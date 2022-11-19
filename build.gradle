@@ -1,0 +1,54 @@
+plugins {
+    id 'io.franzbecker.gradle-lombok' version '1.8'
+    id "com.palantir.git-version" version "0.12.3"
+}
+
+println 'Building version: ' + gitVersion()
+
+subprojects {
+
+    group = 'com.unidev.polydata'
+    version = gitVersion()
+
+    apply plugin: 'java'
+    apply plugin: 'idea'
+    apply plugin: 'maven-publish'
+    apply plugin: 'java-library'
+
+    repositories {
+        mavenCentral()
+    }
+
+    lombok {
+        version = '1.18.8'
+        sha256 = ""
+    }
+
+    dependencies {
+
+    }
+
+    idea {
+        module {
+            downloadSources = true
+        }
+    }
+
+    tasks.withType(JavaCompile) {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    tasks.named('test') {
+        useJUnitPlatform()
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+            }
+        }
+    }
+}
+

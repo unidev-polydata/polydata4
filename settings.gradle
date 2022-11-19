@@ -1,1 +1,6 @@
 rootProject.name = 'polydata4'
+
+include (
+        "polydata-api",
+        "polydata-model",
+)
