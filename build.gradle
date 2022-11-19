@@ -16,7 +16,12 @@ subprojects {
     apply plugin: 'java-library'
 
     repositories {
+        google()
         mavenCentral()
+        jcenter()
+        maven {
+            url "https://mvn.universal-development.com/public"
+        }
     }
 
     lombok {
