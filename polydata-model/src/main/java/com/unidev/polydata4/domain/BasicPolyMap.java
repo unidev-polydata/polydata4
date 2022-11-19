@@ -16,11 +16,11 @@ public class BasicPolyMap implements PolyMap<BasicPoly>, Serializable {
 
     @Getter
     @Setter
-    private Map<String, BasicPoly> map = new ConcurrentHashMap<>();
+    private Map<String, BasicPoly> map;
 
     @Getter
     @Setter
-    private Map<String, Object> metadata = new ConcurrentHashMap<>();
+    private Map<String, Object> metadata;
 
     public static BasicPolyMap basicPolyMap(BasicPoly poly) {
         BasicPolyMap map = new BasicPolyMap();

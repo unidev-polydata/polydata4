@@ -53,7 +53,6 @@ public interface Poly extends Serializable {
     /**
      * Fetch poly data.
      */
-
     Map<String, Object> data();
 
     Map<String, Object> getData();
@@ -61,16 +60,6 @@ public interface Poly extends Serializable {
     void setData(Map<String, Object> data);
 
     <P extends Poly> P withData(Map<String, Object> data);
-
-    Map<String, Object> metadata();
-
-    Map<String, Object> getMetadata();
-
-    <P extends Poly> P withMetadata(Map<String, Object> metadata);
-
-    void setMetadata(Map<String, Object> metadata);
-
-    boolean containsKey(String key);
 
     <P extends PolyList> void putPolyList(String key, P polyList);
 
@@ -83,5 +72,25 @@ public interface Poly extends Serializable {
     <P extends PolyMap> P getPolyMap(String key);
 
     <P extends PolyMap> P getPolyMap(String key, P defaultValue);
+
+    boolean containsKey(String key);
+
+    Map<String, Object> metadata();
+
+    Map<String, Object> getMetadata();
+
+    <P extends Poly> P withMetadata(Map<String, Object> metadata);
+
+    void setMetadata(Map<String, Object> metadata);
+
+    <T, P extends Poly> P withMetadata(String key, T value);
+
+    void putMetadata(String key, Object value);
+
+    <T> T fetchMetadata(String key);
+
+    <T> T fetchMetadata(String key, T defaultValue);
+
+    <P extends Poly> P deleteMetadata(String key);
 
 }

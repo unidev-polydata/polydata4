@@ -1,5 +1,7 @@
 package com.unidev.polydata4.domain;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
 import java.io.Serializable;
@@ -16,7 +18,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @ToString
 public class BasicPolyList implements PolyList<BasicPoly>, Serializable {
 
+    @Getter
+    @Setter
     protected List<BasicPoly> list;
+
+    @Getter
+    @Setter
     protected Map<String, Object> metadata;
 
     public static BasicPolyList newList() {

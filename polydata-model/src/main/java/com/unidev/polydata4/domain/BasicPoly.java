@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.unidev.platform.common.DataTransform;
 import com.unidev.platform.common.exception.UnidevRuntimeException;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.util.LinkedHashMap;
@@ -16,7 +18,12 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class BasicPoly implements Poly, Serializable {
 
+    @Getter
+    @Setter
     protected Map<String, Object> data;
+
+    @Getter
+    @Setter
     protected Map<String, Object> metadata;
 
     /**
@@ -181,6 +188,39 @@ public class BasicPoly implements Poly, Serializable {
     @Override
     public void setMetadata(Map<String, Object> metadata) {
         this.metadata = metadata;
+    }
+
+    @Override
+    public <T, P extends Poly> P withMetadata(String key, T value) {
+        metadata.put(key, value);
+        return (P) this;
+    }
+
+    @Override
+    public void putMetadata(String key, Object value) {
+        metadata.put(key, value);
+    }
+
+    @Override
+    public <T> T fetchMetadata(String key) {
+        return fetchMetadata(key, null);
+    }
+
+    @Override
+    public <T> T fetchMetadata(String key, T defaultValue) {
+        if (metadata == null) {
+            return defaultValue;
+        }
+        if (!metadata.containsKey(key)) {
+            return defaultValue;
+        }
+        return (T) metadata.get(key);
+    }
+
+    @Override
+    public <P extends Poly> P deleteMetadata(String key) {
+        metadata.remove(key);
+        return (P) this;
     }
 
     public String _id() {

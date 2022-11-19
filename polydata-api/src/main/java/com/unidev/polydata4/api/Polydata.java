@@ -1,6 +1,9 @@
 package com.unidev.polydata4.api;
 
 import com.unidev.polydata4.domain.BasicPoly;
+import com.unidev.polydata4.domain.BasicPolyList;
+import com.unidev.polydata4.domain.PersistRequest;
+import com.unidev.polydata4.domain.BasicPolyQuery;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -13,50 +16,49 @@ import java.util.Set;
  */
 public interface Polydata extends Closeable {
 
-    BasicPoly create(String name);
+    BasicPoly create(String poly);
 
     /**
      * Check if exists poly storage.
-     * @param name
+     * @param poly
      * @return
      */
-    boolean exists(String name);
+    boolean exists(String poly);
 
-    Optional<BasicPoly> config(String name);
+    Optional<BasicPoly> config(String poly);
 
-    void config(String name, BasicPoly config);
+    void config(String poly, BasicPoly config);
 
-    Optional<BasicPoly> metadata(String name);
+    Optional<BasicPoly> metadata(String poly);
 
-    void metadata(String name, BasicPoly metadata);
+    void metadata(String poly, BasicPoly metadata);
 
     /**
      * Fetch tags from specific index.
      * Examples:
-     *  TagIndex: tags
+     *  Index: tags
      *  Values: dogs: 10, cats: 2
      *
-     *  TagIndex: _date
+     *  Index: _date
      *  Values: _count: 1000
      */
-    Optional<BasicPoly> fetchTagIndex(String name);
-
-    BasicPolyList persistPoly(String name, Collection<PersistRequest> persistRequests);
-
-    BasicPolyList updatePoly(String name,Collection<PersistRequest> persistRequests);
-
-    BasicPolyList readPoly(String name, Set<String> ids);
-
-    BasicPolyList removePoly(String name, Set<String> ids);
-
-    BasicPolyList query(String name, PolyQuery polyQuery);
+    Optional<BasicPoly> fetchIndexes(String poly);
 
     /** Return tag information **/
-    BasicPoly fetchPolyTagInfo(String name, String tagId);
+    BasicPoly fetchIndexData(String poly, String indexId);
+
+    BasicPolyList persistPoly(String poly, Collection<PersistRequest> persistRequests);
+
+    BasicPolyList updatePoly(String poly,Collection<PersistRequest> persistRequests);
+
+    BasicPolyList readPoly(String poly, Set<String> ids);
+
+    BasicPolyList removePoly(String poly, Set<String> ids);
+
+    BasicPolyList query(String poly, BasicPolyQuery polyQuery);
 
     /**
      * List available polys
-     * @return
      */
     BasicPolyList listPolys();
 

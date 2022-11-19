@@ -24,7 +24,4 @@ public class PersistRequest implements Serializable {
     // additional data to pass for indexing
     private Map<String, BasicPoly> indexData;
 
-    @Builder.Default
-    private boolean excludeDateIndex = false;
-
 }
