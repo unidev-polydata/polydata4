@@ -12,7 +12,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-public class BasicPolyQuery implements Serializable {
+public class BasicPolyQuery implements PolyQuery, Serializable {
 
     public enum QueryType {NEXT, PREV, RANDOM, FETCH_BY_ID, FETCH_BY_INDEX}
 
