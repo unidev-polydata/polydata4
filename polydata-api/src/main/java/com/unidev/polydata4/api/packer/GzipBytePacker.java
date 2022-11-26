@@ -27,6 +27,7 @@ public class GzipBytePacker implements BytePacker {
       result = bos.toByteArray();
     } catch (IOException e) {
       e.printStackTrace();
+      throw new RuntimeException(e);
     }
     return result;
   }
