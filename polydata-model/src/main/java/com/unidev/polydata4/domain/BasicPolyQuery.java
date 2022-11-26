@@ -14,14 +14,12 @@ import java.io.Serializable;
 @ToString
 public class BasicPolyQuery implements PolyQuery, Serializable {
 
-    public enum QueryType {NEXT, PREV, RANDOM, FETCH_BY_ID, FETCH_BY_INDEX}
-
     public static final String QUERY_TYPE = "queryType";
     public static final String QUERY_IDS = "queryIds";
-    public static final String QUERY_KEY = "queryKey"; // next key / prev key
 
-    public static final String TAG_KEY = "tagKey";
-    public static final String TAG_VALUE = "tagValue";
+    public static final String INDEX_KEY = "indexKey";
+
+    public static final String INDEX_VALUE = "indexValue";
 
     public static final String COUNT_KEY = "count";
 
