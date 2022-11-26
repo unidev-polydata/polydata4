@@ -14,66 +14,57 @@ import java.io.Serializable;
 @ToString
 public class BasicPolyQuery implements PolyQuery, Serializable {
 
-    public static final String QUERY_TYPE = "queryType";
-    public static final String QUERY_IDS = "queryIds";
+    public enum QueryFunction { PAGES, RANDOM }
 
-    public static final String INDEX_KEY = "indexKey";
+    public static final String QUERY_FUNCTION = "queryFunction";
 
-    public static final String INDEX_VALUE = "indexValue";
+    public static final String QUERY_IDS = "ids";
 
-    public static final String COUNT_KEY = "count";
+    public static final String INDEX = "index";
 
-    public static final String PAGE_KEY = "page";
+    public static final String PAGE = "page";
 
     @Builder.Default
     private BasicPoly options = new BasicPoly();
 
-    public void queryType(QueryType queryType) {
-        options.put(QUERY_TYPE, queryType.name());
-    }
-
-    public QueryType queryType() {
-        return QueryType.valueOf(QueryType.class, options.fetch(QUERY_TYPE, QueryType.NEXT.name()));
-    }
-
     public void queryIds(BasicPolyList basicPolyList) {
         options.putPolyList(QUERY_IDS, basicPolyList);
+    }
+
+    public void queryType(QueryFunction queryType) {
+        options.put(QUERY_FUNCTION, queryType.name());
+    }
+
+    public QueryFunction queryType() {
+        return QueryFunction.valueOf(QueryFunction.class, options.fetch(QUERY_FUNCTION, QueryFunction.PAGES.name()));
     }
 
     public BasicPolyList queryIds() {
         return options.getPolyList(QUERY_IDS);
     }
 
-    public String queryKey() {
-        return options.fetch(QUERY_KEY);
+    public String index() {
+        return options.fetch(INDEX);
     }
 
-    public void queryKey(String key) {
-        options.put(QUERY_KEY, key);
-    }
-
-    public String tagValue() {
-        return options.fetch(TAG_VALUE);
-    }
-
-    public void queryTag(String tagValue) {
-        options.put(TAG_VALUE, tagValue);
-    }
-
-    public Integer count() {
-        return Integer.parseInt(options.fetch(COUNT_KEY, "0") + "");
-    }
-
-    public void count(int count) {
-        options.put(COUNT_KEY, count + "");
+    public void index(String tagValue) {
+        options.put(INDEX, tagValue);
     }
 
     public Integer page() {
-        return Integer.parseInt(options.fetch(PAGE_KEY, "0") + "");
+        return Integer.parseInt(options.fetch(PAGE, "0") + "");
     }
 
     public void page(int page) {
-        options.put(PAGE_KEY, page + "");
+        options.put(PAGE, page + "");
+    }
+
+    public <T> T option(String key) {
+        return options.fetch(key);
+    }
+
+    public <T> void option(String key, T value) {
+        options.put(key, value);
     }
 
 
