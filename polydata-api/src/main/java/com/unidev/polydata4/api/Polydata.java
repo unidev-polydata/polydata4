@@ -13,6 +13,10 @@ import java.util.Set;
  */
 public interface Polydata extends Closeable {
 
+    public static String POLY_ID = "polyId";
+
+    public final String _ID = "_id";
+
     BasicPoly create(String poly);
 
     /**
