@@ -6,6 +6,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.UpdateOptions;
 import com.unidev.polydata4.api.Polydata;
 import com.unidev.polydata4.domain.BasicPoly;
@@ -25,9 +26,18 @@ import java.util.*;
  */
 public class PolydataMongodb implements Polydata {
 
-    public static final String CONFIGURATION_COLLECTION = "config";
-    public static final String METADATA_COLLECTION = "metadata";
-    public static final String CREATE_DATE = "create_date";
+    public static final String CONFIGURATION_COLLECTION = "_config";
+    public static final String METADATA_COLLECTION = "_metadata";
+    public static final String CREATE_DATE = "_create_date";
+
+    private static final String UPDATE_DATE = "_update_date";
+
+    public static final String INDEX_COLLECTION = "_indexes";
+    public static final String COUNT = "count";
+
+    private static final String TAGS = "tags";
+    private static final String INDEX = "index";
+
 
     @Getter
     @Setter
@@ -45,6 +55,13 @@ public class PolydataMongodb implements Polydata {
         this.mongoUri = mongoUri;
         this.mongoClientURI = new MongoClientURI(this.mongoUri);
         this.mongoClient = new MongoClient(mongoClientURI);
+    }
+
+    public void prepareStorage() {
+        collection(INDEX_COLLECTION).createIndex(Indexes.ascending(POLY));
+        collection(INDEX_COLLECTION).createIndex(Indexes.ascending(POLY, TAGS));
+
+        collection(INDEX_COLLECTION).createIndex(Indexes.ascending(POLY));
     }
 
     @Override
@@ -85,12 +102,18 @@ public class PolydataMongodb implements Polydata {
 
     @Override
     public Optional<BasicPoly> index(String poly) {
-        return Optional.empty();
+        BasicPoly index = new BasicPoly();
+        MongoCollection<Document> collection = collection(INDEX_COLLECTION);
+        for (Document document : collection.find(Filters.eq(POLY, poly))) {
+            BasicPoly value = toPoly(document);
+            index.put(value.fetch(INDEX), value.fetch(COUNT));
+        }
+        return Optional.of(index);
     }
 
     @Override
     public BasicPoly indexData(String poly, String indexId) {
-        return null;
+
     }
 
     @Override
@@ -125,7 +148,11 @@ public class PolydataMongodb implements Polydata {
 
     @Override
     public BasicPolyList list() {
-        return null;
+        BasicPolyList list = new BasicPolyList();
+        for (Document document : collection(CONFIGURATION_COLLECTION).find()) {
+            list.add(BasicPoly.newPoly(document.getString(_ID)));
+        }
+        return list;
     }
 
     @Override
