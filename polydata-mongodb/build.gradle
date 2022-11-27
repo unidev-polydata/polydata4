@@ -1,0 +1,9 @@
+dependencies {
+
+    api project(":polydata-api")
+
+    implementation (
+            "org.mongodb:mongo-java-driver:$mongoJavaDriverVersion",
+            "com.fasterxml.jackson.core:jackson-core:$jacksonVersion"
+    )
+}
