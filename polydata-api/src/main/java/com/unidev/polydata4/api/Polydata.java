@@ -1,6 +1,9 @@
 package com.unidev.polydata4.api;
 
-import com.unidev.polydata4.domain.*;
+import com.unidev.polydata4.domain.BasicPoly;
+import com.unidev.polydata4.domain.BasicPolyList;
+import com.unidev.polydata4.domain.PersistRequest;
+import com.unidev.polydata4.domain.PolyQuery;
 
 import java.io.Closeable;
 import java.io.IOException;
