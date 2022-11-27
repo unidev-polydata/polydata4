@@ -2,11 +2,13 @@ package com.unidev.polydata4.mongodb;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
+import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Indexes;
+import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.unidev.polydata4.api.Polydata;
 import com.unidev.polydata4.domain.BasicPoly;
@@ -15,6 +17,7 @@ import com.unidev.polydata4.domain.PersistRequest;
 import com.unidev.polydata4.domain.PolyQuery;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.collections4.CollectionUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -59,6 +62,7 @@ public class PolydataMongodb implements Polydata {
 
     public void prepareStorage() {
         collection(INDEX_COLLECTION).createIndex(Indexes.ascending(POLY));
+        collection(INDEX_COLLECTION).createIndex(Indexes.ascending(POLY, INDEX));
         collection(INDEX_COLLECTION).createIndex(Indexes.ascending(POLY, TAGS));
 
         collection(INDEX_COLLECTION).createIndex(Indexes.ascending(POLY));
@@ -101,24 +105,25 @@ public class PolydataMongodb implements Polydata {
     }
 
     @Override
-    public Optional<BasicPoly> index(String poly) {
+    public BasicPoly index(String poly) {
         BasicPoly index = new BasicPoly();
         MongoCollection<Document> collection = collection(INDEX_COLLECTION);
         for (Document document : collection.find(Filters.eq(POLY, poly))) {
             BasicPoly value = toPoly(document);
-            index.put(value.fetch(INDEX), value.fetch(COUNT));
+            index.put(value.fetch(INDEX), value);
         }
-        return Optional.of(index);
+        return index;
     }
 
     @Override
     public BasicPoly indexData(String poly, String indexId) {
-
+       return index(poly).fetch(indexId);
     }
 
     @Override
     public BasicPolyList insert(String poly, Collection<PersistRequest> persistRequests) {
-        return null;
+        BasicPolyList basicPolyList = new BasicPolyList();
+        return basicPolyList;
     }
 
     @Override

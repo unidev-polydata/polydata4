@@ -48,7 +48,7 @@ public interface Polydata extends Closeable {
      *  Index: _date
      *  Values: _count: 1000
      */
-    Optional<BasicPoly> index(String poly);
+    BasicPoly index(String poly);
 
     /** Return index information **/
     BasicPoly indexData(String poly, String indexId);
