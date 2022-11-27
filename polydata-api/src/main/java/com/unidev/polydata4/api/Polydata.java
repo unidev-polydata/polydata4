@@ -42,25 +42,27 @@ public interface Polydata extends Closeable {
      *  Index: _date
      *  Values: _count: 1000
      */
-    Optional<BasicPoly> fetchIndexes(String poly);
+    Optional<BasicPoly> index(String poly);
 
-    /** Return tag information **/
-    BasicPoly fetchIndexData(String poly, String indexId);
+    /** Return index information **/
+    BasicPoly indexData(String poly, String indexId);
 
-    BasicPolyList persistPoly(String poly, Collection<PersistRequest> persistRequests);
+    BasicPolyList insert(String poly, Collection<PersistRequest> persistRequests);
 
-    BasicPolyList updatePoly(String poly,Collection<PersistRequest> persistRequests);
+    BasicPolyList update(String poly, Collection<PersistRequest> persistRequests);
 
-    BasicPolyList readPoly(String poly, Set<String> ids);
+    BasicPolyList read(String poly, Set<String> ids);
 
-    BasicPolyList removePoly(String poly, Set<String> ids);
+    BasicPolyList remove(String poly, Set<String> ids);
 
     BasicPolyList query(String poly, BasicPolyQuery polyQuery);
+
+    Long count(String poly, BasicPolyQuery polyQuery);
 
     /**
      * List available polys
      */
-    BasicPolyList listPolys();
+    BasicPolyList list();
 
     void open();
 
