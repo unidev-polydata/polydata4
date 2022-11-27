@@ -1,9 +1,6 @@
 package com.unidev.polydata4.api;
 
-import com.unidev.polydata4.domain.BasicPoly;
-import com.unidev.polydata4.domain.BasicPolyList;
-import com.unidev.polydata4.domain.PersistRequest;
-import com.unidev.polydata4.domain.BasicPolyQuery;
+import com.unidev.polydata4.domain.*;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -54,10 +51,9 @@ public interface Polydata extends Closeable {
     BasicPolyList read(String poly, Set<String> ids);
 
     BasicPolyList remove(String poly, Set<String> ids);
+    BasicPolyList query(String poly, PolyQuery polyQuery);
 
-    BasicPolyList query(String poly, BasicPolyQuery polyQuery);
-
-    Long count(String poly, BasicPolyQuery polyQuery);
+    Long count(String poly, PolyQuery polyQuery);
 
     /**
      * List available polys
