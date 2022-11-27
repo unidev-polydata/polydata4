@@ -258,7 +258,7 @@ public class PolydataMongodb implements Polydata {
 
     @Override
     public BasicPolyList query(String poly, PolyQuery polyQuery) {
-        BasicPolyQuery q = (BasicPolyQuery) polyQuery;
+      /*  BasicPolyQuery q = (BasicPolyQuery) polyQuery;
         Optional<BasicPoly> configPoly = config(poly);
         BasicPolyList list = new BasicPolyList();
         if (configPoly.isEmpty()) {
@@ -274,7 +274,7 @@ public class PolydataMongodb implements Polydata {
 
         Integer defaultItemPerPage = config.fetch(ITEM_PER_PAGE, DEFAULT_ITEM_PER_PAGE);
         Integer itemPerPage = polyQuery.getOptions().fetch(ITEM_PER_PAGE, defaultItemPerPage);
-        Bson query = Filters.and(Filters.eq(POLY, name), Filters.in(TAGS, index));
+        Bson query = Filters.and(Filters.eq(POLY, name), Filters.in(TAGS, index)); */
 
         return null;
     }

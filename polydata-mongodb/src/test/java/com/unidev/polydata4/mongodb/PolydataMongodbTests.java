@@ -2,6 +2,7 @@ package com.unidev.polydata4.mongodb;
 
 import com.unidev.polydata4.domain.BasicPoly;
 import com.unidev.polydata4.domain.BasicPolyList;
+import com.unidev.polydata4.domain.PersistRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -71,6 +73,17 @@ public class PolydataMongodbTests {
 
         assertThat(polyMeta.get().fetch("metadata") + "").isEqualTo(metadata);
         assertThat(polyConfig.get().fetch("config") + "").isEqualTo(configData);
+
+    }
+
+    @Test
+    void insert() {
+
+
+
+        polydata.insert(polyId, Collections.singleton(PersistRequest.builder()
+                        .poly(BasicPoly.newPoly("test").with("app", "123"))
+                .build()));
 
     }
 
