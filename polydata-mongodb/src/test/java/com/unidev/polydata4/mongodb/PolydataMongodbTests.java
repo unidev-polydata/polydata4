@@ -13,6 +13,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -43,7 +44,6 @@ public class PolydataMongodbTests {
     @AfterEach
     public void after() throws IOException, InterruptedException {
         System.out.println(mongodb.execInContainer("mongosh", "mongodb://127.0.0.1:27017/polydata4", "--eval", "show collections"));
-
     }
 
     @Test
@@ -78,13 +78,10 @@ public class PolydataMongodbTests {
 
     @Test
     void insert() {
-
-
-
         polydata.insert(polyId, Collections.singleton(PersistRequest.builder()
                         .poly(BasicPoly.newPoly("test").with("app", "123"))
+                        .indexToPersist(Set.of("tag1", "date"))
                 .build()));
-
     }
 
 }

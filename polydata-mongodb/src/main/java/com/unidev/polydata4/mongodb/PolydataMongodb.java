@@ -16,6 +16,7 @@ import com.unidev.polydata4.domain.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -77,6 +78,8 @@ public class PolydataMongodb implements Polydata {
         config(poly, BasicPoly.newPoly(poly));
         metadata(poly, BasicPoly.newPoly(poly).with(CREATE_DATE, new Date()));
 
+        collection(poly).createIndex(Indexes.ascending(INDEXED_TAGS));
+
         return config(poly).get();
     }
 
@@ -125,7 +128,6 @@ public class PolydataMongodb implements Polydata {
     public BasicPolyList insert(String poly, Collection<PersistRequest> persistRequests) {
         BasicPolyList basicPolyList = new BasicPolyList();
 
-
         Set<String> polyIds = new HashSet<>();
         for (PersistRequest persistRequest : persistRequests) {
             BasicPoly data = persistRequest.getPoly();
@@ -145,21 +147,22 @@ public class PolydataMongodb implements Polydata {
             String id = data._id();
 
             Set<String> indexToPersist = persistRequest.getIndexToPersist();
-            if (indexToPersist == null) {
+            if (CollectionUtils.isEmpty(indexToPersist)) {
                 indexToPersist = new HashSet<>();
             }
+
+            long createDate = System.currentTimeMillis();
 
             Document polyDocument = new Document();
             polyDocument.put(_ID, id);
             polyDocument.put(POLY_ID, data._id());
-            polyDocument.put(CREATE_DATE, new Date());
-            polyDocument.put(UPDATE_DATE, new Date());
+            polyDocument.put(CREATE_DATE, createDate);
+            polyDocument.put(UPDATE_DATE, createDate);
             polyDocument.put(INDEXED_TAGS, indexToPersist);
 
             Document document = toDocument(data);
 
             polyDocument.append(DATA, document);
-            polyDocument.append(TAGS, indexToPersist);
 
             Bson update = new Document("$set", polyDocument);
             Bson filter = Filters.eq(_ID, id);
