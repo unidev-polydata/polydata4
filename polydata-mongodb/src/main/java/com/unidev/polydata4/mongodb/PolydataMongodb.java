@@ -251,6 +251,8 @@ public class PolydataMongodb implements Polydata {
 
     @Override
     public BasicPolyList read(String poly, Set<String> ids) {
+        MongoCollection<Document> polydataCollection = collection(poly);
+
         return null;
     }
 

@@ -82,6 +82,11 @@ public class PolydataMongodbTests {
                         .poly(BasicPoly.newPoly("test").with("app", "123"))
                         .indexToPersist(Set.of("tag1", "date"))
                 .build()));
+
+        BasicPolyList list = polydata.read(polyId, Set.of("test"));
+        assertNotNull(list);
+        assertThat(list.list().size()).isEqualTo(1);
+        assertThat(list.hasPoly("test")).isTrue();
     }
 
 }
