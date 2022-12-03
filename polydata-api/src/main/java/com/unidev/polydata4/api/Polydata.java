@@ -17,11 +17,7 @@ import java.util.Set;
 public interface Polydata extends Closeable {
 
     String POLY = "poly";
-
-    String POLY_ID = "polyId";
-
     String _ID = "_id";
-
 
     void prepareStorage();
 

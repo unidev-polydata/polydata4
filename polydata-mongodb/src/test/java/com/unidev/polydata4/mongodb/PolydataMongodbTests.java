@@ -20,9 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Testcontainers
 public class PolydataMongodbTests {
-
-
-    @Container
+   @Container
     private GenericContainer mongodb = new GenericContainer("mongo:6.0.2-focal")
             .withExposedPorts(27017);
     String port;
@@ -36,7 +34,7 @@ public class PolydataMongodbTests {
 
         polydata = new PolydataMongodb("mongodb://localhost:"+port+"/polydata4");
         polydata.prepareStorage();
-        polyId = "poly-" + System.currentTimeMillis();
+        polyId = "poly_" + System.currentTimeMillis();
         BasicPoly poly = polydata.create(polyId);
         assertNotNull(poly);
     }

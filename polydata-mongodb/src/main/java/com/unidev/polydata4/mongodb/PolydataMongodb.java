@@ -10,14 +10,15 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
-import com.unidev.platform.common.exception.UnidevRuntimeException;
 import com.unidev.polydata4.api.Polydata;
-import com.unidev.polydata4.domain.*;
+import com.unidev.polydata4.domain.BasicPoly;
+import com.unidev.polydata4.domain.BasicPolyList;
+import com.unidev.polydata4.domain.PersistRequest;
+import com.unidev.polydata4.domain.PolyQuery;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -153,16 +154,11 @@ public class PolydataMongodb implements Polydata {
 
             long createDate = System.currentTimeMillis();
 
-            Document polyDocument = new Document();
+            Document polyDocument = toDocument(data);
             polyDocument.put(_ID, id);
-            polyDocument.put(POLY_ID, data._id());
             polyDocument.put(CREATE_DATE, createDate);
             polyDocument.put(UPDATE_DATE, createDate);
             polyDocument.put(INDEXED_TAGS, indexToPersist);
-
-            Document document = toDocument(data);
-
-            polyDocument.append(DATA, document);
 
             Bson update = new Document("$set", polyDocument);
             Bson filter = Filters.eq(_ID, id);
@@ -251,9 +247,15 @@ public class PolydataMongodb implements Polydata {
 
     @Override
     public BasicPolyList read(String poly, Set<String> ids) {
-        MongoCollection<Document> polydataCollection = collection(poly);
+        //TODO: add support for caching
+        BasicPolyList list = new BasicPolyList();
+        Bson query = Filters.in(_ID, ids);
+        collection(poly).find(query).iterator().forEachRemaining(document -> {
+            BasicPoly polyData = toPoly(document);
+            list.add(polyData);
+        });
 
-        return null;
+        return list;
     }
 
     @Override
@@ -316,9 +318,6 @@ public class PolydataMongodb implements Polydata {
         BasicPoly poly = new BasicPoly();
         for (String key : document.keySet()) {
             poly.put(key, document.get(key));
-        }
-        if (poly.containsKey(POLY_ID)) {
-            poly._id(poly.fetch(POLY_ID) + "");
         }
         return poly;
     }
