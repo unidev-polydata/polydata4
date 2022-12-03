@@ -63,12 +63,14 @@ public class PolydataMongodb implements Polydata {
         this.mongoClient = new MongoClient(mongoClientURI);
     }
 
-    public void prepareStorage() {
-        collection(INDEX_COLLECTION).createIndex(Indexes.ascending(POLY));
-        collection(INDEX_COLLECTION).createIndex(Indexes.ascending(POLY, INDEX));
-        collection(INDEX_COLLECTION).createIndex(Indexes.ascending(POLY, TAGS));
+    public void prepareStorage(String poly) {
+        collection(poly).createIndex(Indexes.ascending(INDEXED_TAGS));
+        indexCollection(poly).createIndex(Indexes.descending(COUNT));
+    }
 
-        collection(INDEX_COLLECTION).createIndex(Indexes.ascending(POLY));
+    @Override
+    public void prepareStorage() {
+
     }
 
     @Override
@@ -79,7 +81,7 @@ public class PolydataMongodb implements Polydata {
         config(poly, BasicPoly.newPoly(poly));
         metadata(poly, BasicPoly.newPoly(poly).with(CREATE_DATE, new Date()));
 
-        collection(poly).createIndex(Indexes.ascending(INDEXED_TAGS));
+        prepareStorage(poly);
 
         return config(poly).get();
     }
@@ -112,21 +114,22 @@ public class PolydataMongodb implements Polydata {
     @Override
     public BasicPoly index(String poly) {
         BasicPoly index = new BasicPoly();
-        MongoCollection<Document> collection = collection(INDEX_COLLECTION);
-        for (Document document : collection.find(Filters.eq(POLY, poly))) {
+        MongoCollection<Document> collection = indexCollection(poly);
+        for (Document document : collection.find()) {
             BasicPoly value = toPoly(document);
-            index.put(value.fetch(INDEX), value);
+            index.put(value._id(), value);
         }
         return index;
     }
 
     @Override
     public BasicPoly indexData(String poly, String indexId) {
-       return index(poly).fetch(indexId);
+        return index(poly).fetch(indexId);
     }
 
     @Override
     public BasicPolyList insert(String poly, Collection<PersistRequest> persistRequests) {
+        // TODO: add usage of indexes
         BasicPolyList basicPolyList = new BasicPolyList();
 
         Set<String> polyIds = new HashSet<>();
@@ -211,8 +214,6 @@ public class PolydataMongodb implements Polydata {
             String index = tagToIncrement.getKey();
             Document indexDocument = new Document();
             indexDocument.put(_ID, index);
-            indexDocument.put(POLY, poly);
-            indexDocument.put("index", index);
             if (tagsData.containsKey(index)) {
                 tagsData.put("data", tagsData.get(index));
             }
@@ -228,13 +229,12 @@ public class PolydataMongodb implements Polydata {
         }
 
         if (!tagsUpdate.isEmpty()) {
-            BulkWriteResult bulkWriteResult = collection(INDEX_COLLECTION).bulkWrite(tagsUpdate);
+            BulkWriteResult bulkWriteResult = indexCollection(poly).bulkWrite(tagsUpdate);
             log.debug(
                     "Poly metadata update result getInsertedCount {} getModifiedCount {} getMatchedCount {}",
                     bulkWriteResult.getInsertedCount(), bulkWriteResult.getModifiedCount(),
                     bulkWriteResult.getMatchedCount());
         }
-//
 
         return basicPolyList;
     }
@@ -348,5 +348,9 @@ public class PolydataMongodb implements Polydata {
         Bson filter = Filters.eq(_ID, poly);
         UpdateOptions options = new UpdateOptions().upsert(true);
         collection(collection).updateOne(filter, update, options);
+    }
+
+    private MongoCollection<Document> indexCollection(String poly) {
+        return collection(INDEX_COLLECTION + "_" + poly);
     }
 }
