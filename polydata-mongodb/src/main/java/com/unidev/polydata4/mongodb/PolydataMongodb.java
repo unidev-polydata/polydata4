@@ -173,68 +173,67 @@ public class PolydataMongodb implements Polydata {
                     bulkWriteResult.getInsertedCount(), bulkWriteResult.getModifiedCount(),
                     bulkWriteResult.getMatchedCount());
         }
-//
-//        // bulk tag increment increment
-//        List<UpdateOneModel<Document>> tagsUpdate = new ArrayList<>();
-//
-//        // collect update requests
-//        Map<String, Integer> tagsToIncrement = new HashMap<>();
-//        Map<String, BasicPoly> tagsData = new HashMap<>();
-//
-//        for (PersistRequest persistRequest : persistRequests) {
-//            BasicPoly poly = persistRequest.getPoly();
-//            Set<String> indexToPersist = persistRequest.getIndexToPersist();
-//            if (CollectionUtils.isEmpty(indexToPersist)) {
-//                continue;
-//            }
-//            if (existingPolys.hasPoly(poly._id())) {
-//                // skip increment of tags if poly already exists
-//                continue;
-//            }
-//            Map<String, BasicPoly> indexData = persistRequest.getIndexData();
-//            if (indexData == null) {
-//                indexData = new HashMap<>();
-//            }
-//
-//            for (String index : indexToPersist) {
-//                int count = tagsToIncrement.getOrDefault(index, 0);
-//                count++;
-//                tagsToIncrement.put(index, count);
-//                tagsData.put(index, indexData.get(index));
-//            }
-//
-//        }
-//
-//        // bulk update
-//
-//        for (Map.Entry<String, Integer> tagToIncrement : tagsToIncrement.entrySet()) {
-//            String index = tagToIncrement.getKey();
-//            String indexId = name + "-" + index;
-//            Document indexDocument = new Document();
-//            indexDocument.put(_ID, indexId);
-//            indexDocument.put(POLY, name);
-//            indexDocument.put("index", index);
-//            if (tagsData.containsKey(index)) {
-//                tagsData.put("data", tagsData.get(index));
-//            }
-//
-//            // persist index data
-//            Bson indexUpdate = new Document("$set", indexDocument);
-//            Bson indexFilter = Filters.eq(_ID, indexId);
-//            tagsUpdate.add(new UpdateOneModel<>(indexFilter, indexUpdate, opt));
-//
-//            // index increment
-//            Bson inc = new Document("$inc", new Document().append(COUNT, tagToIncrement.getValue()));
-//            tagsUpdate.add(new UpdateOneModel<>(indexFilter, inc, opt));
-//        }
-//
-//        if (!tagsUpdate.isEmpty()) {
-//            BulkWriteResult bulkWriteResult = getCollection(TAGS_INDEX_COLLECTION).bulkWrite(tagsUpdate);
-//            log.debug(
-//                    "Poly metadata update result getInsertedCount {} getModifiedCount {} getMatchedCount {}",
-//                    bulkWriteResult.getInsertedCount(), bulkWriteResult.getModifiedCount(),
-//                    bulkWriteResult.getMatchedCount());
-//        }
+
+        // bulk update index
+
+        // collect update requests
+        Map<String, Integer> tagsToIncrement = new HashMap<>();
+        Map<String, BasicPoly> tagsData = new HashMap<>();
+
+        for (PersistRequest persistRequest : persistRequests) {
+            BasicPoly data = persistRequest.getPoly();
+            Set<String> indexToPersist = persistRequest.getIndexToPersist();
+            if (CollectionUtils.isEmpty(indexToPersist)) {
+                continue;
+            }
+            if (existingPolys.hasPoly(data._id())) {
+                // skip increment of tags if poly already exists
+                continue;
+            }
+            Map<String, BasicPoly> indexData = persistRequest.getIndexData();
+            if (indexData == null) {
+                indexData = new HashMap<>();
+            }
+
+            for (String index : indexToPersist) {
+                int count = tagsToIncrement.getOrDefault(index, 0);
+                count++;
+                tagsToIncrement.put(index, count);
+                tagsData.put(index, indexData.get(index));
+            }
+
+        }
+
+        // bulk tag increment increment
+        List<UpdateOneModel<Document>> tagsUpdate = new ArrayList<>();
+        // bulk update
+        for (Map.Entry<String, Integer> tagToIncrement : tagsToIncrement.entrySet()) {
+            String index = tagToIncrement.getKey();
+            Document indexDocument = new Document();
+            indexDocument.put(_ID, index);
+            indexDocument.put(POLY, poly);
+            indexDocument.put("index", index);
+            if (tagsData.containsKey(index)) {
+                tagsData.put("data", tagsData.get(index));
+            }
+
+            // persist index data
+            Bson indexUpdate = new Document("$set", indexDocument);
+            Bson indexFilter = Filters.eq(_ID, index);
+            tagsUpdate.add(new UpdateOneModel<>(indexFilter, indexUpdate, opt));
+
+            // index increment
+            Bson inc = new Document("$inc", new Document().append(COUNT, tagToIncrement.getValue()));
+            tagsUpdate.add(new UpdateOneModel<>(indexFilter, inc, opt));
+        }
+
+        if (!tagsUpdate.isEmpty()) {
+            BulkWriteResult bulkWriteResult = collection(INDEX_COLLECTION).bulkWrite(tagsUpdate);
+            log.debug(
+                    "Poly metadata update result getInsertedCount {} getModifiedCount {} getMatchedCount {}",
+                    bulkWriteResult.getInsertedCount(), bulkWriteResult.getModifiedCount(),
+                    bulkWriteResult.getMatchedCount());
+        }
 //
 
         return basicPolyList;
