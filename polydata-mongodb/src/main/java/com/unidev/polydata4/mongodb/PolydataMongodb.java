@@ -224,7 +224,9 @@ public class PolydataMongodb implements Polydata {
             tagsUpdate.add(new UpdateOneModel<>(indexFilter, indexUpdate, opt));
 
             // index increment
-            Bson inc = new Document("$inc", new Document().append(COUNT, tagToIncrement.getValue()));
+            Bson inc = new Document("$inc", new Document()
+                    .append(COUNT, tagToIncrement.getValue())
+            );
             tagsUpdate.add(new UpdateOneModel<>(indexFilter, inc, opt));
         }
 
