@@ -129,7 +129,6 @@ public class PolydataMongodb implements Polydata {
 
     @Override
     public BasicPolyList insert(String poly, Collection<PersistRequest> persistRequests) {
-        // TODO: add usage of indexes
         BasicPolyList basicPolyList = new BasicPolyList();
 
         Set<String> polyIds = new HashSet<>();
@@ -177,8 +176,7 @@ public class PolydataMongodb implements Polydata {
                     bulkWriteResult.getMatchedCount());
         }
 
-        // bulk update index
-
+        // syncronize indexes
         // collect update requests
         Map<String, Integer> tagsToIncrement = new HashMap<>();
         Map<String, BasicPoly> tagsData = new HashMap<>();

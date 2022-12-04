@@ -11,6 +11,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -20,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Testcontainers
 public class PolydataMongodbTests {
-   @Container
+    @Container
     private GenericContainer mongodb = new GenericContainer("mongo:6.0.2-focal")
             .withExposedPorts(27017);
     String port;
@@ -32,7 +33,7 @@ public class PolydataMongodbTests {
     public void setUp() throws IOException, InterruptedException {
         port = mongodb.getMappedPort(27017) + "";
 
-        polydata = new PolydataMongodb("mongodb://localhost:"+port+"/polydata4");
+        polydata = new PolydataMongodb("mongodb://localhost:" + port + "/polydata4");
         polydata.prepareStorage();
         polyId = "poly_" + System.currentTimeMillis();
         BasicPoly poly = polydata.create(polyId);
@@ -77,14 +78,41 @@ public class PolydataMongodbTests {
     @Test
     void insert() {
         polydata.insert(polyId, Collections.singleton(PersistRequest.builder()
-                        .poly(BasicPoly.newPoly("test").with("app", "123"))
-                        .indexToPersist(Set.of("tag1", "date"))
+                .poly(BasicPoly.newPoly("test").with("app", "123"))
+                .indexToPersist(Set.of("tag1", "date"))
                 .build()));
 
         BasicPolyList list = polydata.read(polyId, Set.of("test"));
         assertNotNull(list);
         assertThat(list.list().size()).isEqualTo(1);
         assertThat(list.hasPoly("test")).isTrue();
+    }
+
+    @Test
+    void indexUpdate() {
+        BasicPoly index = polydata.index(polyId);
+        assertThat(index).isNotNull();
+        assertThat(index.data().isEmpty()).isTrue();
+
+        polydata.insert(polyId, Arrays.asList(
+                        PersistRequest.builder()
+                                .poly(BasicPoly.newPoly("test").with("app", "123"))
+                                .indexToPersist(Set.of("tag1", "date"))
+                                .build(),
+                        PersistRequest.builder()
+                                .poly(BasicPoly.newPoly("test").with("app", "567"))
+                                .indexToPersist(Set.of("tag2", "date"))
+                                .build()
+                )
+        );
+
+        index = polydata.index(polyId);
+        assertThat(index).isNotNull();
+        assertThat(index.data().isEmpty()).isFalse();
+
+        assertThat(index.fetch("date", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(2);
+        assertThat(index.fetch("tag1", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(1);
+        assertThat(index.fetch("tag2", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(1);
     }
 
 }

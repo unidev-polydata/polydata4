@@ -41,11 +41,7 @@ public interface Polydata extends Closeable {
     /**
      * Fetch tags from specific index.
      * Examples:
-     *  Index: tags
-     *  Values: dogs: 10, cats: 2
-     *
-     *  Index: _date
-     *  Values: _count: 1000
+     *  index("cats") = "{count: 10}"
      */
     BasicPoly index(String poly);
 
