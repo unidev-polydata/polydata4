@@ -37,6 +37,8 @@ public class PolydataMongodb implements Polydata {
 
     private static final String DATA = "data";
 
+    private static final String DATE_INDEX = "_date";
+
     String ITEM_PER_PAGE = "item_per_page";
     int DEFAULT_ITEM_PER_PAGE = 10;
 
@@ -130,6 +132,17 @@ public class PolydataMongodb implements Polydata {
         for (PersistRequest persistRequest : persistRequests) {
             BasicPoly data = persistRequest.getPoly();
             polyIds.add(data._id());
+
+            Set<String> indexToPersist = persistRequest.getIndexToPersist();
+            if (CollectionUtils.isEmpty(indexToPersist)) {
+                indexToPersist = new HashSet<>();
+            } else {
+                indexToPersist = new HashSet<>(indexToPersist);
+            }
+            if (!indexToPersist.contains(DATE_INDEX)) {
+                indexToPersist.add(DATE_INDEX);
+            }
+            persistRequest.setIndexToPersist(indexToPersist);
         }
         BasicPolyList existingPolys = read(poly, polyIds);
 
@@ -309,7 +322,7 @@ public class PolydataMongodb implements Polydata {
 
         BasicPolyList list = new BasicPolyList();
 
-        String index = "_date";
+        String index = DATE_INDEX;
         String tag = query.index();
         if (!StringUtils.isBlank(tag)) {
             index = tag;
@@ -318,7 +331,7 @@ public class PolydataMongodb implements Polydata {
 
         Integer defaultItemPerPage = config.fetch(ITEM_PER_PAGE, DEFAULT_ITEM_PER_PAGE);
         Integer itemPerPage = query.getOptions().fetch(ITEM_PER_PAGE, defaultItemPerPage);
-        Bson mongoQuery = Filters.in(TAGS, index);
+        Bson mongoQuery = Filters.in(INDEXED_TAGS, index);
         MongoCollection<Document> collection = collection(poly);
         if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
             long count = collection(POLY).countDocuments(mongoQuery);
@@ -356,12 +369,12 @@ public class PolydataMongodb implements Polydata {
         if (configPoly.isEmpty()) {
             throw new RuntimeException("Poly " + poly + " is not configured");
         }
-        String index = "_date";
+        String index = DATE_INDEX;
         String tag = query.index();
         if (!StringUtils.isBlank(tag)) {
             index = tag;
         }
-        Bson mongoQuery = Filters.in(TAGS, index);
+        Bson mongoQuery = Filters.in(INDEXED_TAGS, index);
         MongoCollection<Document> collection = collection(poly);
         return collection.countDocuments(mongoQuery);
     }

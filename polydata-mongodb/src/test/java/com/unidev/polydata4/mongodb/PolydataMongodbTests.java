@@ -2,6 +2,7 @@ package com.unidev.polydata4.mongodb;
 
 import com.unidev.polydata4.domain.BasicPoly;
 import com.unidev.polydata4.domain.BasicPolyList;
+import com.unidev.polydata4.domain.BasicPolyQuery;
 import com.unidev.polydata4.domain.PersistRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -94,28 +95,22 @@ public class PolydataMongodbTests {
         assertThat(index).isNotNull();
         assertThat(index.data().isEmpty()).isTrue();
 
-        polydata.insert(polyId, Arrays.asList(
-                        PersistRequest.builder()
-                                .poly(BasicPoly.newPoly("test").with("app", "123"))
-                                .indexToPersist(Set.of("tag1", "date"))
-                                .build(),
-                        PersistRequest.builder()
-                                .poly(BasicPoly.newPoly("test2").with("app", "567"))
-                                .indexToPersist(Set.of("tag2", "date"))
-                                .build()
-                )
-        );
+        for(int i = 0;i<100;i++) {
+            polydata.insert(polyId, Arrays.asList(
+                    PersistRequest.builder()
+                            .poly(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
+                            .indexToPersist(Set.of("tag_x", "tag_" + i, "tag_a_" + (i % 2)))
+                            .build())
+            );
+        }
 
         index = polydata.index(polyId);
         assertThat(index).isNotNull();
         assertThat(index.data().isEmpty()).isFalse();
 
-        assertThat(index.fetch("date", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(2);
-        assertThat(index.fetch("tag1", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(1);
-        assertThat(index.fetch("tag2", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(1);
-
-
-        assertThat(polydata.indexData(polyId, "date").fetch("count", Integer.class)).isEqualTo(2);
+        assertThat(index.fetch("_date", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(100);
+        assertThat(index.fetch("tag_1", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(1);
+        assertThat(index.fetch("tag_a_0", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(50);
     }
 
     @Test
@@ -141,5 +136,23 @@ public class PolydataMongodbTests {
         assertThat(polydata.index(polyId).fetch("tag1", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(0);
         assertThat(polydata.index(polyId).fetch("date", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(1);
     }
+
+    @Test
+    void query() {
+        for(int i = 0;i<100;i++) {
+            polydata.insert(polyId, Arrays.asList(
+                            PersistRequest.builder()
+                                    .poly(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
+                                    .indexToPersist(Set.of("tag_x", "tag_" + i))
+                                    .build())
+            );
+        }
+
+        BasicPolyList list = polydata.query(polyId,
+                BasicPolyQuery.builder().build());
+
+        assertThat(list.list().size()).isEqualTo(10);
+    }
+
 
 }
