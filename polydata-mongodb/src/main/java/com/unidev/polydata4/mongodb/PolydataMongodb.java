@@ -241,6 +241,7 @@ public class PolydataMongodb implements Polydata {
 
     @Override
     public BasicPolyList update(String poly, Collection<PersistRequest> persistRequests) {
+        //TODO: implement update
         return null;
     }
 
@@ -259,6 +260,7 @@ public class PolydataMongodb implements Polydata {
 
     @Override
     public BasicPolyList remove(String poly, Set<String> ids) {
+        //TODO: implement remove
         return null;
     }
 
@@ -287,6 +289,7 @@ public class PolydataMongodb implements Polydata {
 
     @Override
     public Long count(String poly, PolyQuery polyQuery) {
+        //TODO: implement count
         return null;
     }
 

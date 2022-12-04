@@ -113,6 +113,9 @@ public class PolydataMongodbTests {
         assertThat(index.fetch("date", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(2);
         assertThat(index.fetch("tag1", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(1);
         assertThat(index.fetch("tag2", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(1);
+
+
+        assertThat(polydata.indexData(polyId, "date").fetch("count", Integer.class)).isEqualTo(2);
     }
 
 }
