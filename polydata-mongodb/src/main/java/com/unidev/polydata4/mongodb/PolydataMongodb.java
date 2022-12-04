@@ -350,8 +350,20 @@ public class PolydataMongodb implements Polydata {
 
     @Override
     public Long count(String poly, PolyQuery polyQuery) {
-        //TODO: implement count
-        return null;
+        BasicPolyQuery query = (BasicPolyQuery) polyQuery;
+        Optional<BasicPoly> configPoly = config(poly);
+
+        if (configPoly.isEmpty()) {
+            throw new RuntimeException("Poly " + poly + " is not configured");
+        }
+        String index = "_date";
+        String tag = query.index();
+        if (!StringUtils.isBlank(tag)) {
+            index = tag;
+        }
+        Bson mongoQuery = Filters.in(TAGS, index);
+        MongoCollection<Document> collection = collection(poly);
+        return collection.countDocuments(mongoQuery);
     }
 
     @Override
@@ -370,7 +382,7 @@ public class PolydataMongodb implements Polydata {
 
     @Override
     public void close() throws IOException {
-
+        mongoClient.close();
     }
 
     private MongoCollection<Document> collection(String collection) {
