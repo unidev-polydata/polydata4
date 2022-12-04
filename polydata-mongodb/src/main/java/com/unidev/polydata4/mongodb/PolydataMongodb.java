@@ -24,6 +24,7 @@ import org.bson.conversions.Bson;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Storage of polydata records in mongodb.
@@ -241,8 +242,7 @@ public class PolydataMongodb implements Polydata {
 
     @Override
     public BasicPolyList update(String poly, Collection<PersistRequest> persistRequests) {
-        //TODO: implement update
-        return null;
+        return insert(poly, persistRequests);
     }
 
     @Override
@@ -260,8 +260,47 @@ public class PolydataMongodb implements Polydata {
 
     @Override
     public BasicPolyList remove(String poly, Set<String> ids) {
-        //TODO: implement remove
-        return null;
+        BasicPolyList basicPolyList = read(poly, ids);
+
+        UpdateOptions opt = new UpdateOptions().upsert(true);
+        List<UpdateOneModel<Document>> tagsUpdate = new ArrayList<>();
+
+        for (BasicPoly basicPoly : basicPolyList.list()) {
+            Collection<String> tags = basicPoly.fetch(INDEXED_TAGS);
+
+            // decrement indexes...
+            Map<String, Integer> tagsToIncrement = new HashMap<>();
+
+            for (String index : tags) {
+                int count = tagsToIncrement.getOrDefault(index, 0);
+                count++;
+                tagsToIncrement.put(index, count);
+            }
+
+            for (Map.Entry<String, Integer> tagEntry : tagsToIncrement.entrySet()) {
+                String indexId = tagEntry.getKey();
+
+                Bson indexFilter = Filters.eq(_ID, indexId);
+                Bson dec = new Document("$inc", new Document().append(COUNT, -1 * tagEntry.getValue()));
+                tagsUpdate.add(new UpdateOneModel<>(indexFilter, dec, opt));
+            }
+        }
+
+        if (!tagsUpdate.isEmpty()) {
+            // bulk decrement
+            BulkWriteResult bulkWriteResult = indexCollection(poly).bulkWrite(tagsUpdate);
+            log.debug("Tags decrement result getInsertedCount {} getModifiedCount {} getMatchedCount {}",
+                    bulkWriteResult.getInsertedCount(), bulkWriteResult.getModifiedCount(),
+                    bulkWriteResult.getMatchedCount());
+        }
+
+        // correct negative numbers
+        indexCollection(poly).updateMany(Filters.lt(COUNT, 0),
+                new Document("$set", new Document().append(COUNT, 0)));
+
+        // delete by id
+        collection(poly).deleteMany(Filters.in(_ID, ids));
+        return basicPolyList;
     }
 
     @Override

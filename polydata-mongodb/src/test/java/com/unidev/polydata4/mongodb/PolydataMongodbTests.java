@@ -100,7 +100,7 @@ public class PolydataMongodbTests {
                                 .indexToPersist(Set.of("tag1", "date"))
                                 .build(),
                         PersistRequest.builder()
-                                .poly(BasicPoly.newPoly("test").with("app", "567"))
+                                .poly(BasicPoly.newPoly("test2").with("app", "567"))
                                 .indexToPersist(Set.of("tag2", "date"))
                                 .build()
                 )
@@ -116,6 +116,30 @@ public class PolydataMongodbTests {
 
 
         assertThat(polydata.indexData(polyId, "date").fetch("count", Integer.class)).isEqualTo(2);
+    }
+
+    @Test
+    void removal() {
+        polydata.insert(polyId, Arrays.asList(
+                        PersistRequest.builder()
+                                .poly(BasicPoly.newPoly("test").with("app", "123"))
+                                .indexToPersist(Set.of("tag1", "date"))
+                                .build(),
+                        PersistRequest.builder()
+                                .poly(BasicPoly.newPoly("test2").with("app", "567"))
+                                .indexToPersist(Set.of("tag2", "date"))
+                                .build()
+                )
+        );
+
+        assertThat(polydata.read(polyId, Set.of("test")).hasPoly("test")).isTrue();
+        assertThat(polydata.index(polyId).fetch("tag1", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(1);
+        assertThat(polydata.index(polyId).fetch("date", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(2);
+
+        polydata.remove(polyId, Set.of("test"));
+        assertThat(polydata.read(polyId, Set.of("test")).hasPoly("test")).isFalse();
+        assertThat(polydata.index(polyId).fetch("tag1", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(0);
+        assertThat(polydata.index(polyId).fetch("date", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(1);
     }
 
 }
