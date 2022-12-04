@@ -6,25 +6,19 @@ import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Indexes;
-import com.mongodb.client.model.UpdateOneModel;
-import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.*;
 import com.unidev.polydata4.api.Polydata;
-import com.unidev.polydata4.domain.BasicPoly;
-import com.unidev.polydata4.domain.BasicPolyList;
-import com.unidev.polydata4.domain.PersistRequest;
-import com.unidev.polydata4.domain.PolyQuery;
+import com.unidev.polydata4.domain.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Storage of polydata records in mongodb.
@@ -260,6 +254,7 @@ public class PolydataMongodb implements Polydata {
 
     @Override
     public BasicPolyList remove(String poly, Set<String> ids) {
+        //TODO: update cache
         BasicPolyList basicPolyList = read(poly, ids);
 
         UpdateOptions opt = new UpdateOptions().upsert(true);
@@ -305,25 +300,52 @@ public class PolydataMongodb implements Polydata {
 
     @Override
     public BasicPolyList query(String poly, PolyQuery polyQuery) {
-      /*  BasicPolyQuery q = (BasicPolyQuery) polyQuery;
+        BasicPolyQuery query = (BasicPolyQuery) polyQuery;
         Optional<BasicPoly> configPoly = config(poly);
-        BasicPolyList list = new BasicPolyList();
+
         if (configPoly.isEmpty()) {
-            return list;
+            throw new RuntimeException("Poly " + poly + " is not configured");
         }
+
+        BasicPolyList list = new BasicPolyList();
 
         String index = "_date";
-        if (StringUtils.isNotBlank(q.index())) {
-            index = q.index();
+        String tag = query.index();
+        if (!StringUtils.isBlank(tag)) {
+            index = tag;
         }
-
         BasicPoly config = configPoly.get();
 
         Integer defaultItemPerPage = config.fetch(ITEM_PER_PAGE, DEFAULT_ITEM_PER_PAGE);
-        Integer itemPerPage = polyQuery.getOptions().fetch(ITEM_PER_PAGE, defaultItemPerPage);
-        Bson query = Filters.and(Filters.eq(POLY, name), Filters.in(TAGS, index)); */
+        Integer itemPerPage = query.getOptions().fetch(ITEM_PER_PAGE, defaultItemPerPage);
+        Bson mongoQuery = Filters.in(TAGS, index);
+        MongoCollection<Document> collection = collection(poly);
+        if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
+            long count = collection(POLY).countDocuments(mongoQuery);
+            Random random = new Random();
+            for (int i = 0; i < itemPerPage; i++) {
+                int skip = random.nextInt((int) count);
+                try(MongoCursor<Document> iterator = collection.find(mongoQuery).skip(skip)
+                        .iterator()) {
+                    if (iterator.hasNext()) {
+                        Document next = iterator.next();
+                        list.add(toPoly(next));
+                    }
+                }
+            }
+            return list;
+        }
+        int page = query.page();
+        try(MongoCursor<Document> iterator = collection.find(mongoQuery).sort(
+                        Sorts.descending(UPDATE_DATE))
+                .skip(page * itemPerPage).limit(itemPerPage).cursor()) {
+            while (iterator.hasNext()) {
+                Document next = iterator.next();
+                list.add(toPoly(next));
+            }
+        }
 
-        return null;
+        return list;
     }
 
     @Override
