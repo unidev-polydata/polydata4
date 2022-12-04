@@ -39,8 +39,8 @@ public class PolydataMongodb implements Polydata {
 
     private static final String DATE_INDEX = "_date";
 
-    String ITEM_PER_PAGE = "item_per_page";
-    int DEFAULT_ITEM_PER_PAGE = 10;
+    public static final String ITEM_PER_PAGE = "item_per_page";
+    public static final int DEFAULT_ITEM_PER_PAGE = 10;
 
     @Getter
     @Setter

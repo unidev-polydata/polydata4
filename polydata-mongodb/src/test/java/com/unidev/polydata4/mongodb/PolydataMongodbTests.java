@@ -19,6 +19,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Testcontainers
 public class PolydataMongodbTests {
@@ -100,7 +101,7 @@ public class PolydataMongodbTests {
         assertThat(index).isNotNull();
         assertThat(index.data().isEmpty()).isTrue();
 
-        for(int i = 0;i<100;i++) {
+        for (int i = 0; i < 100; i++) {
             polydata.insert(polyId, Arrays.asList(
                     PersistRequest.builder()
                             .poly(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
@@ -144,12 +145,12 @@ public class PolydataMongodbTests {
 
     @Test
     void query() {
-        for(int i = 0;i<100;i++) {
+        for (int i = 0; i < 100; i++) {
             polydata.insert(polyId, Arrays.asList(
-                            PersistRequest.builder()
-                                    .poly(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
-                                    .indexToPersist(Set.of("tag_x", "tag_" + i))
-                                    .build())
+                    PersistRequest.builder()
+                            .poly(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
+                            .indexToPersist(Set.of("tag_x", "tag_" + i))
+                            .build())
             );
         }
 
@@ -165,6 +166,33 @@ public class PolydataMongodbTests {
         BasicPolyQuery tag1 = BasicPolyQuery.builder().build();
         tag1.index("tag_1");
         assertThat(polydata.count(polyId, tag1)).isEqualTo(1);
+
+    }
+
+    @Test
+    void queryPaging() {
+        for (int i = 0; i < 105; i++) {
+            polydata.insert(polyId, Arrays.asList(
+                    PersistRequest.builder()
+                            .poly(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
+                            .indexToPersist(Set.of("tag_x", "tag_" + i))
+                            .build())
+            );
+        }
+
+
+        for (int page = 0; page < 10; page++) {
+            BasicPolyQuery query = new BasicPolyQuery();
+            query.page(page);
+            BasicPolyList list = polydata.query(polyId, query);
+            assertThat(list.list().size()).isEqualTo(10);
+
+            int begin = 105 - (page + 1) * PolydataMongodb.DEFAULT_ITEM_PER_PAGE ;
+            int end = 105 - page * PolydataMongodb.DEFAULT_ITEM_PER_PAGE;
+            for (int i = begin; i < end; i++) {
+                assertTrue(list.hasPoly("test_" + i), "Missing poly " + "poly_" + i + " page: " + page);
+            }
+        }
 
     }
 
