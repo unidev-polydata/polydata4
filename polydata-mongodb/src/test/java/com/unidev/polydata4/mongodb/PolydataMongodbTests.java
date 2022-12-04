@@ -31,7 +31,7 @@ public class PolydataMongodbTests {
 
 
     @BeforeEach
-    public void setUp() throws IOException, InterruptedException {
+    public void setUp() {
         port = mongodb.getMappedPort(27017) + "";
 
         polydata = new PolydataMongodb("mongodb://localhost:" + port + "/polydata4");
@@ -39,6 +39,11 @@ public class PolydataMongodbTests {
         polyId = "poly_" + System.currentTimeMillis();
         BasicPoly poly = polydata.create(polyId);
         assertNotNull(poly);
+    }
+
+    @AfterEach
+    public void cleanup() throws IOException {
+        polydata.close();
     }
 
     @AfterEach
@@ -150,8 +155,17 @@ public class PolydataMongodbTests {
 
         BasicPolyList list = polydata.query(polyId,
                 BasicPolyQuery.builder().build());
-
         assertThat(list.list().size()).isEqualTo(10);
+        assertThat(polydata.count(polyId, BasicPolyQuery.builder().build())).isEqualTo(100);
+
+        BasicPolyQuery tagx = BasicPolyQuery.builder().build();
+        tagx.index("tag_x");
+        assertThat(polydata.count(polyId, tagx)).isEqualTo(100);
+
+        BasicPolyQuery tag1 = BasicPolyQuery.builder().build();
+        tag1.index("tag_1");
+        assertThat(polydata.count(polyId, tag1)).isEqualTo(1);
+
     }
 
 
