@@ -179,21 +179,27 @@ public class PolydataMongodbTests {
                             .build())
             );
         }
-
-
+        int checkPoly = 104;
         for (int page = 0; page < 10; page++) {
             BasicPolyQuery query = new BasicPolyQuery();
             query.page(page);
             BasicPolyList list = polydata.query(polyId, query);
             assertThat(list.list().size()).isEqualTo(10);
 
-            int begin = 105 - (page + 1) * PolydataMongodb.DEFAULT_ITEM_PER_PAGE ;
-            int end = 105 - page * PolydataMongodb.DEFAULT_ITEM_PER_PAGE;
-            for (int i = begin; i < end; i++) {
-                assertTrue(list.hasPoly("test_" + i), "Missing poly " + "poly_" + i + " page: " + page);
+            for (int i = 0; i < list.list().size(); i++) {
+                assertTrue(list.hasPoly("test_" + checkPoly), "Missing poly " + "poly_" + checkPoly + " page: " + page);
+                checkPoly--;
             }
         }
+        BasicPolyQuery query = new BasicPolyQuery();
+        query.page(10);
+        BasicPolyList list = polydata.query(polyId, query);
+        assertThat(list.list().size()).isEqualTo(5);
 
+        for (int i = 0; i < list.list().size(); i++) {
+            assertTrue(list.hasPoly("test_" + checkPoly), "Missing poly " + "poly_" + checkPoly + " page: 10");
+            checkPoly--;
+        }
     }
 
 
