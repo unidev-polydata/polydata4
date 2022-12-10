@@ -7,7 +7,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.*;
-import com.unidev.polydata4.api.Polydata;
+import com.unidev.polydata4.api.AbstractPolydata;
 import com.unidev.polydata4.domain.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,7 +24,7 @@ import java.util.*;
  * Storage of polydata records in mongodb.
  */
 @Slf4j
-public class PolydataMongodb implements Polydata {
+public class PolydataMongodb extends AbstractPolydata {
     public static final String CONFIGURATION_COLLECTION = "_config";
     public static final String METADATA_COLLECTION = "_metadata";
     public static final String CREATE_DATE = "_create_date";
@@ -254,6 +254,8 @@ public class PolydataMongodb implements Polydata {
 
     @Override
     public BasicPolyList read(String poly, Set<String> ids) {
+
+
         //TODO: add support for caching
         BasicPolyList list = new BasicPolyList();
         Bson query = Filters.in(_ID, ids);
@@ -338,7 +340,7 @@ public class PolydataMongodb implements Polydata {
             Random random = new Random();
             for (int i = 0; i < itemPerPage; i++) {
                 int skip = random.nextInt((int) count);
-                try(MongoCursor<Document> iterator = collection.find(mongoQuery).skip(skip)
+                try (MongoCursor<Document> iterator = collection.find(mongoQuery).skip(skip)
                         .iterator()) {
                     if (iterator.hasNext()) {
                         Document next = iterator.next();
@@ -349,7 +351,7 @@ public class PolydataMongodb implements Polydata {
             return list;
         }
         int page = query.page();
-        try(MongoCursor<Document> iterator = collection.find(mongoQuery).sort(
+        try (MongoCursor<Document> iterator = collection.find(mongoQuery).sort(
                         Sorts.descending(UPDATE_DATE))
                 .skip(page * itemPerPage).limit(itemPerPage).cursor()) {
             while (iterator.hasNext()) {
@@ -416,7 +418,9 @@ public class PolydataMongodb implements Polydata {
         return document;
     }
 
-
+    /**
+     * Fetch Poly document from mongo collection
+     */
     private Optional<BasicPoly> fetchPolyFromCollection(String poly, String collection) {
         FindIterable<Document> configById = collection(collection)
                 .find(Filters.eq(poly));
