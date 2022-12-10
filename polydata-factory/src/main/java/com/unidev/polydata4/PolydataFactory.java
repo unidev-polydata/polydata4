@@ -14,6 +14,20 @@ import java.util.Optional;
 
 /**
  * Factory of Polydata storages.
+ *
+ * Example configuration:
+ * {
+ *  type: "mongodb"
+ *  uri: "mongodb://localhost:27017"
+ *  ...
+ *  cache: {
+ *      type: "jcache"
+ *      provider: ""
+ *      name: ""
+ *  }
+ * }
+ *
+ *
  */
 @Slf4j
 public class PolydataFactory {

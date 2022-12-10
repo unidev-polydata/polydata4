@@ -2,6 +2,4 @@ dependencies {
     api project(":polydata-api")
 
     api project(":polydata-mongodb")
-
-    implementation "com.unidev.cache:guava-cache-redis:$unidevGuavaCacheRedisVersion"
 }

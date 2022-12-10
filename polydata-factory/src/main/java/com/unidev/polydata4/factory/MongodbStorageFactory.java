@@ -2,6 +2,7 @@ package com.unidev.polydata4.factory;
 
 import com.unidev.polydata4.api.Polydata;
 import com.unidev.polydata4.domain.BasicPoly;
+import com.unidev.polydata4.mongodb.PolydataMongodb;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Optional;
@@ -16,7 +17,15 @@ public class MongodbStorageFactory implements StorageFactory {
 
     @Override
     public Optional<Polydata> create(BasicPoly config) {
-        return Optional.empty();
+        if (!config.containsKey("uri")) {
+            log.warn("Missing mongodb URI");
+            return Optional.empty();
+        }
+        String uri = config.fetch("uri") + "";
+
+        PolydataMongodb polydataMongodb = new PolydataMongodb(uri);
+        StorageFactory.fetchCache(config).ifPresent(polydataMongodb::setCache);
+        return Optional.of(polydataMongodb);
     }
 
 }
