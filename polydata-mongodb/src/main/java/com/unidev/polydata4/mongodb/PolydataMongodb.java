@@ -269,9 +269,11 @@ public class PolydataMongodb extends AbstractPolydata {
 
         // query from cache only missing ids
 
-        for(BasicPoly item : cachedPolys.values()) {
-            list.add(item);
-            idsToQuery.remove(item._id());
+        if (cachedPolys != null) {
+            for (BasicPoly item : cachedPolys.values()) {
+                list.add(item);
+                idsToQuery.remove(item._id());
+            }
         }
 
         final BasicPolyList dbPolys = new BasicPolyList();
