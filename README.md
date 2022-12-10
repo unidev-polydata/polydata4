@@ -2,6 +2,29 @@
 
 Universal storage, edition 4
 
+Dependencies:
+```
+    repositories {
+        maven {
+            url "https://mvn.universal-development.com/public" 
+        }
+    }
+
+    dependencies {
+        implementation 'com.unidev.polydata4:polydata-factory:0.0.1'
+    }
+```
+
+Usage in Java code:
+```
+        BasicPoly config = new BasicPoly();
+        config.put("type", "mongodb");
+        config.put("uri", "mongodb://localhost:27017");
+
+        Polydata polydata = polydataFactory.create(config).get();
+        
+```
+
 ## License
 
 ```

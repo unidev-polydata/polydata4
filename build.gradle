@@ -7,7 +7,7 @@ println 'Building version: ' + gitVersion()
 
 subprojects {
 
-    group = 'com.unidev.polydata'
+    group = 'com.unidev.polydata4'
     version = gitVersion()
 
     apply plugin: 'java'
