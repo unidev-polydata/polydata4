@@ -57,7 +57,9 @@ public class PolydataFactory {
             log.warn("Failed to get factory {} ", type);
             return Optional.empty();
         }
-        return storageFactory.create(config);
+        Optional<Polydata> polydata = storageFactory.create(config);
+        polydata.ifPresent(Polydata::prepareStorage);
+        return polydata;
     }
 
 }
