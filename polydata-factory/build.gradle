@@ -2,4 +2,8 @@ dependencies {
     api project(":polydata-api")
 
     api project(":polydata-mongodb")
+
+    testImplementation(
+            "org.ehcache:ehcache:$testEhcacheVersion"
+    )
 }

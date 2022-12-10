@@ -4,6 +4,7 @@ import com.unidev.polydata4.domain.BasicPoly;
 import com.unidev.polydata4.domain.BasicPolyList;
 import com.unidev.polydata4.domain.BasicPolyQuery;
 import com.unidev.polydata4.domain.PersistRequest;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,7 +12,15 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import javax.cache.Cache;
+import javax.cache.CacheManager;
+import javax.cache.Caching;
+import javax.cache.configuration.MutableConfiguration;
+import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -22,6 +31,12 @@ public class PolydataMongodbTests {
     @Container
     private GenericContainer mongodb = new GenericContainer("mongo:6.0.2-focal")
             .withExposedPorts(27017);
+
+    @Container
+    private GenericContainer redis = new GenericContainer("redis:7.0.5")
+            .withExposedPorts(6379);
+
+
     String port;
     PolydataMongodb polydata;
     String polyId = "";
@@ -221,6 +236,38 @@ public class PolydataMongodbTests {
         assertTrue(polyList.hasPoly(poly1));
         assertTrue(polyList.hasPoly(poly2));
         assertTrue(polyList.hasPoly(polyId));
+
+    }
+
+    @Test
+    void redisJcache() throws URISyntaxException, IOException {
+        MutableConfiguration<String, BasicPoly> config = new MutableConfiguration<>();
+        config.setStoreByValue(false);
+        config.setStatisticsEnabled(true);
+        File file = File.createTempFile("redisson-jcache", ".yaml");
+        String port = redis.getMappedPort(6379) + "\"";
+        FileUtils.write(file, """
+                singleServerConfig:
+                  address: "redis://127.0.0.1:""" + port + """ 
+                """, StandardCharsets.UTF_8);
+
+        CacheManager manager = Caching.getCachingProvider().getCacheManager(file.toURI(), null);
+        Cache<String, BasicPoly> cache = manager.createCache("namedCache", config);
+
+        cache.put("test", BasicPoly.newPoly("123"));
+        cache.put("test2", BasicPoly.newPoly("987"));
+
+        polydata.setCache(cache);
+
+
+        String poly1 = "poly-1-" + UUID.randomUUID().toString();
+        String poly2 = "poly-2-" + UUID.randomUUID().toString();
+
+        polydata.create(poly1);
+        polydata.create(poly2);
+
+        polydata.config(poly1, BasicPoly.newPoly(poly1).with("key-1", "value-1"));
+        polydata.config(poly2, BasicPoly.newPoly(poly2).with("key-2", "value-2"));
 
     }
 

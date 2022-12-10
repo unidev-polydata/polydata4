@@ -6,4 +6,8 @@ dependencies {
             "org.mongodb:mongo-java-driver:$mongoJavaDriverVersion",
             "com.fasterxml.jackson.core:jackson-core:$jacksonVersion"
     )
+
+    testImplementation(
+            "org.redisson:redisson:$testRedissonVersion"
+    )
 }
