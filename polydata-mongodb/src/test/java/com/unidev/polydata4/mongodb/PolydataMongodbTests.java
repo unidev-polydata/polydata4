@@ -12,14 +12,10 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @Testcontainers
 public class PolydataMongodbTests {
@@ -200,6 +196,32 @@ public class PolydataMongodbTests {
             assertTrue(list.hasPoly("test_" + checkPoly), "Missing poly " + "poly_" + checkPoly + " page: 10");
             checkPoly--;
         }
+    }
+
+    @Test
+    void multiplePolysHandling() {
+
+        String poly1 = "poly-1-" + UUID.randomUUID().toString();
+        String poly2 = "poly-2-" + UUID.randomUUID().toString();
+
+        polydata.create(poly1);
+        polydata.create(poly2);
+
+        polydata.config(poly1, BasicPoly.newPoly(poly1).with("key-1", "value-1"));
+        polydata.config(poly2, BasicPoly.newPoly(poly2).with("key-2", "value-2"));
+
+        assertEquals(polydata.config(poly1).get().fetch("key-1", String.class), "value-1");
+        assertEquals(polydata.config(poly1).get()._id(), poly1);
+
+        assertEquals(polydata.config(poly2).get().fetch("key-2", String.class), "value-2");
+        assertEquals(polydata.config(poly2).get()._id(), poly2);
+
+        BasicPolyList polyList = polydata.list();
+        assertEquals(3, polyList.list().size());
+        assertTrue(polyList.hasPoly(poly1));
+        assertTrue(polyList.hasPoly(poly2));
+        assertTrue(polyList.hasPoly(polyId));
+
     }
 
 
