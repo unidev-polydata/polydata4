@@ -1,0 +1,19 @@
+metadata:
+  date: "2020-02-01 11:01:21"
+  bbb: "ccc"
+  category:
+    - id: "category1"
+      label: "Category 1"
+
+  tag:
+    - id: "tag1"
+      label: "Tag 1"
+    - id: "tag2"
+      label: "Tag 2"
+    - id: "tag3"
+      label: "Tag 3"
+
+data:
+  _id: "test-id-2"
+  "666": "123"
+  "xxx": 123
