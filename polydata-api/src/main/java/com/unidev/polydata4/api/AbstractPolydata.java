@@ -4,9 +4,7 @@ import com.unidev.polydata4.domain.BasicPoly;
 
 import javax.cache.Cache;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 /**
  * Common polydata handling logic

@@ -18,7 +18,6 @@ import javax.cache.Caching;
 import javax.cache.configuration.MutableConfiguration;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;

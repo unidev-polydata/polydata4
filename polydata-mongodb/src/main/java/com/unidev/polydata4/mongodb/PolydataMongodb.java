@@ -20,7 +20,6 @@ import org.bson.conversions.Bson;
 import javax.cache.Cache;
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Function;
 
 /**
  * Storage of polydata records in mongodb.
