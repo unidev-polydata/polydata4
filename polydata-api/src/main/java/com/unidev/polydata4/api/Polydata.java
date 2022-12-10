@@ -5,6 +5,7 @@ import com.unidev.polydata4.domain.BasicPolyList;
 import com.unidev.polydata4.domain.PersistRequest;
 import com.unidev.polydata4.domain.PolyQuery;
 
+import javax.cache.Cache;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
@@ -67,5 +68,7 @@ public interface Polydata extends Closeable {
     void open();
 
     void close() throws IOException;
+
+    void setCache(Cache<String, BasicPoly> cache);
 
 }
