@@ -14,7 +14,7 @@ import java.util.function.Predicate;
  */
 public abstract class AbstractPolydata implements Polydata {
 
-    protected Optional<Cache<String, BasicPoly>> cache;
+    protected Optional<Cache<String, BasicPoly>> cache = Optional.empty();
 
     @Override
     public void setCache(Cache<String, BasicPoly> cache) {
@@ -26,6 +26,10 @@ public abstract class AbstractPolydata implements Polydata {
      */
     protected <R> R ifCache(Function<Cache<String, BasicPoly>, R> logic) {
         return cache.map(logic::apply).orElse(null);
+    }
+
+    protected void putIfCache(String key, BasicPoly poly) {
+        cache.ifPresent(entries -> entries.put(key, poly));
     }
 
 }

@@ -17,8 +17,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
+import javax.cache.Cache;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * Storage of polydata records in mongodb.
@@ -254,15 +256,37 @@ public class PolydataMongodb extends AbstractPolydata {
 
     @Override
     public BasicPolyList read(String poly, Set<String> ids) {
+        Map<String, BasicPoly> cachedPolys = ifCache(cache -> {
+            List<String> cachedIds = new ArrayList<>();
+            for (String id : ids) {
+                cachedIds.add(poly + "-read-" + id);
+            }
+            return cache.getAll(ids);
+        });
 
-
-        //TODO: add support for caching
+        List<String> idsToQuery = new ArrayList<>(ids);
         BasicPolyList list = new BasicPolyList();
+
+        // query from cache only missing ids
+
+        for(BasicPoly item : cachedPolys.values()) {
+            list.add(item);
+            idsToQuery.remove(item._id());
+        }
+
+        final BasicPolyList dbPolys = new BasicPolyList();
         Bson query = Filters.in(_ID, ids);
         collection(poly).find(query).iterator().forEachRemaining(document -> {
             BasicPoly polyData = toPoly(document);
-            list.add(polyData);
+            dbPolys.add(polyData);
         });
+        if (cache.isPresent()) {
+            Cache cacheInstance = cache.get();
+            for (BasicPoly polyData : dbPolys.list()) {
+                cacheInstance.put(poly + "-read-" + polyData._id(), polyData);
+            }
+        }
+        list.list().addAll(dbPolys.list());
 
         return list;
     }
@@ -350,6 +374,19 @@ public class PolydataMongodb extends AbstractPolydata {
             }
             return list;
         }
+        BasicPolyList cachedResult = ifCache(cache -> {
+            String key = poly + "-query-" + query.page() + "-"+ query.index() + "-" + query.queryType();
+            BasicPoly cachedQuery = cache.get(key);
+            if (cachedQuery != null) {
+                return (BasicPolyList) cachedQuery.fetch("list");
+            }
+            return null;
+        });
+
+        if (cachedResult != null) {
+            return cachedResult;
+        }
+
         int page = query.page();
         try (MongoCursor<Document> iterator = collection.find(mongoQuery).sort(
                         Sorts.descending(UPDATE_DATE))
@@ -358,6 +395,14 @@ public class PolydataMongodb extends AbstractPolydata {
                 Document next = iterator.next();
                 list.add(toPoly(next));
             }
+        }
+
+        if (cache.isPresent()) {
+            Cache<String, BasicPoly> cachedInstance = cache.get();
+            String key = poly + "-query-" + query.page() + "-"+ query.index() + "-" + query.queryType();
+            BasicPoly cachedQuery = new BasicPoly();
+            cachedQuery.put("list", list);
+            cachedInstance.put(key, cachedQuery);
         }
 
         return list;
@@ -376,9 +421,32 @@ public class PolydataMongodb extends AbstractPolydata {
         if (!StringUtils.isBlank(tag)) {
             index = tag;
         }
+
+        Long cachedResult = ifCache(cache -> {
+            String key = poly + "-count-" + query.page() + "-"+ query.index() + "-" + query.queryType();
+            BasicPoly cachedQuery = cache.get(key);
+            if (cachedQuery != null) {
+                return (Long) cachedQuery.fetch("count");
+            }
+            return null;
+        });
+        if (cachedResult != null) {
+            return cachedResult;
+        }
+
         Bson mongoQuery = Filters.in(INDEXED_TAGS, index);
         MongoCollection<Document> collection = collection(poly);
-        return collection.countDocuments(mongoQuery);
+        Long count = collection.countDocuments(mongoQuery);
+
+        if (cache.isPresent()) {
+            Cache<String, BasicPoly> cachedInstance = cache.get();
+            String key = poly + "-count-" + query.page() + "-"+ query.index() + "-" + query.queryType();
+            BasicPoly cachedQuery = new BasicPoly();
+            cachedQuery.put("count", count);
+            cachedInstance.put(key, cachedQuery);
+        }
+
+        return count;
     }
 
     @Override
@@ -422,6 +490,10 @@ public class PolydataMongodb extends AbstractPolydata {
      * Fetch Poly document from mongo collection
      */
     private Optional<BasicPoly> fetchPolyFromCollection(String poly, String collection) {
+        BasicPoly cachedPoly = ifCache(cache -> cache.get(collection + "-poly-from-collection-"+ poly));
+        if (cachedPoly != null) {
+            return Optional.of(cachedPoly);
+        }
         FindIterable<Document> configById = collection(collection)
                 .find(Filters.eq(poly));
         try (MongoCursor<Document> iterator = configById.iterator()) {
@@ -429,8 +501,9 @@ public class PolydataMongodb extends AbstractPolydata {
                 return Optional.empty();
             }
             Document document = iterator.next();
-            BasicPoly config = toPoly(document);
-            return Optional.of(config);
+            BasicPoly extractedPoly = toPoly(document);
+            putIfCache(collection + "-poly-from-collection-" + poly, extractedPoly);
+            return Optional.of(extractedPoly);
         }
     }
 
@@ -441,6 +514,7 @@ public class PolydataMongodb extends AbstractPolydata {
         Bson filter = Filters.eq(_ID, poly);
         UpdateOptions options = new UpdateOptions().upsert(true);
         collection(collection).updateOne(filter, update, options);
+        putIfCache(collection + "-poly-from-collection-" + poly, data);
     }
 
     private MongoCollection<Document> indexCollection(String poly) {
