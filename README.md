@@ -2,6 +2,16 @@
 
 Universal storage, edition 4
 
+Supported providers:
+* Mongodb
+* Flat files: yaml, json
+* Redis
+* Sqlite
+* PostgreSQL
+* AWS DynamoDB
+* AWS S3
+* GCP Datastore
+
 Dependencies:
 ```
     repositories {
