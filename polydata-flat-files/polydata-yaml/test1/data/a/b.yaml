@@ -1,4 +1,4 @@
-metadata:
+_metadata:
   date: "2020-02-02 11:01:21"
   bbb: "ccc"
   category:
@@ -11,7 +11,7 @@ metadata:
     - id: "tag100"
       label: "Tag 100"
 
-data:
-  _id: "test-id-3"
-  "666": "123"
-  "xxx": 123
+
+_id: "test-id-3"
+"666": "123"
+"xxx": 123
