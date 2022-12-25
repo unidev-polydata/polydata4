@@ -1,6 +1,8 @@
-package com.unidev.polydata4.flatfiles.yaml;
+package com.unidev.polydata4.flatfiles;
 
+import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.unidev.polydata4.api.AbstractPolydata;
 import com.unidev.polydata4.domain.BasicPoly;
@@ -22,6 +24,18 @@ import java.util.Set;
 public class PolydataYaml extends AbstractPolydata {
 
     public static ObjectMapper MAPPER =  new ObjectMapper(new YAMLFactory());
+
+    static {
+        SimpleModule flatFile =
+                new SimpleModule("FlatFileDeserializer", new Version(1, 0, 0, null, null, null));
+        flatFile.addDeserializer(FlatFile.class, new FlatFileDeserializer(FlatFile.class, MAPPER));
+        MAPPER.registerModule(flatFile);
+
+        SimpleModule fileMetadata =
+                new SimpleModule("FlatFileDeserializer", new Version(1, 0, 0, null, null, null));
+        flatFile.addDeserializer(FlatFile.YamlFileMetadata.class, new FileMetadataDeserializer(FlatFile.YamlFileMetadata.class, MAPPER));
+        MAPPER.registerModule(fileMetadata);
+    }
 
     private final File rootDir;
 

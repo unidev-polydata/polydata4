@@ -1,4 +1,4 @@
-package com.unidev.polydata4.flatfiles.yaml;
+package com.unidev.polydata4.flatfiles;
 
 import com.unidev.polydata4.domain.BasicPoly;
 import lombok.*;
@@ -11,7 +11,7 @@ import java.util.Map;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
-public class YamlRepository {
+public class FlatFileRepository {
     @Getter
     @Setter
     private String poly;
