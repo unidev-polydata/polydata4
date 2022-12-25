@@ -1,48 +1,73 @@
 package com.unidev.polydata4.flatfiles;
 
 import com.unidev.polydata4.domain.BasicPoly;
+import com.unidev.polydata4.domain.BasicPolyList;
 import lombok.*;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Data
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
 public class FlatFileRepository {
-    @Getter
-    @Setter
+
     private String poly;
-
-    @Getter
-    @Setter
-    private File root;
-
-    // Mapping of id = poly
-    @Getter
-    @Setter
-    private Map<String, BasicPoly> polyMap;
-
-    @Getter
-    @Setter
-    private Map<String, Integer> indexes;
-
-    // index-name : <list ordered by date>
-    @Getter
-    @Setter
-    private Map<String, List<String>> polyIndexes;
-
-    @Getter
-    @Setter
     private BasicPoly metadata;
 
-    @Getter
-    @Setter
     private BasicPoly config;
 
-    @Getter
-    @Setter
-    private Map<String, String> tagLabels;
+    private Map<String, BasicPoly> polyById = new ConcurrentHashMap<>();
+
+    private Map<String, List<String>> polyIndex = new ConcurrentHashMap<>();
+
+    /**
+     * Fetch polys by _id
+     */
+    public BasicPolyList fetchById(Set<String> ids) {
+        BasicPolyList list = new BasicPolyList();
+        ids.forEach(id -> {
+            BasicPoly poly = polyById.get(id);
+            if (poly != null) {
+                list.add(poly);
+            }
+        });
+        return list;
+    }
+
+    /**
+     * Fetch polys from index by order
+     */
+    public BasicPolyList fetchIndexById(String index, List<Integer> ids) {
+        BasicPolyList list = new BasicPolyList();
+        List<String> polysById = polyIndex.get(index);
+        if (polysById == null) {
+            return list;
+        }
+        ids.forEach(id -> {
+            if (id >= polysById.size()) {
+                return;
+            }
+            String polyId = polysById.get(id);
+            BasicPoly poly = polyById.get(polyId);
+            if (poly != null) {
+                list.add(poly);
+            }
+        });
+        return list;
+    }
+
+    public void add(BasicPoly basicPoly, List<String> indexes) {
+        polyById.put(basicPoly._id(), basicPoly);
+        for (String index : indexes) {
+            polyIndex.putIfAbsent(index, new ArrayList<>());
+            polyIndex.get(index).add(basicPoly._id());
+        }
+    }
+
 }
