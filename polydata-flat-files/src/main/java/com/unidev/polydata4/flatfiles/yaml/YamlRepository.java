@@ -11,7 +11,7 @@ import java.util.Map;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
-public class PolydataYamlModel {
+public class YamlRepository {
     @Getter
     @Setter
     private String poly;
