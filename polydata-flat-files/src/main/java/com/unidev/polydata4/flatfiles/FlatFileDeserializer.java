@@ -29,7 +29,7 @@ public class FlatFileDeserializer extends StdDeserializer<FlatFile> {
         rawData.remove("_metadata");
         flatFile.putAll(rawData);
         if (rawMetadata != null) {
-            FlatFile.YamlFileMetadata metadata = objectMapper.convertValue(rawMetadata, FlatFile.YamlFileMetadata.class);
+            FlatFile.FileMetadata metadata = objectMapper.convertValue(rawMetadata, FlatFile.FileMetadata.class);
             flatFile.setMetadata(metadata);
         }
         return flatFile;

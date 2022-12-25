@@ -17,9 +17,9 @@ import java.util.List;
 @NoArgsConstructor
 public class FlatFile extends HashMap<String, Object> {
 
-    private YamlFileMetadata metadata;
+    private FileMetadata metadata;
 
-    public YamlFileMetadata metadata() {
+    public FileMetadata metadata() {
         return getMetadata();
     }
 
@@ -38,7 +38,7 @@ public class FlatFile extends HashMap<String, Object> {
     @ToString
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class YamlFileMetadata extends HashMap<String, Object> {
+    public static class FileMetadata extends HashMap<String, Object> {
 
         private List<String> index;
 

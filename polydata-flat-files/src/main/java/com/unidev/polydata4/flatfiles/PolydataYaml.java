@@ -33,7 +33,7 @@ public class PolydataYaml extends AbstractPolydata {
 
         SimpleModule fileMetadata =
                 new SimpleModule("FlatFileDeserializer", new Version(1, 0, 0, null, null, null));
-        flatFile.addDeserializer(FlatFile.YamlFileMetadata.class, new FileMetadataDeserializer(FlatFile.YamlFileMetadata.class, MAPPER));
+        flatFile.addDeserializer(FlatFile.FileMetadata.class, new FileMetadataDeserializer(FlatFile.FileMetadata.class, MAPPER));
         MAPPER.registerModule(fileMetadata);
     }
 

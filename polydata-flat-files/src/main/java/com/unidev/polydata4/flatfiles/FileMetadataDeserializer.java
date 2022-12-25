@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * Desiariation of flat file metadata
  */
-public class FileMetadataDeserializer extends StdDeserializer<FlatFile.YamlFileMetadata> {
+public class FileMetadataDeserializer extends StdDeserializer<FlatFile.FileMetadata> {
 
     private final ObjectMapper objectMapper;
 
@@ -23,8 +23,8 @@ public class FileMetadataDeserializer extends StdDeserializer<FlatFile.YamlFileM
     }
 
     @Override
-    public FlatFile.YamlFileMetadata deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
-        FlatFile.YamlFileMetadata metadata = new FlatFile.YamlFileMetadata();
+    public FlatFile.FileMetadata deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+        FlatFile.FileMetadata metadata = new FlatFile.FileMetadata();
 
         HashMap rawData = p.getCodec().readValue(p, HashMap.class);
         List<String> indexList = (List<String>) rawData.get("_index");
