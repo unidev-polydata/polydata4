@@ -1,16 +1,8 @@
 _metadata:
   date: "2020-01-31 11:01:21"
   xxx: "yyy"
-
-  category:
-    - id: "category1"
-      label: "Category 1"
-
-  tag:
-    - id: "tag1"
-      label: "Tag 1"
-    - id: "tag2"
-      label: "Tag2"
+  _index:
+    - "tag1"
 
 
 _id: "test-id-1"

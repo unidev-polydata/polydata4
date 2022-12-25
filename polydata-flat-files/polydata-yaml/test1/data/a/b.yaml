@@ -1,15 +1,9 @@
 _metadata:
   date: "2020-02-02 11:01:21"
   bbb: "ccc"
-  category:
-    - id: "category2"
-      label: "Category 2"
-
-  tag:
-    - id: "tag1"
-      label: "Tag 1"
-    - id: "tag100"
-      label: "Tag 100"
+  _index:
+    - "tag1"
+    - "tag3"
 
 
 _id: "test-id-3"

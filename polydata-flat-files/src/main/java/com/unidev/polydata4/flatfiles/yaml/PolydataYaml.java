@@ -1,5 +1,7 @@
 package com.unidev.polydata4.flatfiles.yaml;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.unidev.polydata4.api.AbstractPolydata;
 import com.unidev.polydata4.domain.BasicPoly;
 import com.unidev.polydata4.domain.BasicPolyList;
@@ -19,6 +21,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class PolydataYaml extends AbstractPolydata {
 
+    public static ObjectMapper MAPPER =  new ObjectMapper(new YAMLFactory());
 
     private final File rootDir;
 
