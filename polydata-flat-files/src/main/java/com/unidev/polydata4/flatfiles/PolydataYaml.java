@@ -26,6 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class PolydataYaml extends AbstractPolydata {
 
+    public static final String DATA_DIR = "data";
+
     public static ObjectMapper MAPPER =  new ObjectMapper(new YAMLFactory());
 
     static {
@@ -49,6 +51,23 @@ public class PolydataYaml extends AbstractPolydata {
      */
     @Override
     public void prepareStorage() {
+
+        File[] files = rootDir.listFiles();
+        if (files == null) {
+            return;
+        }
+        for (File file : files) {
+            if (file.isDirectory()) {
+                loadPoly(file);
+            }
+        }
+    }
+
+    /**
+     * Load specific poly directory
+     * @param polyDir
+     */
+    public void loadPoly(File polyDir) {
 
     }
 
