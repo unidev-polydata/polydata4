@@ -1,7 +1,10 @@
 package com.unidev.polydata4.flatfiles;
 
 import com.unidev.polydata4.domain.BasicPoly;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.HashMap;
