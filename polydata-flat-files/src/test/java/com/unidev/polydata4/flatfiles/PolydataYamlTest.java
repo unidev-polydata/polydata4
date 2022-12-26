@@ -14,10 +14,10 @@ public class PolydataYamlTest {
 
     @Test
     public void yamlConfigReading() throws IOException {
-        FlatFile flatFile = PolydataYaml.MAPPER.readValue(new File("polydata-yaml/test1/config.yaml"), FlatFile.class);
+        FlatFile flatFile = PolydataYaml.MAPPER.readValue(new File("polydata-yaml/test1/polydata.yaml"), FlatFile.class);
         assertEquals("cvalue1", flatFile.get("cfield1"));
         assertNotNull(flatFile.getMetadata());
-        assertEquals("c1-value", flatFile.getMetadata().get("c1"));
+        assertEquals("metavalue2", flatFile.getMetadata().get("metakey2"));
     }
 
     @Test

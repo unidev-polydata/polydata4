@@ -10,12 +10,15 @@ import com.unidev.polydata4.domain.BasicPolyList;
 import com.unidev.polydata4.domain.PersistRequest;
 import com.unidev.polydata4.domain.PolyQuery;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Polydata storage backed by Yaml files
@@ -39,6 +42,11 @@ public class PolydataYaml extends AbstractPolydata {
 
     private final File rootDir;
 
+    private final Map<String, FlatFileRepository> repositories = new ConcurrentHashMap<>();
+
+    /**
+     * Scan root directory for polys
+     */
     @Override
     public void prepareStorage() {
 

@@ -1,9 +1,0 @@
-
-metadata:
-  key1: "value1"
-  key2: "value2"
-
-data:
-  item_per_page: 2
-  data1: "data-value-1"
-  data2: "data-value-2"

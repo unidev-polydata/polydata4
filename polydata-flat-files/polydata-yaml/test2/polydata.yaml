@@ -1,6 +1,7 @@
-
 _metadata:
   metakey1: "metavalue1"
   metakey2: "metavalue2"
 
-mfield1: "mvalue1"
+item_per_page: 2
+data1: "data-value-1"
+data2: "data-value-2"

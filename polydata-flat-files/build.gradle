@@ -5,6 +5,7 @@ dependencies {
     api (
             'com.fasterxml.jackson.core:jackson-core:2.14.0',
             'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.14.0',
-            'commons-codec:commons-codec:1.15'
+            'commons-codec:commons-codec:1.15',
+            'commons-io:commons-io:2.11.0'
     )
 }
