@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -46,10 +45,4 @@ public class FlatFile extends HashMap<String, Object> {
         private List<String> index;
 
     }
-
-    public static class StringList extends ArrayList<String> {
-
-    }
-
-
 }

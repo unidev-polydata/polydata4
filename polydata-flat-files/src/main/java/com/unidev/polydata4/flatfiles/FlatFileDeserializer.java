@@ -22,7 +22,7 @@ public class FlatFileDeserializer extends StdDeserializer<FlatFile> {
     }
 
     @Override
-    public FlatFile deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+    public FlatFile deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         FlatFile flatFile = new FlatFile();
         HashMap rawData = p.getCodec().readValue(p, HashMap.class);
         Object rawMetadata = rawData.get("_metadata");

@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * Desiariation of flat file metadata
+ * Flat files deserializer.
  */
 public class FileMetadataDeserializer extends StdDeserializer<FlatFile.FileMetadata> {
 
