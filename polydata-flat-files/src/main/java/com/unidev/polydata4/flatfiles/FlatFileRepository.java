@@ -2,15 +2,9 @@ package com.unidev.polydata4.flatfiles;
 
 import com.unidev.polydata4.domain.BasicPoly;
 import com.unidev.polydata4.domain.BasicPolyList;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Data
@@ -19,13 +13,17 @@ import java.util.concurrent.ConcurrentHashMap;
 @NoArgsConstructor
 public class FlatFileRepository {
 
+    public static final String TIMESTAMP_KEY = "_timestamp";
+
     private String poly;
     private BasicPoly metadata;
 
     private BasicPoly config;
 
+    @Getter
     private Map<String, BasicPoly> polyById = new ConcurrentHashMap<>();
 
+    @Getter
     private Map<String, List<String>> polyIndex = new ConcurrentHashMap<>();
 
     /**
@@ -64,11 +62,40 @@ public class FlatFileRepository {
         return list;
     }
 
+    /**
+     * Return all polys from index.
+     * @param index
+     * @return
+     */
+    public BasicPolyList fetchPolysFromIndex(String index) {
+        BasicPolyList list = new BasicPolyList();
+        List<String> polysById = polyIndex.get(index);
+        if (polysById == null) {
+            return list;
+        }
+        polysById.forEach(polyId -> {
+            BasicPoly poly = polyById.get(polyId);
+            if (poly != null) {
+                list.add(poly);
+            }
+        });
+        return list;
+    }
+
+    /**
+     * Add poly to index
+     */
     public void add(BasicPoly basicPoly, List<String> indexes) {
         polyById.put(basicPoly._id(), basicPoly);
         for (String index : indexes) {
             polyIndex.putIfAbsent(index, new ArrayList<>());
-            polyIndex.get(index).add(basicPoly._id());
+            List<String> list = polyIndex.get(index);
+            list.add(basicPoly._id());
+            list.sort((o1, o2) -> {
+                Number t1 = polyById.get(o1).fetch(TIMESTAMP_KEY, 0L);
+                Number t2 = polyById.get(o2).fetch(TIMESTAMP_KEY, 0L);
+                return Long.compare(t2.longValue(), t1.longValue());
+            });
         }
     }
 
