@@ -140,9 +140,7 @@ public class PolydataMongodb extends AbstractPolydata {
             } else {
                 indexToPersist = new HashSet<>(indexToPersist);
             }
-            if (!indexToPersist.contains(DATE_INDEX)) {
-                indexToPersist.add(DATE_INDEX);
-            }
+            indexToPersist.add(DATE_INDEX);
             persistRequest.setIndexToPersist(indexToPersist);
         }
         BasicPolyList existingPolys = read(poly, polyIds);
@@ -379,7 +377,7 @@ public class PolydataMongodb extends AbstractPolydata {
             String key = poly + "-query-" + query.page() + "-"+ query.index() + "-" + query.queryType();
             BasicPoly cachedQuery = cache.get(key);
             if (cachedQuery != null) {
-                return (BasicPolyList) cachedQuery.fetch("list");
+                return cachedQuery.fetch("list");
             }
             return null;
         });
@@ -427,7 +425,7 @@ public class PolydataMongodb extends AbstractPolydata {
             String key = poly + "-count-" + query.page() + "-"+ query.index() + "-" + query.queryType();
             BasicPoly cachedQuery = cache.get(key);
             if (cachedQuery != null) {
-                return (Long) cachedQuery.fetch("count");
+                return cachedQuery.fetch("count");
             }
             return null;
         });

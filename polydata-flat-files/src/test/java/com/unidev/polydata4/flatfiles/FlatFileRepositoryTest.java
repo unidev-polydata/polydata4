@@ -5,6 +5,7 @@ import com.unidev.polydata4.domain.BasicPolyList;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,7 +27,7 @@ public class FlatFileRepositoryTest {
     @Test
     public void queryByTag() {
         FlatFileRepository repository = createRepository();
-        BasicPolyList list = repository.fetchIndexById("_date", Arrays.asList(1));
+        BasicPolyList list = repository.fetchIndexById("_date", List.of(1));
         assertNotNull(list);
         assertEquals(1, list.list().size());
         assertTrue(list.hasPoly("test1"));
@@ -45,8 +46,8 @@ public class FlatFileRepositoryTest {
 
     private FlatFileRepository createRepository() {
         FlatFileRepository repository = new FlatFileRepository();
-        repository.add(BasicPoly.newPoly("test1").with(FlatFileRepository.TIMESTAMP_KEY, 1), Arrays.asList("_date"));
-        repository.add(BasicPoly.newPoly("test2").with(FlatFileRepository.TIMESTAMP_KEY, 2), Arrays.asList("_date"));
+        repository.add(BasicPoly.newPoly("test1").with(FlatFileRepository.TIMESTAMP_KEY, 1), List.of("_date"));
+        repository.add(BasicPoly.newPoly("test2").with(FlatFileRepository.TIMESTAMP_KEY, 2), List.of("_date"));
         return repository;
     }
 

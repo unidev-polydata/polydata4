@@ -28,11 +28,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @Testcontainers
 public class PolydataMongodbTests {
     @Container
-    private GenericContainer mongodb = new GenericContainer("mongo:6.0.2-focal")
+    private final GenericContainer mongodb = new GenericContainer("mongo:6.0.2-focal")
             .withExposedPorts(27017);
 
     @Container
-    private GenericContainer redis = new GenericContainer("redis:7.0.5")
+    private final GenericContainer redis = new GenericContainer("redis:7.0.5")
             .withExposedPorts(6379);
 
 
@@ -112,7 +112,7 @@ public class PolydataMongodbTests {
         assertThat(index.data().isEmpty()).isTrue();
 
         for (int i = 0; i < 100; i++) {
-            polydata.insert(polyId, Arrays.asList(
+            polydata.insert(polyId, Collections.singletonList(
                     PersistRequest.builder()
                             .poly(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
                             .indexToPersist(Set.of("tag_x", "tag_" + i, "tag_a_" + (i % 2)))
@@ -156,7 +156,7 @@ public class PolydataMongodbTests {
     @Test
     void query() {
         for (int i = 0; i < 100; i++) {
-            polydata.insert(polyId, Arrays.asList(
+            polydata.insert(polyId, Collections.singletonList(
                     PersistRequest.builder()
                             .poly(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
                             .indexToPersist(Set.of("tag_x", "tag_" + i))
@@ -182,7 +182,7 @@ public class PolydataMongodbTests {
     @Test
     void queryPaging() {
         for (int i = 0; i < 105; i++) {
-            polydata.insert(polyId, Arrays.asList(
+            polydata.insert(polyId, Collections.singletonList(
                     PersistRequest.builder()
                             .poly(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
                             .indexToPersist(Set.of("tag_x", "tag_" + i))
@@ -215,8 +215,8 @@ public class PolydataMongodbTests {
     @Test
     void multiplePolysHandling() {
 
-        String poly1 = "poly-1-" + UUID.randomUUID().toString();
-        String poly2 = "poly-2-" + UUID.randomUUID().toString();
+        String poly1 = "poly-1-" + UUID.randomUUID();
+        String poly2 = "poly-2-" + UUID.randomUUID();
 
         polydata.create(poly1);
         polydata.create(poly2);
@@ -259,8 +259,8 @@ public class PolydataMongodbTests {
         polydata.setCache(cache);
 
 
-        String poly1 = "poly-1-" + UUID.randomUUID().toString();
-        String poly2 = "poly-2-" + UUID.randomUUID().toString();
+        String poly1 = "poly-1-" + UUID.randomUUID();
+        String poly2 = "poly-2-" + UUID.randomUUID();
 
         polydata.create(poly1);
         polydata.create(poly2);

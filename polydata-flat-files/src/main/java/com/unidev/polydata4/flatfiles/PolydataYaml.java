@@ -121,12 +121,15 @@ public class PolydataYaml extends AbstractPolydata {
 
     @Override
     public boolean exists(String poly) {
-        return false;
+        return repositories.containsKey(poly);
     }
 
     @Override
     public Optional<BasicPoly> config(String poly) {
-        return Optional.empty();
+        if (!exists(poly)) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(repositories.get(poly).getConfig());
     }
 
     @Override
@@ -137,7 +140,10 @@ public class PolydataYaml extends AbstractPolydata {
 
     @Override
     public Optional<BasicPoly> metadata(String poly) {
-        return Optional.empty();
+        if (!exists(poly)) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(repositories.get(poly).getMetadata());
     }
 
     @Override

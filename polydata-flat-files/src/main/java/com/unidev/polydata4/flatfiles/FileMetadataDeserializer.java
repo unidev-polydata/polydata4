@@ -23,7 +23,7 @@ public class FileMetadataDeserializer extends StdDeserializer<FlatFile.FileMetad
     }
 
     @Override
-    public FlatFile.FileMetadata deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+    public FlatFile.FileMetadata deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         FlatFile.FileMetadata metadata = new FlatFile.FileMetadata();
 
         HashMap rawData = p.getCodec().readValue(p, HashMap.class);

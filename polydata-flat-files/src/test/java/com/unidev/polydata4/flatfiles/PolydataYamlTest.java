@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class PolydataYamlTest {
 
-    private PolydataYaml polydataYaml = new PolydataYaml(new File("polydata-yaml"));
+    private final PolydataYaml polydataYaml = new PolydataYaml(new File("polydata-yaml"));
 
     @BeforeEach
     public void init() {
