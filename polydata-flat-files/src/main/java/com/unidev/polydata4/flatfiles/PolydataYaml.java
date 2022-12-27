@@ -9,6 +9,7 @@ import com.unidev.polydata4.domain.BasicPoly;
 import com.unidev.polydata4.domain.BasicPolyList;
 import com.unidev.polydata4.domain.PersistRequest;
 import com.unidev.polydata4.domain.PolyQuery;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -45,8 +46,10 @@ public class PolydataYaml extends AbstractPolydata {
         MAPPER.registerModule(fileMetadata);
     }
 
+    @Getter
     private final File rootDir;
 
+    @Getter
     private final Map<String, FlatFileRepository> repositories = new ConcurrentHashMap<>();
 
     /**
