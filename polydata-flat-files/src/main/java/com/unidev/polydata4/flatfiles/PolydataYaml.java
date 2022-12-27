@@ -10,7 +10,7 @@ import com.unidev.polydata4.domain.BasicPolyList;
 import com.unidev.polydata4.domain.PersistRequest;
 import com.unidev.polydata4.domain.PolyQuery;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.io.FileUtils;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,9 +24,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * Polydata storage backed by Yaml files
  */
 @RequiredArgsConstructor
+@Slf4j
 public class PolydataYaml extends AbstractPolydata {
 
     public static final String DATA_DIR = "data";
+    public static final String POLY_FILE = "polydata.yaml";
 
     public static ObjectMapper MAPPER =  new ObjectMapper(new YAMLFactory());
 
@@ -68,7 +70,10 @@ public class PolydataYaml extends AbstractPolydata {
      * @param polyDir
      */
     public void loadPoly(File polyDir) {
+        log.info("Loading poly {}", polyDir.getName());
+        FlatFileRepository flatFileRepository = new FlatFileRepository();
 
+        repositories.put(polyDir.getName(), flatFileRepository);
     }
 
     @Override
