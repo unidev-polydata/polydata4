@@ -11,13 +11,11 @@ import com.unidev.polydata4.domain.PersistRequest;
 import com.unidev.polydata4.domain.PolyQuery;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -27,8 +25,11 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class PolydataYaml extends AbstractPolydata {
 
+    public static final String DATE_INDEX = "_date";
     public static final String DATA_DIR = "data";
     public static final String POLY_FILE = "polydata.yaml";
+
+    private static final String[] POLY_EXTENSIONS = new String[]{"yaml", "yml"};
 
     public static ObjectMapper MAPPER =  new ObjectMapper(new YAMLFactory());
 
@@ -72,6 +73,40 @@ public class PolydataYaml extends AbstractPolydata {
     public void loadPoly(File polyDir) {
         log.info("Loading poly {}", polyDir.getName());
         FlatFileRepository flatFileRepository = new FlatFileRepository();
+        flatFileRepository.setPoly(polyDir.getName());
+
+        // load poly file
+        File polyFile = new File(polyDir, POLY_FILE);
+        if (polyFile.exists()) {
+            try {
+                FlatFile flatFile = MAPPER.readValue(polyFile, FlatFile.class);
+                flatFileRepository.setMetadata(BasicPoly.newPoly().withData(flatFile.metadata()));
+                flatFileRepository.setConfig(flatFile.toPoly());
+            } catch (IOException e) {
+                log.error("Failed to load poly {}", polyDir.getName(), e);
+            }
+        }
+
+        // scan for YAMLs and load to poly
+        for (File file : FileUtils.listFiles(new File(polyDir, DATA_DIR), POLY_EXTENSIONS, true)) {
+            log.info("Loading file {}", file.getPath());
+            try {
+                FlatFile flatFile = MAPPER.readValue(file, FlatFile.class);
+                BasicPoly poly = flatFile.toPoly();
+                List<String> index = null;
+                if (flatFile.metadata() != null) {
+                    index = flatFile.metadata().getIndex();
+                }
+                if (index == null) {
+                    index = new ArrayList<>();
+                }
+                index.add(DATE_INDEX);
+                flatFileRepository.add(poly, index);
+            } catch (IOException e) {
+                log.error("Failed to load file {}", file.getName(), e);
+            }
+
+        }
 
         repositories.put(polyDir.getName(), flatFileRepository);
     }
