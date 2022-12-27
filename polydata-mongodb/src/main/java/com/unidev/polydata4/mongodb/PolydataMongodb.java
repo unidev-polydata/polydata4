@@ -111,7 +111,7 @@ public class PolydataMongodb extends AbstractPolydata {
 
     @Override
     public Optional<BasicPoly> index(String poly) {
-        if (exists(poly)) {
+        if (!exists(poly)) {
             return Optional.empty();
         }
         BasicPoly index = new BasicPoly();
