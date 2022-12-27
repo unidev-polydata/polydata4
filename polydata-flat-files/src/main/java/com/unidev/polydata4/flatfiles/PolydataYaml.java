@@ -29,10 +29,8 @@ public class PolydataYaml extends AbstractPolydata {
     public static final String DATE_INDEX = "_date";
     public static final String DATA_DIR = "data";
     public static final String POLY_FILE = "polydata.yaml";
-
     private static final String[] POLY_EXTENSIONS = new String[]{"yaml", "yml"};
-
-    public static ObjectMapper MAPPER =  new ObjectMapper(new YAMLFactory());
+    public static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
 
     static {
         SimpleModule flatFile =
@@ -71,6 +69,7 @@ public class PolydataYaml extends AbstractPolydata {
 
     /**
      * Load specific poly directory
+     *
      * @param polyDir
      */
     public void loadPoly(File polyDir) {
@@ -154,12 +153,20 @@ public class PolydataYaml extends AbstractPolydata {
 
     @Override
     public Optional<BasicPoly> index(String poly) {
-        return Optional.empty();
+        if (!exists(poly)) {
+            return Optional.empty();
+        }
+        BasicPoly index = new BasicPoly();
+        repositories.get(poly).getPolyIndex().forEach((key, value) -> index.put(key, BasicPoly.newPoly(key).with("_count", value.size())));
+        return Optional.of(index);
     }
 
     @Override
     public Optional<BasicPoly> indexData(String poly, String indexId) {
-        return Optional.empty();
+        if (!exists(poly)) {
+            return Optional.empty();
+        }
+        return index(poly).map(p -> p.fetch(indexId));
     }
 
     @Override
@@ -174,7 +181,10 @@ public class PolydataYaml extends AbstractPolydata {
 
     @Override
     public BasicPolyList read(String poly, Set<String> ids) {
-        return null;
+        if (!exists(poly)) {
+            return new BasicPolyList();
+        }
+        return repositories.get(poly).fetchById(ids);
     }
 
     @Override
