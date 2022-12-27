@@ -27,6 +27,7 @@ public class PolydataYamlTest {
         assertTrue(repositories.containsKey("test1"));
         assertTrue(repositories.containsKey("test2"));
 
+        assertEquals(2, polydataYaml.list().list().size());
     }
 
 }

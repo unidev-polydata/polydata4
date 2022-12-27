@@ -154,12 +154,12 @@ public class PolydataYaml extends AbstractPolydata {
 
     @Override
     public Optional<BasicPoly> index(String poly) {
-        return null;
+        return Optional.empty();
     }
 
     @Override
     public Optional<BasicPoly> indexData(String poly, String indexId) {
-        return null;
+        return Optional.empty();
     }
 
     @Override
@@ -194,7 +194,9 @@ public class PolydataYaml extends AbstractPolydata {
 
     @Override
     public BasicPolyList list() {
-        return null;
+        BasicPolyList list = new BasicPolyList();
+        repositories.keySet().forEach(poly -> list.add(BasicPoly.newPoly(poly)));
+        return list;
     }
 
     @Override
