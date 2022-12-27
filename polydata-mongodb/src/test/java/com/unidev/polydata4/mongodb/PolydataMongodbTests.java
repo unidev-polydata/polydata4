@@ -107,7 +107,7 @@ public class PolydataMongodbTests {
 
     @Test
     void indexUpdate() {
-        BasicPoly index = polydata.index(polyId);
+        BasicPoly index = polydata.index(polyId).get();
         assertThat(index).isNotNull();
         assertThat(index.data().isEmpty()).isTrue();
 
@@ -120,7 +120,7 @@ public class PolydataMongodbTests {
             );
         }
 
-        index = polydata.index(polyId);
+        index = polydata.index(polyId).get();
         assertThat(index).isNotNull();
         assertThat(index.data().isEmpty()).isFalse();
 
@@ -144,13 +144,13 @@ public class PolydataMongodbTests {
         );
 
         assertThat(polydata.read(polyId, Set.of("test")).hasPoly("test")).isTrue();
-        assertThat(polydata.index(polyId).fetch("tag1", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(1);
-        assertThat(polydata.index(polyId).fetch("date", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(2);
+        assertThat(polydata.index(polyId).get().fetch("tag1", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(1);
+        assertThat(polydata.index(polyId).get().fetch("date", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(2);
 
         polydata.remove(polyId, Set.of("test"));
         assertThat(polydata.read(polyId, Set.of("test")).hasPoly("test")).isFalse();
-        assertThat(polydata.index(polyId).fetch("tag1", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(0);
-        assertThat(polydata.index(polyId).fetch("date", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(1);
+        assertThat(polydata.index(polyId).get().fetch("tag1", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(0);
+        assertThat(polydata.index(polyId).get().fetch("date", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(1);
     }
 
     @Test

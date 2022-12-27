@@ -110,19 +110,26 @@ public class PolydataMongodb extends AbstractPolydata {
     }
 
     @Override
-    public BasicPoly index(String poly) {
+    public Optional<BasicPoly> index(String poly) {
+        if (exists(poly)) {
+            return Optional.empty();
+        }
         BasicPoly index = new BasicPoly();
         MongoCollection<Document> collection = indexCollection(poly);
         for (Document document : collection.find()) {
             BasicPoly value = toPoly(document);
             index.put(value._id(), value);
         }
-        return index;
+        return Optional.of(index);
     }
 
     @Override
-    public BasicPoly indexData(String poly, String indexId) {
-        return index(poly).fetch(indexId);
+    public Optional<BasicPoly> indexData(String poly, String indexId) {
+        Optional<BasicPoly> index = index(poly);
+        if (index.isEmpty()) {
+            return Optional.empty();
+        }
+        return index.get().fetch(indexId);
     }
 
     @Override

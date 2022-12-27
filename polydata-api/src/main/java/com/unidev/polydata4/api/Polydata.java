@@ -44,10 +44,10 @@ public interface Polydata extends Closeable {
      * Examples:
      *  index("cats") = "{count: 10}"
      */
-    BasicPoly index(String poly);
+    Optional<BasicPoly> index(String poly);
 
     /** Return index information **/
-    BasicPoly indexData(String poly, String indexId);
+    Optional<BasicPoly> indexData(String poly, String indexId);
 
     BasicPolyList insert(String poly, Collection<PersistRequest> persistRequests);
 

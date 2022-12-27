@@ -153,12 +153,12 @@ public class PolydataYaml extends AbstractPolydata {
     }
 
     @Override
-    public BasicPoly index(String poly) {
+    public Optional<BasicPoly> index(String poly) {
         return null;
     }
 
     @Override
-    public BasicPoly indexData(String poly, String indexId) {
+    public Optional<BasicPoly> indexData(String poly, String indexId) {
         return null;
     }
 
