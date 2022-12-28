@@ -20,6 +20,10 @@ public interface Polydata extends Closeable {
     String POLY = "poly";
     String _ID = "_id";
 
+    public static final String ITEM_PER_PAGE = "item_per_page";
+
+    public static final int DEFAULT_ITEM_PER_PAGE = 10;
+
     void prepareStorage();
 
     BasicPoly create(String poly);

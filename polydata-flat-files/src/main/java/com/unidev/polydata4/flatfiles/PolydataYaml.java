@@ -4,15 +4,15 @@ import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.unidev.platform.Randoms;
 import com.unidev.polydata4.api.AbstractPolydata;
-import com.unidev.polydata4.domain.BasicPoly;
-import com.unidev.polydata4.domain.BasicPolyList;
-import com.unidev.polydata4.domain.PersistRequest;
-import com.unidev.polydata4.domain.PolyQuery;
+import com.unidev.polydata4.domain.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -192,14 +192,58 @@ public class PolydataYaml extends AbstractPolydata {
         throw new UnsupportedOperationException("Operation not supported");
     }
 
+    private final Randoms randoms = new Randoms();
+
     @Override
     public BasicPolyList query(String poly, PolyQuery polyQuery) {
-        return null;
+        BasicPolyQuery query = (BasicPolyQuery) polyQuery;
+        Optional<BasicPoly> configPoly = config(poly);
+
+        if (configPoly.isEmpty()) {
+            throw new RuntimeException("Poly " + poly + " is not configured");
+        }
+
+        String index = DATE_INDEX;
+        String queryIndex = query.index();
+        if (!StringUtils.isBlank(queryIndex)) {
+            index = queryIndex;
+        }
+        BasicPoly config = configPoly.get();
+
+        Integer defaultItemPerPage = config.fetch(ITEM_PER_PAGE, DEFAULT_ITEM_PER_PAGE);
+        Integer itemPerPage = query.getOptions().fetch(ITEM_PER_PAGE, defaultItemPerPage);
+
+        if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
+            List<String> indexes = repositories.get(poly).getPolyIndex().get(index);
+            List<String> randomIds = randoms.randomValues(indexes, itemPerPage);
+            return read(poly, new HashSet<>(randomIds));
+        }
+        final int page = query.page() < 0 ? 0 : query.page();
+        List<Integer> ids = new ArrayList<>();
+        for (int i = page * itemPerPage; i < (page + 1) * itemPerPage; i++) {
+            ids.add(i);
+        }
+
+        return repositories.get(poly).fetchIndexById(index, ids);
     }
 
     @Override
     public Long count(String poly, PolyQuery polyQuery) {
-        return null;
+        BasicPolyQuery query = (BasicPolyQuery) polyQuery;
+        Optional<BasicPoly> configPoly = config(poly);
+        if (configPoly.isEmpty()) {
+            throw new RuntimeException("Poly " + poly + " is not configured");
+        }
+        String index = DATE_INDEX;
+        String queryIndex = query.index();
+        if (!StringUtils.isBlank(queryIndex)) {
+            index = queryIndex;
+        }
+        List<String> ids = repositories.get(poly).getPolyIndex().get(index);
+        if (CollectionUtils.isEmpty(ids)) {
+            return 0L;
+        }
+        return (long) ids.size();
     }
 
     @Override

@@ -1,12 +1,13 @@
 package com.unidev.polydata4.flatfiles;
 
 import com.unidev.polydata4.domain.BasicPoly;
+import com.unidev.polydata4.domain.BasicPolyList;
+import com.unidev.polydata4.domain.BasicPolyQuery;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -43,13 +44,30 @@ public class PolydataYamlTest {
         assertTrue(testIndex.containsKey("_date"));
 
         BasicPoly tag1 = testIndex.fetch("tag1");
-        assertEquals(3, tag1.fetch("_count", 0));
+        assertEquals(4, tag1.fetch("_count", 0));
 
         BasicPoly date = testIndex.fetch("_date");
-        assertEquals(3, date.fetch("_count", 0));
+        assertEquals(4, date.fetch("_count", 0));
 
         BasicPoly tag2 = polydataYaml.indexData("test1", "tag2").get();
         assertEquals(1, tag2.fetch("_count", 0));
     }
 
+    @Test
+    void query() {
+        BasicPolyList list = polydataYaml.query("test1", BasicPolyQuery.builder().build());
+        assertEquals(2, list.list().size());
+
+        assertTrue(list.hasPoly("test-id-4"));
+        assertTrue(list.hasPoly("test-id-3"));
+    }
+
+    @Test
+    void count() {
+        Long countTest1 = polydataYaml.count("test1", BasicPolyQuery.builder().build());
+        assertEquals(4, countTest1);
+    }
+
+
 }
+

@@ -40,8 +40,6 @@ public class PolydataMongodb extends AbstractPolydata {
 
     private static final String DATE_INDEX = "_date";
 
-    public static final String ITEM_PER_PAGE = "item_per_page";
-    public static final int DEFAULT_ITEM_PER_PAGE = 10;
 
     @Getter
     @Setter
@@ -361,6 +359,8 @@ public class PolydataMongodb extends AbstractPolydata {
         }
         BasicPoly config = configPoly.get();
 
+        final int page = query.page() < 0 ? 0 : query.page();
+
         Integer defaultItemPerPage = config.fetch(ITEM_PER_PAGE, DEFAULT_ITEM_PER_PAGE);
         Integer itemPerPage = query.getOptions().fetch(ITEM_PER_PAGE, defaultItemPerPage);
         Bson mongoQuery = Filters.in(INDEXED_TAGS, index);
@@ -381,7 +381,7 @@ public class PolydataMongodb extends AbstractPolydata {
             return list;
         }
         BasicPolyList cachedResult = ifCache(cache -> {
-            String key = poly + "-query-" + query.page() + "-"+ query.index() + "-" + query.queryType();
+            String key = poly + "-query-" + page + "-" + query.index() + "-" + query.queryType();
             BasicPoly cachedQuery = cache.get(key);
             if (cachedQuery != null) {
                 return cachedQuery.fetch("list");
@@ -393,7 +393,6 @@ public class PolydataMongodb extends AbstractPolydata {
             return cachedResult;
         }
 
-        int page = query.page();
         try (MongoCursor<Document> iterator = collection.find(mongoQuery).sort(
                         Sorts.descending(UPDATE_DATE))
                 .skip(page * itemPerPage).limit(itemPerPage).cursor()) {
@@ -405,7 +404,7 @@ public class PolydataMongodb extends AbstractPolydata {
 
         if (cache.isPresent()) {
             Cache<String, BasicPoly> cachedInstance = cache.get();
-            String key = poly + "-query-" + query.page() + "-"+ query.index() + "-" + query.queryType();
+            String key = poly + "-query-" + query.page() + "-" + query.index() + "-" + query.queryType();
             BasicPoly cachedQuery = new BasicPoly();
             cachedQuery.put("list", list);
             cachedInstance.put(key, cachedQuery);
@@ -429,7 +428,7 @@ public class PolydataMongodb extends AbstractPolydata {
         }
 
         Long cachedResult = ifCache(cache -> {
-            String key = poly + "-count-" + query.page() + "-"+ query.index() + "-" + query.queryType();
+            String key = poly + "-count-" + query.index() + "-" + query.queryType();
             BasicPoly cachedQuery = cache.get(key);
             if (cachedQuery != null) {
                 return cachedQuery.fetch("count");
@@ -446,7 +445,7 @@ public class PolydataMongodb extends AbstractPolydata {
 
         if (cache.isPresent()) {
             Cache<String, BasicPoly> cachedInstance = cache.get();
-            String key = poly + "-count-" + query.page() + "-"+ query.index() + "-" + query.queryType();
+            String key = poly + "-count-" + query.index() + "-" + query.queryType();
             BasicPoly cachedQuery = new BasicPoly();
             cachedQuery.put("count", count);
             cachedInstance.put(key, cachedQuery);
@@ -496,7 +495,7 @@ public class PolydataMongodb extends AbstractPolydata {
      * Fetch Poly document from mongo collection
      */
     private Optional<BasicPoly> fetchPolyFromCollection(String poly, String collection) {
-        BasicPoly cachedPoly = ifCache(cache -> cache.get(collection + "-poly-from-collection-"+ poly));
+        BasicPoly cachedPoly = ifCache(cache -> cache.get(collection + "-poly-from-collection-" + poly));
         if (cachedPoly != null) {
             return Optional.of(cachedPoly);
         }

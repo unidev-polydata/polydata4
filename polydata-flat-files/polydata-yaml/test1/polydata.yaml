@@ -5,3 +5,5 @@ _metadata:
 
 mfield1: "mvalue1"
 cfield1: "cvalue1"
+
+item_per_page: 2

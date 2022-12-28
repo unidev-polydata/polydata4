@@ -7,5 +7,6 @@ _metadata:
 
 
 _id: "test-id-3"
+_timestamp: 300
 "666": "123"
 "xxx": 123
