@@ -38,6 +38,29 @@ Usage in Java code:
         
 ```
 
+## Configuration examples
+
+Mongodb:
+```
+type: mongodb
+uri: mongodb://localhost:27017
+
+```
+
+Flatfile Yaml:
+```
+type: flat-file-yaml
+root: /data/polydata
+```
+
+Cache integration:
+```
+cache:
+    data:
+        type: jcache
+        name: org.ehcache.jsr107.EhcacheCachingProvider
+```
+
 ## License
 
 ```
