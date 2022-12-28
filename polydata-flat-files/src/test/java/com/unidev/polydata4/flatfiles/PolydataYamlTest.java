@@ -60,6 +60,14 @@ public class PolydataYamlTest {
 
         assertTrue(list.hasPoly("test-id-4"));
         assertTrue(list.hasPoly("test-id-3"));
+
+        BasicPolyQuery query2 = new BasicPolyQuery();
+        query2.page(1);
+        BasicPolyList listPage2 = polydataYaml.query("test1", query2);
+        assertEquals(2, listPage2.list().size());
+
+        assertTrue(listPage2.hasPoly("test-id-2"));
+        assertTrue(listPage2.hasPoly("test-id-1"));
     }
 
     @Test
