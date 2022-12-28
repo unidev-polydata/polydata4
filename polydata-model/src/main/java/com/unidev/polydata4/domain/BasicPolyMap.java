@@ -22,6 +22,12 @@ public class BasicPolyMap implements PolyMap<BasicPoly>, Serializable {
     @Setter
     private Map<String, Object> metadata;
 
+    public BasicPolyMap() {
+        super();
+        map = new ConcurrentHashMap<>();
+        metadata = new ConcurrentHashMap<>();
+    }
+
     public static BasicPolyMap basicPolyMap(BasicPoly poly) {
         BasicPolyMap map = new BasicPolyMap();
         map.put(poly);
@@ -30,12 +36,6 @@ public class BasicPolyMap implements PolyMap<BasicPoly>, Serializable {
 
     public static BasicPolyMap basicPolyMap() {
         return new BasicPolyMap();
-    }
-
-    public BasicPolyMap() {
-        super();
-        map = new ConcurrentHashMap<>();
-        metadata = new ConcurrentHashMap<>();
     }
 
     @Override

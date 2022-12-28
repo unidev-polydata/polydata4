@@ -8,7 +8,6 @@ import java.util.function.Function;
 
 /**
  * Common polydata handling logic
- *
  */
 public abstract class AbstractPolydata implements Polydata {
 

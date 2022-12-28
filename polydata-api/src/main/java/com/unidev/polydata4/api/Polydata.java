@@ -30,6 +30,7 @@ public interface Polydata extends Closeable {
 
     /**
      * Check if exists poly storage.
+     *
      * @param poly
      * @return
      */
@@ -46,11 +47,13 @@ public interface Polydata extends Closeable {
     /**
      * Fetch tags from specific index.
      * Examples:
-     *  index("cats") = "{count: 10}"
+     * index("cats") = "{count: 10}"
      */
     Optional<BasicPoly> index(String poly);
 
-    /** Return index information **/
+    /**
+     * Return index information
+     **/
     Optional<BasicPoly> indexData(String poly, String indexId);
 
     BasicPolyList insert(String poly, Collection<PersistRequest> persistRequests);
@@ -60,6 +63,7 @@ public interface Polydata extends Closeable {
     BasicPolyList read(String poly, Set<String> ids);
 
     BasicPolyList remove(String poly, Set<String> ids);
+
     BasicPolyList query(String poly, PolyQuery polyQuery);
 
     Long count(String poly, PolyQuery polyQuery);

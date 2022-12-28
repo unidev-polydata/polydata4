@@ -29,9 +29,9 @@ public class PolydataMongodb extends AbstractPolydata {
     public static final String CONFIGURATION_COLLECTION = "_config";
     public static final String METADATA_COLLECTION = "_metadata";
     public static final String CREATE_DATE = "_create_date";
-    private static final String UPDATE_DATE = "_update_date";
     public static final String INDEX_COLLECTION = "_indexes";
     public static final String COUNT = "count";
+    private static final String UPDATE_DATE = "_update_date";
     private static final String TAGS = "tags";
     private static final String INDEX = "index";
     private static final String INDEXED_TAGS = "_indexed_tags";

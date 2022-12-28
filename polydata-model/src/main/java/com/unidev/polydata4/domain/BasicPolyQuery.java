@@ -14,16 +14,10 @@ import java.io.Serializable;
 @ToString
 public class BasicPolyQuery implements PolyQuery, Serializable {
 
-    public enum QueryFunction { PAGES, RANDOM }
-
     public static final String QUERY_FUNCTION = "queryFunction";
-
     public static final String QUERY_IDS = "ids";
-
     public static final String INDEX = "index";
-
     public static final String PAGE = "page";
-
     @Builder.Default
     private BasicPoly options = new BasicPoly();
 
@@ -66,6 +60,8 @@ public class BasicPolyQuery implements PolyQuery, Serializable {
     public <T> void option(String key, T value) {
         options.put(key, value);
     }
+
+    public enum QueryFunction {PAGES, RANDOM}
 
 
 }

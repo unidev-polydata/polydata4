@@ -2,6 +2,7 @@ package com.unidev.polydata4;
 
 import com.unidev.polydata4.api.Polydata;
 import com.unidev.polydata4.domain.BasicPoly;
+import com.unidev.polydata4.factory.FlatFileYamlStorageFactory;
 import com.unidev.polydata4.factory.MongodbStorageFactory;
 import com.unidev.polydata4.factory.StorageFactory;
 import lombok.Getter;
@@ -14,20 +15,18 @@ import java.util.Optional;
 
 /**
  * Factory of Polydata storages.
- *
+ * <p>
  * Example configuration:
  * {
- *  type: "mongodb"
- *  uri: "mongodb://localhost:27017"
- *  ...
- *  cache: {
- *      type: "jcache"
- *      provider: ""
- *      name: ""
- *  }
+ * type: "mongodb"
+ * uri: "mongodb://localhost:27017"
+ * ...
+ * cache: {
+ * type: "jcache"
+ * provider: ""
+ * name: ""
  * }
- *
- *
+ * }
  */
 @Slf4j
 public class PolydataFactory {
@@ -39,6 +38,7 @@ public class PolydataFactory {
     public PolydataFactory() {
         // default storage factories
         addFactory(new MongodbStorageFactory());
+        addFactory(new FlatFileYamlStorageFactory());
     }
 
     public void addFactory(StorageFactory factory) {

@@ -19,57 +19,57 @@ import java.util.zip.GZIPOutputStream;
 @Slf4j
 public class GzipPolyPacker implements PolyPacker {
 
-  @Getter
-  @Setter
-  private ObjectMapper objectMapper = objectMapper();
+    public static byte[] gzipCompress(byte[] uncompressedData) {
+        byte[] result = new byte[]{};
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream(uncompressedData.length);
+             GZIPOutputStream gzipOS = new GZIPOutputStream(bos)) {
+            gzipOS.write(uncompressedData);
+            gzipOS.close();
+            result = bos.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+        return result;
+    }    @Getter
+    @Setter
+    private ObjectMapper objectMapper = objectMapper();
 
-  public byte[] packPoly(BasicPoly poly) throws IOException {
-    String value = objectMapper.writeValueAsString(poly);
-    return gzipCompress(value.getBytes());
-  }
-
-  public BasicPoly unPackPoly(InputStream stream) throws IOException {
-    return objectMapper.readValue(gzipUncompress(IOUtils.toByteArray(stream)), BasicPoly.class);
-  }
-
-  public static byte[] gzipCompress(byte[] uncompressedData) {
-    byte[] result = new byte[]{};
-    try (ByteArrayOutputStream bos = new ByteArrayOutputStream(uncompressedData.length);
-        GZIPOutputStream gzipOS = new GZIPOutputStream(bos)) {
-      gzipOS.write(uncompressedData);
-      gzipOS.close();
-      result = bos.toByteArray();
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw new RuntimeException(e);
+    public static byte[] gzipUncompress(byte[] compressedData) {
+        byte[] result = new byte[]{};
+        try (ByteArrayInputStream bis = new ByteArrayInputStream(compressedData);
+             ByteArrayOutputStream bos = new ByteArrayOutputStream();
+             GZIPInputStream gzipIS = new GZIPInputStream(bis)) {
+            byte[] buffer = new byte[1024];
+            int len;
+            while ((len = gzipIS.read(buffer)) != -1) {
+                bos.write(buffer, 0, len);
+            }
+            result = bos.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
     }
-    return result;
-  }
 
-  public static byte[] gzipUncompress(byte[] compressedData) {
-    byte[] result = new byte[]{};
-    try (ByteArrayInputStream bis = new ByteArrayInputStream(compressedData);
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        GZIPInputStream gzipIS = new GZIPInputStream(bis)) {
-      byte[] buffer = new byte[1024];
-      int len;
-      while ((len = gzipIS.read(buffer)) != -1) {
-        bos.write(buffer, 0, len);
-      }
-      result = bos.toByteArray();
-    } catch (IOException e) {
-      e.printStackTrace();
+    public byte[] packPoly(BasicPoly poly) throws IOException {
+        String value = objectMapper.writeValueAsString(poly);
+        return gzipCompress(value.getBytes());
     }
-    return result;
-  }
 
-  protected ObjectMapper objectMapper() {
-    return objectMapper = new ObjectMapper(
-        new JsonFactoryBuilder()
-            .configure(JsonFactory.Feature.INTERN_FIELD_NAMES, false)
-            .configure(JsonFactory.Feature.CANONICALIZE_FIELD_NAMES, false)
-            .build()
-    );
-  }
+    public BasicPoly unPackPoly(InputStream stream) throws IOException {
+        return objectMapper.readValue(gzipUncompress(IOUtils.toByteArray(stream)), BasicPoly.class);
+    }
+
+    protected ObjectMapper objectMapper() {
+        return objectMapper = new ObjectMapper(
+                new JsonFactoryBuilder()
+                        .configure(JsonFactory.Feature.INTERN_FIELD_NAMES, false)
+                        .configure(JsonFactory.Feature.CANONICALIZE_FIELD_NAMES, false)
+                        .build()
+        );
+    }
+
+
 
 }

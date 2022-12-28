@@ -79,9 +79,9 @@ public interface Poly extends Serializable {
 
     Map<String, Object> getMetadata();
 
-    <P extends Poly> P withMetadata(Map<String, Object> metadata);
-
     void setMetadata(Map<String, Object> metadata);
+
+    <P extends Poly> P withMetadata(Map<String, Object> metadata);
 
     <T, P extends Poly> P withMetadata(String key, T value);
 

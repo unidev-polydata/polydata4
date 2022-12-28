@@ -3,6 +3,7 @@
 Universal storage, edition 4
 
 Supported providers:
+
 * Mongodb
 * Flat files: yaml, json
 * Redis
@@ -13,6 +14,7 @@ Supported providers:
 * GCP Datastore
 
 Dependencies:
+
 ```
     repositories {
         maven {
@@ -26,6 +28,7 @@ Dependencies:
 ```
 
 Usage in Java code:
+
 ```
         BasicPoly config = new BasicPoly();
         config.put("type", "mongodb");

@@ -10,8 +10,8 @@ import java.io.InputStream;
  */
 public interface PolyPacker {
 
-  byte[] packPoly(BasicPoly poly) throws Exception;
+    byte[] packPoly(BasicPoly poly) throws Exception;
 
-  BasicPoly unPackPoly(InputStream stream) throws Exception;
+    BasicPoly unPackPoly(InputStream stream) throws Exception;
 
 }

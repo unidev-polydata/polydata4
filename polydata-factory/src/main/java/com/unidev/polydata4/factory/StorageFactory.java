@@ -19,17 +19,6 @@ import java.util.Optional;
 public interface StorageFactory {
 
     /**
-     * Return supported storage type.
-     */
-    String type();
-
-    /**
-     * Create polydata from configuration.
-     */
-    Optional<Polydata> create(BasicPoly config);
-
-
-    /**
      * Fetch cache provider from configuration
      */
     static Optional<Cache<String, BasicPoly>> fetchCache(BasicPoly config) {
@@ -83,6 +72,16 @@ public interface StorageFactory {
         //TODO: add jcache configuration
         return Optional.of(jcacheConfig);
     }
+
+    /**
+     * Return supported storage type.
+     */
+    String type();
+
+    /**
+     * Create polydata from configuration.
+     */
+    Optional<Polydata> create(BasicPoly config);
 
 
 }

@@ -26,29 +26,6 @@ public class BasicPoly implements Poly, Serializable {
     @Setter
     protected Map<String, Object> metadata;
 
-    /**
-     * Build new poly instance
-     *
-     * @return new poly instance
-     */
-    public static BasicPoly newPoly() {
-        return new BasicPoly();
-    }
-
-    /**
-     * New poly instance with id
-     *
-     * @param id Poly id
-     * @return new poly instance with provided id
-     */
-    public static BasicPoly newPoly(String id) {
-        return new BasicPoly()._id(id);
-    }
-
-    public static BasicPoly newPoly(BasicPoly data) {
-        return new BasicPoly(data);
-    }
-
     public BasicPoly(Map<String, Object> data, Map<String, Object> metadata) {
         this.data = data;
         this.metadata = metadata;
@@ -77,6 +54,28 @@ public class BasicPoly implements Poly, Serializable {
         }
     }
 
+    /**
+     * Build new poly instance
+     *
+     * @return new poly instance
+     */
+    public static BasicPoly newPoly() {
+        return new BasicPoly();
+    }
+
+    /**
+     * New poly instance with id
+     *
+     * @param id Poly id
+     * @return new poly instance with provided id
+     */
+    public static BasicPoly newPoly(String id) {
+        return new BasicPoly()._id(id);
+    }
+
+    public static BasicPoly newPoly(BasicPoly data) {
+        return new BasicPoly(data);
+    }
 
     /**
      * Fetch metadata by key, if value is missing, null is returned
@@ -175,6 +174,11 @@ public class BasicPoly implements Poly, Serializable {
     }
 
     @Override
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
+    }
+
+    @Override
     public Map<String, Object> metadata() {
         return metadata;
     }
@@ -183,11 +187,6 @@ public class BasicPoly implements Poly, Serializable {
     public <P extends Poly> P withMetadata(Map<String, Object> metadata) {
         this.metadata = metadata;
         return (P) this;
-    }
-
-    @Override
-    public void setMetadata(Map<String, Object> metadata) {
-        this.metadata = metadata;
     }
 
     @Override

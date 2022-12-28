@@ -29,8 +29,8 @@ public class PolydataYaml extends AbstractPolydata {
     public static final String DATE_INDEX = "_date";
     public static final String DATA_DIR = "data";
     public static final String POLY_FILE = "polydata.yaml";
-    private static final String[] POLY_EXTENSIONS = new String[]{"yaml", "yml"};
     public static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
+    private static final String[] POLY_EXTENSIONS = new String[]{"yaml", "yml"};
 
     static {
         SimpleModule flatFile =
@@ -49,6 +49,7 @@ public class PolydataYaml extends AbstractPolydata {
 
     @Getter
     private final Map<String, FlatFileRepository> repositories = new ConcurrentHashMap<>();
+    private final Randoms randoms = new Randoms();
 
     /**
      * Scan root directory for polys
@@ -191,8 +192,6 @@ public class PolydataYaml extends AbstractPolydata {
     public BasicPolyList remove(String poly, Set<String> ids) {
         throw new UnsupportedOperationException("Operation not supported");
     }
-
-    private final Randoms randoms = new Randoms();
 
     @Override
     public BasicPolyList query(String poly, PolyQuery polyQuery) {

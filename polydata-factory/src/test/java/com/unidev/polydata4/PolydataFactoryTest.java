@@ -2,6 +2,7 @@ package com.unidev.polydata4;
 
 import com.unidev.polydata4.api.Polydata;
 import com.unidev.polydata4.domain.BasicPoly;
+import com.unidev.polydata4.flatfiles.PolydataYaml;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
@@ -38,7 +39,6 @@ public class PolydataFactoryTest {
         assertTrue(polydata.isPresent());
     }
 
-
     @Test
     void notExistingFactory() {
         BasicPoly config = new BasicPoly();
@@ -46,6 +46,16 @@ public class PolydataFactoryTest {
 
         Optional<Polydata> polydata = polydataFactory.create(config);
         assertFalse(polydata.isPresent());
+    }
+    @Test
+    void flatFileFactory() {
+        BasicPoly config = new BasicPoly();
+        config.put("type", "flat-file-yaml");
+        config.put("root", "../polydata-flat-files/polydata-yaml");
+
+        Optional<Polydata> polydata = polydataFactory.create(config);
+        assertTrue(polydata.isPresent());
+        assertTrue(polydata.get() instanceof PolydataYaml);
     }
 
 }
