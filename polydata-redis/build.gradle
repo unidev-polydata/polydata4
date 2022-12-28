@@ -1,0 +1,9 @@
+dependencies {
+
+    api project(":polydata-api")
+
+    api(
+            'com.fasterxml.jackson.core:jackson-core:2.14.0',
+            'redis.clients:jedis:4.3.1'
+    )
+}
