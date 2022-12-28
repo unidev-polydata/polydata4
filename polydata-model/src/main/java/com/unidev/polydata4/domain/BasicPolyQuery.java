@@ -47,8 +47,8 @@ public class BasicPolyQuery implements PolyQuery, Serializable {
         return options.fetch(INDEX);
     }
 
-    public void index(String tagValue) {
-        options.put(INDEX, tagValue);
+    public void index(String index) {
+        options.put(INDEX, index);
     }
 
     public Integer page() {

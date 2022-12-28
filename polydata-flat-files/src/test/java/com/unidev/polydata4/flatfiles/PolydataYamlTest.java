@@ -68,6 +68,11 @@ public class PolydataYamlTest {
 
         assertTrue(listPage2.hasPoly("test-id-2"));
         assertTrue(listPage2.hasPoly("test-id-1"));
+
+        BasicPolyQuery query3 = new BasicPolyQuery();
+        query3.page(2);
+        BasicPolyList listPage3 = polydataYaml.query("test1", query3);
+        assertEquals(0, listPage3.list().size());
     }
 
     @Test
@@ -76,6 +81,21 @@ public class PolydataYamlTest {
         assertEquals(4, countTest1);
     }
 
+    @Test
+    void queryIndex() {
+        BasicPolyQuery query = new BasicPolyQuery();
+        query.index("tag2");
+        BasicPolyList listPage = polydataYaml.query("test1", query);
+        assertEquals(1, listPage.list().size());
+    }
+
+    @Test
+    void countIndex() {
+        BasicPolyQuery query = new BasicPolyQuery();
+        query.index("tag2");
+        Long count = polydataYaml.count("test1", query);
+        assertEquals(1, count);
+    }
 
 }
 
