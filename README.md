@@ -2,6 +2,8 @@
 
 Universal storage, edition 4
 
+Storage library with unified interface and multiple storage providers.
+
 Supported providers:
 
 * Mongodb
