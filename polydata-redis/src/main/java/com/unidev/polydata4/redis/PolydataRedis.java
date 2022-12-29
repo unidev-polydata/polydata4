@@ -26,7 +26,10 @@ import java.util.Set;
 @Slf4j
 public class PolydataRedis extends AbstractPolydata {
 
-    private static final String POLY_LIST = "poly_list";
+    static final String POLY_LIST = "poly_list";
+
+    static final String TAG_INDEX_KEY = "tag-index";
+
 
     // prefix key
     @Getter
@@ -87,22 +90,64 @@ public class PolydataRedis extends AbstractPolydata {
 
     @Override
     public void config(String poly, BasicPoly config) {
-
+        try (Jedis jedis = pool.getResource()) {
+            try {
+                byte[] configBytes = polyPacker.packPoly(config);
+                jedis.set(fetchId(poly, CONFIG_KEY), configBytes);
+            } catch (Exception e) {
+                log.error("Failed to persist config", e);
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @Override
     public Optional<BasicPoly> metadata(String poly) {
-        return Optional.empty();
+        try (Jedis jedis = pool.getResource()) {
+            byte[] metadataBytes = jedis.get(fetchId(poly, METADATA_KEY));
+            if (metadataBytes == null || metadataBytes.length == 0) {
+                return Optional.empty();
+            }
+            try {
+                return Optional.of(polyPacker.unPackPoly(new ByteArrayInputStream(metadataBytes)));
+            } catch (Exception e) {
+                log.error("Failed to fetch metadata", e);
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @Override
     public void metadata(String poly, BasicPoly metadata) {
-
+        try (Jedis jedis = pool.getResource()) {
+            try {
+                byte[] metadataBytes = polyPacker.packPoly(metadata);
+                jedis.set(fetchId(poly, METADATA_KEY), metadataBytes);
+            } catch (Exception e) {
+                log.error("Failed to persist config", e);
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @Override
     public Optional<BasicPoly> index(String poly) {
-        return Optional.empty();
+        try (Jedis jedis = pool.getResource()) {
+            if (!exists(poly)) {
+                return Optional.empty();
+            }
+            try {
+                byte[] id = fetchId(poly, TAG_INDEX_KEY);
+                byte[] value = jedis.get(id);
+                if (value == null || value.length == 0) {
+                    return Optional.empty();
+                }
+                return Optional.ofNullable(polyPacker.unPackPoly(new ByteArrayInputStream(value)));
+            } catch (Exception e) {
+                log.error("Failed to persist config", e);
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @Override
@@ -158,7 +203,7 @@ public class PolydataRedis extends AbstractPolydata {
     private byte[] fetchId(String poly, String id) {
         String value = prefix + poly + "-" + id;
         if (!hashIds) {
-            return (value.hashCode()+ "").getBytes();
+            return (value.hashCode() + "").getBytes();
         }
         return DigestUtils.sha256Hex(value).toLowerCase().getBytes();
     }
