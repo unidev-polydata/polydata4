@@ -1,6 +1,5 @@
 package com.unidev.polydata4.api.packer;
 
-
 import com.unidev.polydata4.domain.BasicPoly;
 
 import java.io.InputStream;
