@@ -127,22 +127,22 @@ public class PolydataMongodb extends AbstractPolydata {
     }
 
     @Override
-    public BasicPolyList insert(String poly, Collection<PersistRequest> persistRequests) {
+    public BasicPolyList insert(String poly, Collection<InsertRequest> insertRequests) {
         BasicPolyList basicPolyList = new BasicPolyList();
 
         Set<String> polyIds = new HashSet<>();
-        for (PersistRequest persistRequest : persistRequests) {
-            BasicPoly data = persistRequest.getPoly();
+        for (InsertRequest insertRequest : insertRequests) {
+            BasicPoly data = insertRequest.getPoly();
             polyIds.add(data._id());
 
-            Set<String> indexToPersist = persistRequest.getIndexToPersist();
+            Set<String> indexToPersist = insertRequest.getIndexToPersist();
             if (CollectionUtils.isEmpty(indexToPersist)) {
                 indexToPersist = new HashSet<>();
             } else {
                 indexToPersist = new HashSet<>(indexToPersist);
             }
             indexToPersist.add(DATE_INDEX);
-            persistRequest.setIndexToPersist(indexToPersist);
+            insertRequest.setIndexToPersist(indexToPersist);
         }
         BasicPolyList existingPolys = read(poly, polyIds);
 
@@ -153,11 +153,11 @@ public class PolydataMongodb extends AbstractPolydata {
         List<UpdateOneModel<Document>> requests = new ArrayList<>();
         UpdateOptions opt = new UpdateOptions().upsert(true);
 
-        for (PersistRequest persistRequest : persistRequests) {
-            BasicPoly data = persistRequest.getPoly();
+        for (InsertRequest insertRequest : insertRequests) {
+            BasicPoly data = insertRequest.getPoly();
             String id = data._id();
 
-            Set<String> indexToPersist = persistRequest.getIndexToPersist();
+            Set<String> indexToPersist = insertRequest.getIndexToPersist();
             if (CollectionUtils.isEmpty(indexToPersist)) {
                 indexToPersist = new HashSet<>();
             }
@@ -189,9 +189,9 @@ public class PolydataMongodb extends AbstractPolydata {
         Map<String, Integer> tagsToIncrement = new HashMap<>();
         Map<String, BasicPoly> tagsData = new HashMap<>();
 
-        for (PersistRequest persistRequest : persistRequests) {
-            BasicPoly data = persistRequest.getPoly();
-            Set<String> indexToPersist = persistRequest.getIndexToPersist();
+        for (InsertRequest insertRequest : insertRequests) {
+            BasicPoly data = insertRequest.getPoly();
+            Set<String> indexToPersist = insertRequest.getIndexToPersist();
             if (CollectionUtils.isEmpty(indexToPersist)) {
                 continue;
             }
@@ -199,7 +199,7 @@ public class PolydataMongodb extends AbstractPolydata {
                 // skip increment of tags if poly already exists
                 continue;
             }
-            Map<String, BasicPoly> indexData = persistRequest.getIndexData();
+            Map<String, BasicPoly> indexData = insertRequest.getIndexData();
             if (indexData == null) {
                 indexData = new HashMap<>();
             }
@@ -248,8 +248,8 @@ public class PolydataMongodb extends AbstractPolydata {
     }
 
     @Override
-    public BasicPolyList update(String poly, Collection<PersistRequest> persistRequests) {
-        return insert(poly, persistRequests);
+    public BasicPolyList update(String poly, Collection<InsertRequest> insertRequests) {
+        return insert(poly, insertRequests);
     }
 
     @Override

@@ -16,7 +16,7 @@ import java.util.Set;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class PersistRequest implements Serializable {
+public class InsertRequest implements Serializable {
 
     private BasicPoly poly;
     private Set<String> indexToPersist;

@@ -3,7 +3,10 @@ package com.unidev.polydata4;
 import com.unidev.polydata4.api.Polydata;
 import com.unidev.polydata4.domain.BasicPoly;
 import com.unidev.polydata4.domain.BasicPolyList;
+import com.unidev.polydata4.domain.InsertRequest;
 import org.junit.jupiter.api.Test;
+
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,6 +32,20 @@ public abstract class IntegrationTest {
         polydata.create(poly);
         list = polydata.list();
         assertTrue(list.hasPoly(poly));
+    }
+
+    @Test
+    void operationsById() {
+        String poly = createPoly();
+        BasicPoly data = BasicPoly.newPoly("test-id");
+
+        polydata.insert(poly, Set.of(InsertRequest.builder().poly(data).build()));
+    }
+
+    String createPoly() {
+        String poly = "poly-" + System.currentTimeMillis();
+        polydata.create(poly);
+        return poly;
     }
 
 

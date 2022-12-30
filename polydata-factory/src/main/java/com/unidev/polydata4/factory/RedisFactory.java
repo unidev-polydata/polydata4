@@ -33,8 +33,8 @@ public class RedisFactory implements StorageFactory {
         poolConfig.setTestOnBorrow(true);
         poolConfig.setTestOnReturn(true);
         poolConfig.setTestWhileIdle(true);
-        poolConfig.setMinEvictableIdleTimeMillis(Duration.ofSeconds(config.fetch("min-evictable-idle", 60)).toMillis());
-        poolConfig.setTimeBetweenEvictionRunsMillis(Duration.ofSeconds(config.fetch("time-between-eviction-runs", 30)).toMillis());
+        poolConfig.setMinEvictableIdleTime(Duration.ofSeconds(config.fetch("min-evictable-idle", 60)));
+        poolConfig.setTimeBetweenEvictionRuns(Duration.ofSeconds(config.fetch("time-between-eviction-runs", 30)));
         poolConfig.setNumTestsPerEvictionRun(config.fetch("num-tests-per-eviction", 10));
 
         JedisPool jedisPool = new JedisPool(poolConfig, uri);
@@ -44,7 +44,7 @@ public class RedisFactory implements StorageFactory {
                 PolydataRedis.PolydataRedisConfig.builder()
                         .pool(jedisPool)
                         .hashIds(config.fetch("hash-ids", false))
-                        .prefix(config.fetch("prefix", "prod"))
+                        .prefix(config.fetch("prefix", "prod-"))
                         .polyPacker(new NoOpPolyPacker())
                         .build()
 

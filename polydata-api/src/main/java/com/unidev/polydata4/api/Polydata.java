@@ -2,7 +2,7 @@ package com.unidev.polydata4.api;
 
 import com.unidev.polydata4.domain.BasicPoly;
 import com.unidev.polydata4.domain.BasicPolyList;
-import com.unidev.polydata4.domain.PersistRequest;
+import com.unidev.polydata4.domain.InsertRequest;
 import com.unidev.polydata4.domain.PolyQuery;
 
 import javax.cache.Cache;
@@ -59,9 +59,9 @@ public interface Polydata extends Closeable {
      **/
     Optional<BasicPoly> indexData(String poly, String indexId);
 
-    BasicPolyList insert(String poly, Collection<PersistRequest> persistRequests);
+    BasicPolyList insert(String poly, Collection<InsertRequest> insertRequests);
 
-    BasicPolyList update(String poly, Collection<PersistRequest> persistRequests);
+    BasicPolyList update(String poly, Collection<InsertRequest> insertRequests);
 
     BasicPolyList read(String poly, Set<String> ids);
 

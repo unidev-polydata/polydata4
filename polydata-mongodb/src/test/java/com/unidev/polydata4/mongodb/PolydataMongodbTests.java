@@ -3,7 +3,7 @@ package com.unidev.polydata4.mongodb;
 import com.unidev.polydata4.domain.BasicPoly;
 import com.unidev.polydata4.domain.BasicPolyList;
 import com.unidev.polydata4.domain.BasicPolyQuery;
-import com.unidev.polydata4.domain.PersistRequest;
+import com.unidev.polydata4.domain.InsertRequest;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -94,7 +94,7 @@ public class PolydataMongodbTests {
 
     @Test
     void insert() {
-        polydata.insert(polyId, Collections.singleton(PersistRequest.builder()
+        polydata.insert(polyId, Collections.singleton(InsertRequest.builder()
                 .poly(BasicPoly.newPoly("test").with("app", "123"))
                 .indexToPersist(Set.of("tag1", "date"))
                 .build()));
@@ -113,7 +113,7 @@ public class PolydataMongodbTests {
 
         for (int i = 0; i < 100; i++) {
             polydata.insert(polyId, Collections.singletonList(
-                    PersistRequest.builder()
+                    InsertRequest.builder()
                             .poly(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
                             .indexToPersist(Set.of("tag_x", "tag_" + i, "tag_a_" + (i % 2)))
                             .build())
@@ -132,11 +132,11 @@ public class PolydataMongodbTests {
     @Test
     void removal() {
         polydata.insert(polyId, Arrays.asList(
-                        PersistRequest.builder()
+                        InsertRequest.builder()
                                 .poly(BasicPoly.newPoly("test").with("app", "123"))
                                 .indexToPersist(Set.of("tag1", "date"))
                                 .build(),
-                        PersistRequest.builder()
+                        InsertRequest.builder()
                                 .poly(BasicPoly.newPoly("test2").with("app", "567"))
                                 .indexToPersist(Set.of("tag2", "date"))
                                 .build()
@@ -157,7 +157,7 @@ public class PolydataMongodbTests {
     void query() {
         for (int i = 0; i < 100; i++) {
             polydata.insert(polyId, Collections.singletonList(
-                    PersistRequest.builder()
+                    InsertRequest.builder()
                             .poly(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
                             .indexToPersist(Set.of("tag_x", "tag_" + i))
                             .build())
@@ -183,7 +183,7 @@ public class PolydataMongodbTests {
     void queryPaging() {
         for (int i = 0; i < 105; i++) {
             polydata.insert(polyId, Collections.singletonList(
-                    PersistRequest.builder()
+                    InsertRequest.builder()
                             .poly(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
                             .indexToPersist(Set.of("tag_x", "tag_" + i))
                             .build())

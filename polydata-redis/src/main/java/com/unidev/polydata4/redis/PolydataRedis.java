@@ -4,7 +4,7 @@ import com.unidev.polydata4.api.AbstractPolydata;
 import com.unidev.polydata4.api.packer.PolyPacker;
 import com.unidev.polydata4.domain.BasicPoly;
 import com.unidev.polydata4.domain.BasicPolyList;
-import com.unidev.polydata4.domain.PersistRequest;
+import com.unidev.polydata4.domain.InsertRequest;
 import com.unidev.polydata4.domain.PolyQuery;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
@@ -125,16 +125,21 @@ public class PolydataRedis extends AbstractPolydata {
     }
 
     @Override
-    public BasicPolyList insert(String poly, Collection<PersistRequest> persistRequests) {
+    public BasicPolyList insert(String poly, Collection<InsertRequest> insertRequests) {
         final BasicPolyList basicPolyList = new BasicPolyList();
         redis(jedis -> {
-            for (PersistRequest persistRequest : persistRequests) {
+            for (InsertRequest insertRequest : insertRequests) {
 
-                BasicPoly polyToPersist = persistRequest.getPoly();
+                BasicPoly polyToPersist = insertRequest.getPoly();
                 writePoly(jedis, poly, polyToPersist);
-                Map<String, BasicPoly> indexData = persistRequest.getIndexData();
+                Map<String, BasicPoly> indexData = insertRequest.getIndexData();
 
-                for (String indexName : persistRequest.getIndexToPersist()) {
+                Set<String> indexToPersist = insertRequest.getIndexToPersist();
+                if (indexToPersist == null) {
+                    indexToPersist = Collections.emptySet();
+                }
+
+                for (String indexName : indexToPersist) {
                     // add poly it to list of polys
                     byte[] indexId = fetchId(poly, indexName);
                     jedis.lpush(indexId, indexId);
@@ -158,7 +163,7 @@ public class PolydataRedis extends AbstractPolydata {
     }
 
     @Override
-    public BasicPolyList update(String poly, Collection<PersistRequest> persistRequests) {
+    public BasicPolyList update(String poly, Collection<InsertRequest> insertRequests) {
         return null;
     }
 
