@@ -29,7 +29,7 @@ public class PolydataRedis extends AbstractPolydata {
     @RequiredArgsConstructor
     @Builder
     public static class PolydataRedisConfig {
-        final String prefix = "";
+        final String prefix;
 
         final JedisPool pool;
 
@@ -68,7 +68,7 @@ public class PolydataRedis extends AbstractPolydata {
 
     @Override
     public boolean exists(String poly) {
-        return config(poly).isPresent();
+        return list().hasPoly(poly);
     }
 
     @Override

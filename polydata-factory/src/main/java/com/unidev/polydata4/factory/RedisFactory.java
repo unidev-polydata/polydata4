@@ -1,6 +1,7 @@
 package com.unidev.polydata4.factory;
 
 import com.unidev.polydata4.api.Polydata;
+import com.unidev.polydata4.api.packer.NoOpPolyPacker;
 import com.unidev.polydata4.domain.BasicPoly;
 import com.unidev.polydata4.redis.PolydataRedis;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +45,7 @@ public class RedisFactory implements StorageFactory {
                         .pool(jedisPool)
                         .hashIds(config.fetch("hash-ids", false))
                         .prefix(config.fetch("prefix", "prod"))
+                        .polyPacker(new NoOpPolyPacker())
                         .build()
 
         );
