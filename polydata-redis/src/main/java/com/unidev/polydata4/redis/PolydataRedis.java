@@ -77,7 +77,7 @@ public class PolydataRedis extends AbstractPolydata {
             return Optional.empty();
         }
         return redis(jedis -> {
-            return readPoly(jedis, poly,  CONFIG_KEY);
+            return readPoly(jedis, poly, CONFIG_KEY);
         });
     }
 
@@ -169,7 +169,23 @@ public class PolydataRedis extends AbstractPolydata {
 
     @Override
     public BasicPolyList read(String poly, Set<String> ids) {
-        return null;
+        return redis(jedis -> {
+            BasicPolyList basicPolyList = new BasicPolyList();
+            jedis.mget(
+                    ids.stream().map(id -> fetchId(poly, id)).toArray(byte[][]::new)
+            ).forEach(polyData -> {
+                if (polyData == null) {
+                    return;
+                }
+                try {
+                    BasicPoly basicPoly = polyConfig.polyPacker.unPackPoly(new ByteArrayInputStream(polyData));
+                    basicPolyList.add(basicPoly);
+                } catch (Exception e) {
+                    log.error("Failed to unpack poly", e);
+                }
+            });
+            return basicPolyList;
+        });
     }
 
     @Override
