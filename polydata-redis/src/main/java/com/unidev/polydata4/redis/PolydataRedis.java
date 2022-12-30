@@ -1,16 +1,15 @@
 package com.unidev.polydata4.redis;
 
+import com.unidev.platform.Randoms;
 import com.unidev.polydata4.api.AbstractPolydata;
 import com.unidev.polydata4.api.packer.PolyPacker;
-import com.unidev.polydata4.domain.BasicPoly;
-import com.unidev.polydata4.domain.BasicPolyList;
-import com.unidev.polydata4.domain.InsertRequest;
-import com.unidev.polydata4.domain.PolyQuery;
+import com.unidev.polydata4.domain.*;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
@@ -219,9 +218,57 @@ public class PolydataRedis extends AbstractPolydata {
         });
     }
 
+    private final Randoms randoms = new Randoms();
+
     @Override
     public BasicPolyList query(String poly, PolyQuery polyQuery) {
-        return null;
+        return redis(jedis -> {
+            BasicPolyQuery query = (BasicPolyQuery) polyQuery;
+            Optional<BasicPoly> configPoly = config(poly);
+
+            if (configPoly.isEmpty()) {
+                throw new RuntimeException("Poly " + poly + " is not configured");
+            }
+
+            String index;
+            String queryIndex = query.index();
+            if (!StringUtils.isBlank(queryIndex)) {
+                index = queryIndex;
+            } else {
+                index = DATE_INDEX;
+            }
+            BasicPoly config = configPoly.get();
+
+            Integer defaultItemPerPage = config.fetch(ITEM_PER_PAGE, DEFAULT_ITEM_PER_PAGE);
+            Integer itemPerPage = query.getOptions().fetch(ITEM_PER_PAGE, defaultItemPerPage);
+
+            long count = jedis.llen(fetchId(poly, index));
+
+            List<Integer> ids = new ArrayList<>();
+            if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
+                for(int i = 0;i<itemPerPage;i++){
+                    ids.add(randoms.getRandom().nextInt((int) count));
+                }
+            } else {
+                final int page = query.page() < 0 ? 0 : query.page();
+                for (int i = page * itemPerPage; i < (page + 1) * itemPerPage; i++) {
+                    ids.add(i);
+                }
+            }
+
+//            Set<String> idsById = new HashSet<>();
+//            ids.stream()
+//                    .map(id -> jedis.lindex(fetchId(poly, index), id))
+//                    .filter(Objects::nonNull)
+//                    .map(id -> {
+//                if (id != null) {
+//                    idsById.add(new String(id));
+//                }
+//            });
+
+
+            return null;
+        });
     }
 
     @Override
