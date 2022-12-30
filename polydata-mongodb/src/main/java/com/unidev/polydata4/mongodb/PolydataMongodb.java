@@ -32,14 +32,10 @@ public class PolydataMongodb extends AbstractPolydata {
     public static final String INDEX_COLLECTION = "_indexes";
     public static final String COUNT = "count";
     private static final String UPDATE_DATE = "_update_date";
-    private static final String TAGS = "tags";
-    private static final String INDEX = "index";
+
     private static final String INDEXED_TAGS = "_indexed_tags";
 
-    private static final String DATA = "data";
-
     private static final String DATE_INDEX = "_date";
-
 
     @Getter
     @Setter

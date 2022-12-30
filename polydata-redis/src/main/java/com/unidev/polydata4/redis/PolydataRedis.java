@@ -15,9 +15,7 @@ import redis.clients.jedis.JedisPool;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -75,6 +73,9 @@ public class PolydataRedis extends AbstractPolydata {
 
     @Override
     public Optional<BasicPoly> config(String poly) {
+        if (!exists(poly)) {
+            return Optional.empty();
+        }
         return redis(jedis -> {
             return readPoly(jedis, poly,  CONFIG_KEY);
         });
@@ -89,6 +90,9 @@ public class PolydataRedis extends AbstractPolydata {
 
     @Override
     public Optional<BasicPoly> metadata(String poly) {
+        if (!exists(poly)) {
+            return Optional.empty();
+        }
         return redis(jedis -> {
             return readPoly(jedis, poly, METADATA_KEY);
         });
@@ -103,32 +107,54 @@ public class PolydataRedis extends AbstractPolydata {
 
     @Override
     public Optional<BasicPoly> index(String poly) {
-        try (Jedis jedis = polyConfig.pool.getResource()) {
-            if (!exists(poly)) {
-                return Optional.empty();
-            }
-            try {
-                byte[] id = fetchId(poly, TAG_INDEX_KEY);
-                byte[] value = jedis.get(id);
-                if (value == null || value.length == 0) {
-                    return Optional.empty();
-                }
-                return Optional.ofNullable(polyConfig.polyPacker.unPackPoly(new ByteArrayInputStream(value)));
-            } catch (Exception e) {
-                log.error("Failed to persist config", e);
-                throw new RuntimeException(e);
-            }
+        if (!exists(poly)) {
+            return Optional.empty();
         }
+        return redis(jedis -> {
+            return readPoly(jedis, poly, TAG_INDEX_KEY);
+        });
     }
 
     @Override
     public Optional<BasicPoly> indexData(String poly, String indexId) {
-        return Optional.empty();
+        Optional<BasicPoly> index = index(poly);
+        if (index.isEmpty()) {
+            return Optional.empty();
+        }
+        return index.get().fetch(indexId);
     }
 
     @Override
     public BasicPolyList insert(String poly, Collection<PersistRequest> persistRequests) {
-        return null;
+        final BasicPolyList basicPolyList = new BasicPolyList();
+        redis(jedis -> {
+            for (PersistRequest persistRequest : persistRequests) {
+
+                BasicPoly polyToPersist = persistRequest.getPoly();
+                writePoly(jedis, poly, polyToPersist);
+                Map<String, BasicPoly> indexData = persistRequest.getIndexData();
+
+                for (String indexName : persistRequest.getIndexToPersist()) {
+                    // add poly it to list of polys
+                    byte[] indexId = fetchId(poly, indexName);
+                    jedis.lpush(indexId, indexId);
+
+                    BasicPoly tagIndex = index(poly).orElseGet(() -> BasicPoly.newPoly());
+
+                    // update tags list
+                    Map data = new HashMap();
+                    if (indexData != null) {
+                        data = indexData.getOrDefault(indexName, BasicPoly.newPoly()).data();
+                    }
+
+                    data.put("_count", jedis.llen(indexId));
+                    tagIndex.put(indexName, data);
+                    writePoly(jedis, poly, tagIndex);
+                }
+            }
+        });
+
+        return basicPolyList;
     }
 
     @Override
@@ -185,12 +211,18 @@ public class PolydataRedis extends AbstractPolydata {
         return DigestUtils.sha256Hex(value).toLowerCase().getBytes();
     }
 
+    /**
+     * Execute logic on redis connection.
+     */
     private <R> R redis(Function<Jedis, R> logic) {
         try (Jedis jedis = polyConfig.pool.getResource()) {
             return logic.apply(jedis);
         }
     }
 
+    /**
+     * Execute logic on redis connection.
+     */
     private void redis(Consumer<Jedis> logic) {
         try (Jedis jedis = polyConfig.pool.getResource()) {
             logic.accept(jedis);
