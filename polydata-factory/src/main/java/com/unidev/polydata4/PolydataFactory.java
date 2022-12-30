@@ -2,8 +2,9 @@ package com.unidev.polydata4;
 
 import com.unidev.polydata4.api.Polydata;
 import com.unidev.polydata4.domain.BasicPoly;
-import com.unidev.polydata4.factory.FlatFileYamlStorageFactory;
-import com.unidev.polydata4.factory.MongodbStorageFactory;
+import com.unidev.polydata4.factory.FlatFileYamlFactory;
+import com.unidev.polydata4.factory.MongodbFactory;
+import com.unidev.polydata4.factory.RedisFactory;
 import com.unidev.polydata4.factory.StorageFactory;
 import lombok.Getter;
 import lombok.Setter;
@@ -37,8 +38,9 @@ public class PolydataFactory {
 
     public PolydataFactory() {
         // default storage factories
-        addFactory(new MongodbStorageFactory());
-        addFactory(new FlatFileYamlStorageFactory());
+        addFactory(new MongodbFactory());
+        addFactory(new FlatFileYamlFactory());
+        addFactory(new RedisFactory());
     }
 
     public void addFactory(StorageFactory factory) {
