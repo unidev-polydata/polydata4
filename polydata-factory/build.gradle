@@ -8,3 +8,32 @@ dependencies {
             "org.ehcache:ehcache:$testEhcacheVersion"
     )
 }
+
+sourceSets {
+    itest {
+        java {
+            compileClasspath += sourceSets.main.output + main.output + test.output + sourceSets.test.compileClasspath
+            runtimeClasspath += sourceSets.main.output + main.output + test.output + sourceSets.test.runtimeClasspath
+            srcDir file('src/itest/java')
+        }
+        resources.srcDir file('src/itest/resources')
+    }
+}
+
+configurations {
+    itestImplementation.extendsFrom implementation
+    itestRuntimeOnly.extendsFrom runtimeOnly
+
+}
+
+
+def integrationTestTask = tasks.register('itest', Test) {
+    description = 'Runs integration tests.'
+    group = 'verification'
+    //duplicatesStrategy = 'include'
+    useJUnitPlatform()
+
+    testClassesDirs = sourceSets.itest.output.classesDirs
+    classpath = configurations[sourceSets.itest.runtimeClasspathConfigurationName] + sourceSets.itest.output + sourceSets.test.runtimeClasspath
+
+}
