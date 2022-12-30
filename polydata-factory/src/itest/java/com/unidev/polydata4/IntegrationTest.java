@@ -35,7 +35,7 @@ public abstract class IntegrationTest {
     }
 
     @Test
-    void operationsById() {
+    void polyOperationsById() {
         String poly = createPoly();
         BasicPoly data = BasicPoly.newPoly("test-id");
         data.put("test-key", "test-value");

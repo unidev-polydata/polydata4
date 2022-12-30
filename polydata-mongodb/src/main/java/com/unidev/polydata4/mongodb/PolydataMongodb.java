@@ -35,8 +35,6 @@ public class PolydataMongodb extends AbstractPolydata {
 
     private static final String INDEXED_TAGS = "_indexed_tags";
 
-    private static final String DATE_INDEX = "_date";
-
     @Getter
     @Setter
     private String mongoUri;

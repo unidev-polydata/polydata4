@@ -27,6 +27,8 @@ public interface Polydata extends Closeable {
     String CONFIG_KEY = "config";
     String METADATA_KEY = "metadata";
 
+    String DATE_INDEX = "_date";
+
     void prepareStorage();
 
     BasicPoly create(String poly);

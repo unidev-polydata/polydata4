@@ -10,6 +10,7 @@ import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
@@ -135,21 +136,24 @@ public class PolydataRedis extends AbstractPolydata {
                 Map<String, BasicPoly> indexData = insertRequest.getIndexData();
 
                 Set<String> indexToPersist = insertRequest.getIndexToPersist();
-                if (indexToPersist == null) {
-                    indexToPersist = Collections.emptySet();
+                if (CollectionUtils.isEmpty(indexToPersist)) {
+                    indexToPersist = new HashSet<>();
+                } else {
+                    indexToPersist = new HashSet<>(indexToPersist);
                 }
+                indexToPersist.add(DATE_INDEX);
 
                 for (String indexName : indexToPersist) {
                     // add poly it to list of polys
                     byte[] indexId = fetchId(poly, indexName);
                     jedis.lpush(indexId, indexId);
 
-                    BasicPoly tagIndex = index(poly).orElseGet(() -> BasicPoly.newPoly());
+                    BasicPoly tagIndex = index(poly).orElseGet(() -> BasicPoly.newPoly(TAG_INDEX_KEY));
 
                     // update tags list
                     Map data = new HashMap();
                     if (indexData != null) {
-                        data = indexData.getOrDefault(indexName, BasicPoly.newPoly()).data();
+                        data = indexData.getOrDefault(indexName, BasicPoly.newPoly(indexName)).data();
                     }
 
                     data.put("_count", jedis.llen(indexId));
@@ -164,7 +168,7 @@ public class PolydataRedis extends AbstractPolydata {
 
     @Override
     public BasicPolyList update(String poly, Collection<InsertRequest> insertRequests) {
-        return null;
+        return insert(poly, insertRequests);
     }
 
     @Override
@@ -190,7 +194,29 @@ public class PolydataRedis extends AbstractPolydata {
 
     @Override
     public BasicPolyList remove(String poly, Set<String> ids) {
-        return null;
+        return redis(jedis -> {
+            BasicPolyList basicPolyList = new BasicPolyList();
+            byte[][] redisIds = ids.stream().map(id -> fetchId(poly, id)).toArray(byte[][]::new);
+            jedis.mget(redisIds).forEach(polyData -> {
+                if (polyData == null) {
+                    return;
+                }
+                try {
+                    BasicPoly basicPoly = polyConfig.polyPacker.unPackPoly(new ByteArrayInputStream(polyData));
+                    basicPolyList.add(basicPoly);
+                } catch (Exception e) {
+                    log.error("Failed to unpack poly", e);
+                }
+            });
+            for (byte[] id : redisIds) {
+                try {
+                    jedis.del(id);
+                } catch (Exception e) {
+                    log.error("Failed to delete poly", e);
+                }
+            }
+            return basicPolyList;
+        });
     }
 
     @Override
