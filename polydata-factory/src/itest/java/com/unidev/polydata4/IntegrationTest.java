@@ -35,7 +35,7 @@ public abstract class IntegrationTest {
     }
 
     @Test
-    void polyOperationsById() {
+    void operationsById() {
         String poly = createPoly();
         BasicPoly data = BasicPoly.newPoly("test-id");
         data.put("test-key", "test-value");
@@ -47,6 +47,12 @@ public abstract class IntegrationTest {
         BasicPoly dbPoly = list.safeById("test-id");
         assertEquals("test-id", dbPoly._id());
         assertEquals("test-value", dbPoly.fetch("test-key"));
+
+        polydata.remove(poly, Set.of("test-id"));
+
+        list = polydata.read(poly, Set.of("test-id"));
+        assertNotNull(list);
+        assertEquals(0, list.list().size());
     }
 
     String createPoly() {
