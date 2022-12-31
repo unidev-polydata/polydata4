@@ -8,16 +8,20 @@ import com.unidev.polydata4.domain.PolyQuery;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * Polydata storage backed by SQLite databases.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class PolydataSqlite extends AbstractPolydata {
 
-
+    private final File rootDir;
 
     @Override
     public void prepareStorage() {
