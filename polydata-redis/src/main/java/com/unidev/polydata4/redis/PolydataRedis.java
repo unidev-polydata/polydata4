@@ -154,7 +154,7 @@ public class PolydataRedis extends AbstractPolydata {
                 for (String indexName : insertRequest.getIndexToPersist()) {
                     // add poly it to list of polys
                     byte[] indexId = fetchId(poly, indexName);
-                    jedis.rpush(indexId, indexId);
+                    jedis.rpush(indexId, insertRequest.getPoly()._id().getBytes());
 
                     BasicPoly tagIndex = index(poly).orElseGet(() -> BasicPoly.newPoly(TAG_INDEX_KEY));
 
