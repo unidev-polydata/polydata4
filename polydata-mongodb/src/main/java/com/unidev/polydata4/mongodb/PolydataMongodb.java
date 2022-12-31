@@ -301,15 +301,15 @@ public class PolydataMongodb extends AbstractPolydata {
             Collection<String> tags = basicPoly.fetch(INDEXED_TAGS);
 
             // decrement indexes...
-            Map<String, Integer> tagsToIncrement = new HashMap<>();
+            Map<String, Integer> tagsToDecrement = new HashMap<>();
 
             for (String index : tags) {
-                int count = tagsToIncrement.getOrDefault(index, 0);
+                int count = tagsToDecrement.getOrDefault(index, 0);
                 count++;
-                tagsToIncrement.put(index, count);
+                tagsToDecrement.put(index, count);
             }
 
-            for (Map.Entry<String, Integer> tagEntry : tagsToIncrement.entrySet()) {
+            for (Map.Entry<String, Integer> tagEntry : tagsToDecrement.entrySet()) {
                 String indexId = tagEntry.getKey();
 
                 Bson indexFilter = Filters.eq(_ID, indexId);

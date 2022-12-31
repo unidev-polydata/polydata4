@@ -3,11 +3,14 @@ package com.unidev.polydata4;
 import com.unidev.polydata4.api.Polydata;
 import com.unidev.polydata4.domain.BasicPoly;
 import com.unidev.polydata4.domain.BasicPolyList;
+import com.unidev.polydata4.domain.BasicPolyQuery;
 import com.unidev.polydata4.domain.InsertRequest;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.Set;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -53,6 +56,34 @@ public abstract class IntegrationTest {
         list = polydata.read(poly, Set.of("test-id"));
         assertNotNull(list);
         assertEquals(0, list.list().size());
+    }
+
+
+    @Test
+    void query() {
+        String poly = createPoly();
+
+        for (int i = 0; i < 100; i++) {
+            polydata.insert(poly, Collections.singletonList(
+                    InsertRequest.builder()
+                            .poly(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
+                            .indexToPersist(Set.of("tag_x", "tag_" + i))
+                            .build())
+            );
+        }
+
+        BasicPolyList list = polydata.query(poly,
+                BasicPolyQuery.builder().build());
+        assertThat(list.list().size()).isEqualTo(10);
+        assertThat(polydata.count(poly, BasicPolyQuery.builder().build())).isEqualTo(100);
+
+        BasicPolyQuery tagx = BasicPolyQuery.builder().build();
+        tagx.index("tag_x");
+        assertThat(polydata.count(poly, tagx)).isEqualTo(100);
+
+        BasicPolyQuery tag1 = BasicPolyQuery.builder().build();
+        tag1.index("tag_1");
+        assertThat(polydata.count(poly, tag1)).isEqualTo(1);
     }
 
     String createPoly() {

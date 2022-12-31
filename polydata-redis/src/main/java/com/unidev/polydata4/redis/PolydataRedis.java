@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Polydata storage in Redis.
@@ -128,11 +129,11 @@ public class PolydataRedis extends AbstractPolydata {
     public BasicPolyList insert(String poly, Collection<InsertRequest> insertRequests) {
         final BasicPolyList basicPolyList = new BasicPolyList();
         redis(jedis -> {
-            for (InsertRequest insertRequest : insertRequests) {
 
-                BasicPoly polyToPersist = insertRequest.getPoly();
-                writePoly(jedis, poly, polyToPersist);
-                Map<String, BasicPoly> indexData = insertRequest.getIndexData();
+            Set<String> polyIds = new HashSet<>();
+            for (InsertRequest insertRequest : insertRequests) {
+                BasicPoly data = insertRequest.getPoly();
+                polyIds.add(data._id());
 
                 Set<String> indexToPersist = insertRequest.getIndexToPersist();
                 if (CollectionUtils.isEmpty(indexToPersist)) {
@@ -141,11 +142,19 @@ public class PolydataRedis extends AbstractPolydata {
                     indexToPersist = new HashSet<>(indexToPersist);
                 }
                 indexToPersist.add(DATE_INDEX);
+                insertRequest.setIndexToPersist(indexToPersist);
+            }
 
-                for (String indexName : indexToPersist) {
+            for (InsertRequest insertRequest : insertRequests) {
+
+                BasicPoly polyToPersist = insertRequest.getPoly();
+                writePoly(jedis, poly, polyToPersist);
+                Map<String, BasicPoly> indexData = insertRequest.getIndexData();
+
+                for (String indexName : insertRequest.getIndexToPersist()) {
                     // add poly it to list of polys
                     byte[] indexId = fetchId(poly, indexName);
-                    jedis.lpush(indexId, indexId);
+                    jedis.rpush(indexId, indexId);
 
                     BasicPoly tagIndex = index(poly).orElseGet(() -> BasicPoly.newPoly(TAG_INDEX_KEY));
 
@@ -194,19 +203,8 @@ public class PolydataRedis extends AbstractPolydata {
     @Override
     public BasicPolyList remove(String poly, Set<String> ids) {
         return redis(jedis -> {
-            BasicPolyList basicPolyList = new BasicPolyList();
             byte[][] redisIds = ids.stream().map(id -> fetchId(poly, id)).toArray(byte[][]::new);
-            jedis.mget(redisIds).forEach(polyData -> {
-                if (polyData == null) {
-                    return;
-                }
-                try {
-                    BasicPoly basicPoly = polyConfig.polyPacker.unPackPoly(new ByteArrayInputStream(polyData));
-                    basicPolyList.add(basicPoly);
-                } catch (Exception e) {
-                    log.error("Failed to unpack poly", e);
-                }
-            });
+            BasicPolyList basicPolyList = read(poly, ids);
             for (byte[] id : redisIds) {
                 try {
                     jedis.del(id);
@@ -246,7 +244,7 @@ public class PolydataRedis extends AbstractPolydata {
 
             List<Integer> ids = new ArrayList<>();
             if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
-                for(int i = 0;i<itemPerPage;i++){
+                for (int i = 0; i < itemPerPage; i++) {
                     ids.add(randoms.getRandom().nextInt((int) count));
                 }
             } else {
@@ -256,24 +254,34 @@ public class PolydataRedis extends AbstractPolydata {
                 }
             }
 
-//            Set<String> idsById = new HashSet<>();
-//            ids.stream()
-//                    .map(id -> jedis.lindex(fetchId(poly, index), id))
-//                    .filter(Objects::nonNull)
-//                    .map(id -> {
-//                if (id != null) {
-//                    idsById.add(new String(id));
-//                }
-//            });
+            Set<String> indexIds = ids.stream()
+                    .map(id -> jedis.lindex(fetchId(poly, index), id))
+                    .filter(Objects::nonNull)
+                    .map(id -> new String(id))
+                    .collect(Collectors.toSet());
 
-
-            return null;
+            return read(poly, indexIds);
         });
     }
 
     @Override
     public Long count(String poly, PolyQuery polyQuery) {
-        return null;
+        return redis(jedis -> {
+            BasicPolyQuery query = (BasicPolyQuery) polyQuery;
+            Optional<BasicPoly> configPoly = config(poly);
+            if (configPoly.isEmpty()) {
+                throw new RuntimeException("Poly " + poly + " is not configured");
+            }
+            String index;
+            String queryIndex = query.index();
+            if (!StringUtils.isBlank(queryIndex)) {
+                index = queryIndex;
+            } else {
+                index = DATE_INDEX;
+            }
+            byte[] indexId = fetchId(poly, index);
+            return jedis.llen(indexId);
+        });
     }
 
     @Override
