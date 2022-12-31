@@ -3,6 +3,9 @@ dependencies {
     api project(":polydata-api")
 
     api(
-            "com.fasterxml.jackson.core:jackson-core:$jacksonVersion"
+            "com.fasterxml.jackson.core:jackson-core:$jacksonVersion",
+            "org.xerial:sqlite-jdbc:$sqliteJdbcVersion",
+            "org.flywaydb:flyway-core:$flywayCoreVersion"
+
     )
 }
