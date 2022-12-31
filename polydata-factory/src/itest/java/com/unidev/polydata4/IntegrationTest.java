@@ -86,6 +86,40 @@ public abstract class IntegrationTest {
         assertThat(polydata.count(poly, tag1)).isEqualTo(1);
     }
 
+    @Test
+    void queryPaging() {
+        String poly = createPoly();
+        for (int i = 0; i < 105; i++) {
+            polydata.insert(poly, Collections.singletonList(
+                    InsertRequest.builder()
+                            .poly(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
+                            .indexToPersist(Set.of("tag_x", "tag_" + i))
+                            .build())
+            );
+        }
+        int checkPoly = 104;
+        for (int page = 0; page < 10; page++) {
+            BasicPolyQuery query = new BasicPolyQuery();
+            query.page(page);
+            BasicPolyList list = polydata.query(poly, query);
+            assertThat(list.list().size()).isEqualTo(10);
+
+            for (int i = 0; i < list.list().size(); i++) {
+                assertTrue(list.hasPoly("test_" + checkPoly), "Missing poly " + "poly_" + checkPoly + " page: " + page);
+                checkPoly--;
+            }
+        }
+        BasicPolyQuery query = new BasicPolyQuery();
+        query.page(10);
+        BasicPolyList list = polydata.query(poly, query);
+        assertThat(list.list().size()).isEqualTo(5);
+
+        for (int i = 0; i < list.list().size(); i++) {
+            assertTrue(list.hasPoly("test_" + checkPoly), "Missing poly " + "poly_" + checkPoly + " page: 10");
+            checkPoly--;
+        }
+    }
+
     String createPoly() {
         String poly = "poly-" + System.currentTimeMillis();
         polydata.create(poly);
