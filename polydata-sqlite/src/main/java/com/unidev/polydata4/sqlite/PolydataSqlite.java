@@ -107,12 +107,45 @@ public class PolydataSqlite extends AbstractPolydata {
 
     @Override
     public BasicPolyList insert(String poly, Collection<InsertRequest> insertRequests) {
+
         return null;
     }
 
     @Override
     public BasicPolyList update(String poly, Collection<InsertRequest> insertRequests) {
-        return null;
+        BasicPolyList result = new BasicPolyList();
+        try(Connection connection = fetchConnection(poly)) {
+            connection.setAutoCommit(false);
+            PreparedStatement preparedStatement = connection
+                    .prepareStatement("UPDATE data SET data=?, tags=?, update_date=? WHERE _id=?");
+            for (InsertRequest request : insertRequests) {
+                Set<String> indexToPersist = request.getIndexToPersist();
+                String tagString = "";
+
+                for (String index : indexToPersist) {
+                    tagString += "|" + index + "|";
+                }
+                BasicPoly data = request.getPoly();
+                String id = data._id();
+                String jsonData = objectMapper.writeValueAsString(data);
+                preparedStatement.setString(1, jsonData);
+                preparedStatement.setString(2, tagString);
+                preparedStatement.setLong(3, System.currentTimeMillis());
+                preparedStatement.setString(4, id);
+                preparedStatement.addBatch();
+
+                result.add(data);
+            }
+            preparedStatement.executeBatch();
+            connection.commit();
+            connection.setAutoCommit(true);
+            preparedStatement.close();
+        } catch (Exception e) {
+            log.error("Failed to persist poly", e);
+            throw new RuntimeException(e);
+        }
+
+        return result;
     }
 
     @Override
