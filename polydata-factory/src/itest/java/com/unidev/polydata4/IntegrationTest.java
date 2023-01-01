@@ -37,6 +37,19 @@ public abstract class IntegrationTest {
     }
 
     @Test
+    void listPolys() {
+        polydata.create("poly1");
+        polydata.create("poly2");
+        polydata.create("poly3");
+        polydata.create("poly4");
+        polydata.create("poly5");
+
+        BasicPolyList list = polydata.list();
+        assertEquals(5, list.list().size());
+    }
+
+
+    @Test
     void operationsById() {
         String poly = createPoly();
         BasicPoly data = BasicPoly.newPoly("test-id");
