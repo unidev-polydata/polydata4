@@ -25,12 +25,6 @@ public abstract class IntegrationTest {
     protected void create(BasicPoly config) {
         polydata = factory.create(config).get();
     }
-
-    @Test
-    void configOperations() {
-
-    }
-
     @Test
     void polyCreation() {
         String poly = "random-name-" + System.currentTimeMillis();
@@ -124,6 +118,18 @@ public abstract class IntegrationTest {
             checkPoly--;
         }
     }
+
+    @Test
+    void configOperations() {
+        String poly = createPoly();
+        BasicPoly config = polydata.config(poly).get();
+        config.put("test-key", "test-value");
+        polydata.config(poly, config);
+
+        BasicPoly config2 = polydata.config(poly).get();
+        assertEquals("test-value", config2.fetch("test-key"));
+    }
+
 
     String createPoly() {
         String poly = "poly-" + System.currentTimeMillis();
