@@ -27,6 +27,11 @@ public abstract class IntegrationTest {
     }
 
     @Test
+    void configOperations() {
+
+    }
+
+    @Test
     void polyCreation() {
         String poly = "random-name-" + System.currentTimeMillis();
         BasicPolyList list = polydata.list();

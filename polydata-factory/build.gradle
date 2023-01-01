@@ -4,6 +4,7 @@ dependencies {
     api project(":polydata-mongodb")
     api project(":polydata-flat-files")
     api project(":polydata-redis")
+    api project(":polydata-sqlite")
 
     testImplementation(
             "org.ehcache:ehcache:$testEhcacheVersion"

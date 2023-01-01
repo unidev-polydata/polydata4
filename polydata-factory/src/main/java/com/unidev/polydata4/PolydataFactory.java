@@ -2,10 +2,7 @@ package com.unidev.polydata4;
 
 import com.unidev.polydata4.api.Polydata;
 import com.unidev.polydata4.domain.BasicPoly;
-import com.unidev.polydata4.factory.FlatFileYamlFactory;
-import com.unidev.polydata4.factory.MongodbFactory;
-import com.unidev.polydata4.factory.RedisFactory;
-import com.unidev.polydata4.factory.StorageFactory;
+import com.unidev.polydata4.factory.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +38,7 @@ public class PolydataFactory {
         addFactory(new MongodbFactory());
         addFactory(new FlatFileYamlFactory());
         addFactory(new RedisFactory());
+        addFactory(new SQLiteFactory());
     }
 
     public void addFactory(StorageFactory factory) {

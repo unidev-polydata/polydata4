@@ -1,11 +1,14 @@
 package com.unidev.polydata4.sqlite;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.unidev.polydata4.api.AbstractPolydata;
 import com.unidev.polydata4.domain.BasicPoly;
 import com.unidev.polydata4.domain.BasicPolyList;
 import com.unidev.polydata4.domain.InsertRequest;
 import com.unidev.polydata4.domain.PolyQuery;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.flywaydb.core.Flyway;
 import org.sqlite.SQLiteDataSource;
@@ -13,6 +16,8 @@ import org.sqlite.SQLiteDataSource;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Map;
@@ -27,7 +32,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class PolydataSqlite extends AbstractPolydata {
 
+    private static final String DB_FILE_EXTENSION = ".db.sqlite";
+
     private final File rootDir;
+
+    private final ObjectMapper objectMapper;
+
 
     private final Map<String, SQLiteDataSource> connections = new ConcurrentHashMap<>();
 
@@ -51,10 +61,10 @@ public class PolydataSqlite extends AbstractPolydata {
         }
 
         BasicPoly config = new BasicPoly();
-        config._id(poly + "-" + CONFIG_KEY);
+        config._id(CONFIG_KEY);
         config.put(ITEM_PER_PAGE, DEFAULT_ITEM_PER_PAGE);
         config(poly, config);
-        metadata(poly, BasicPoly.newPoly(poly + "-" + METADATA_KEY));
+        metadata(poly, BasicPoly.newPoly(METADATA_KEY));
 
         return config(poly).get();
 
@@ -62,27 +72,27 @@ public class PolydataSqlite extends AbstractPolydata {
 
     @Override
     public boolean exists(String poly) {
-        return false;
+        return getDbFile(poly).exists();
     }
 
     @Override
     public Optional<BasicPoly> config(String poly) {
-        return Optional.empty();
+        return readInternal(poly, CONFIG_KEY);
     }
 
     @Override
     public void config(String poly, BasicPoly config) {
-
+        persistInternal(poly, config);
     }
 
     @Override
     public Optional<BasicPoly> metadata(String poly) {
-        return Optional.empty();
+        return readInternal(poly, METADATA_KEY);
     }
 
     @Override
     public void metadata(String poly, BasicPoly metadata) {
-
+        persistInternal(poly, metadata);
     }
 
     @Override
@@ -127,7 +137,17 @@ public class PolydataSqlite extends AbstractPolydata {
 
     @Override
     public BasicPolyList list() {
-        return null;
+        BasicPolyList list = new BasicPolyList();
+        File[] files = rootDir.listFiles();
+        if (files != null) {
+            for(File file : files) {
+                if (file.getName().endsWith(DB_FILE_EXTENSION)) {
+                    String poly = file.getName().replace(DB_FILE_EXTENSION, "");
+                    list.add(BasicPoly.newPoly(poly));
+                }
+            }
+        }
+        return list;
     }
 
     @Override
@@ -140,13 +160,51 @@ public class PolydataSqlite extends AbstractPolydata {
 
     }
 
+    private void persistInternal(String poly, BasicPoly data) {
+        try(Connection connection = fetchConnection(poly)) {
+            PreparedStatement preparedStatement = connection
+                    .prepareStatement("INSERT OR REPLACE INTO internal(_id, data, create_date, update_date) VALUES(?,?,?,?);");
+            preparedStatement.setString(1, data._id());
+            preparedStatement.setString(2, objectMapper.writeValueAsString(data));
+            preparedStatement.setLong(3, System.currentTimeMillis());
+            preparedStatement.setLong(4, System.currentTimeMillis());
+            preparedStatement.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Optional<BasicPoly> readInternal(String poly, String id) {
+        try(Connection connection = fetchConnection(poly)) {
+            PreparedStatement preparedStatement = connection
+                    .prepareStatement("SELECT data FROM internal WHERE _id=?");
+            preparedStatement.setString(1, id);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                String rawData = resultSet.getString("data");
+                return Optional.ofNullable(objectMapper.readValue(rawData, BasicPoly.class));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
     private SQLiteDataSource fetchDataSource(String poly) {
         return connections.computeIfAbsent(poly, k -> {
-            File dbFile = new File(rootDir, k + ".db.sqlite");
+            File dbFile = getDbFile(k);
             SQLiteDataSource sqLiteDataSource = new SQLiteDataSource();
             sqLiteDataSource.setUrl("jdbc:sqlite:" + dbFile.getAbsolutePath());
             return sqLiteDataSource;
         });
+    }
+
+
+
+    private File getDbFile(String poly) {
+        File dbFile = new File(rootDir, poly + DB_FILE_EXTENSION);
+        return dbFile;
     }
 
     private Connection fetchConnection(String poly) {

@@ -1,5 +1,6 @@
 package com.unidev.polydata4.sqlite;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -16,7 +17,7 @@ public class PolydataSqliteTest {
     @BeforeEach
     void init() {
         root.mkdirs();
-        polydata = new PolydataSqlite(root);
+        polydata = new PolydataSqlite(root, new ObjectMapper());
     }
 
 
