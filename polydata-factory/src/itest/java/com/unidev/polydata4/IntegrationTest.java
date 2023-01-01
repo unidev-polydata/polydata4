@@ -25,6 +25,7 @@ public abstract class IntegrationTest {
     protected void create(BasicPoly config) {
         polydata = factory.create(config).get();
     }
+
     @Test
     void polyCreation() {
         String poly = "random-name-" + System.currentTimeMillis();
