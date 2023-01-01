@@ -1,0 +1,1 @@
+CREATE INDEX polydata_index ON data(polydata_index);
