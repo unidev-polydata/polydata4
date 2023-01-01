@@ -130,6 +130,16 @@ public abstract class IntegrationTest {
         assertEquals("test-value", config2.fetch("test-key"));
     }
 
+    @Test
+    void metadataOperations() {
+        String poly = createPoly();
+        BasicPoly metadata = polydata.metadata(poly).get();
+        metadata.put("test-key", "test-value");
+        polydata.metadata(poly, metadata);
+
+        BasicPoly metadata2 = polydata.metadata(poly).get();
+        assertEquals("test-value", metadata2.fetch("test-key"));
+    }
 
     String createPoly() {
         String poly = "poly-" + System.currentTimeMillis();
