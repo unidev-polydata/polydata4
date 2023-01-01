@@ -19,10 +19,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -107,8 +104,90 @@ public class PolydataSqlite extends AbstractPolydata {
 
     @Override
     public BasicPolyList insert(String poly, Collection<InsertRequest> insertRequests) {
+        BasicPolyList result = new BasicPolyList();
 
-        return null;
+        Set<String> ids = new HashSet<>();
+        insertRequests.forEach(persistRequest -> ids.add(persistRequest.getPoly()._id()));
+        BasicPolyList existingPolys = read(poly, ids);
+
+        Collection<InsertRequest> toInsert = new HashSet<>();
+        Collection<InsertRequest> toUpdate = new HashSet<>();
+
+        insertRequests.forEach(persistRequest -> {
+            BasicPoly polyToPersist = persistRequest.getPoly();
+            if (existingPolys.hasPoly(polyToPersist._id())) {
+                toUpdate.add(persistRequest);
+            } else {
+                toInsert.add(persistRequest);
+            }
+        });
+
+        try(Connection connection = fetchConnection(poly)) {
+            for (InsertRequest request : toInsert) {
+                String id = request.getPoly()._id();
+
+                Set<String> indexToPersist = request.getIndexToPersist();
+                String tagString = "";
+
+                for (String index : indexToPersist) {
+                    tagString += "|" + index + "|";
+                }
+
+                try {
+                    BasicPoly data = request.getPoly();
+                    String jsonData = objectMapper.writeValueAsString(data);
+
+                    long createDate = Long.parseLong(
+                            data.fetch("_create_date", System.currentTimeMillis()) + "");
+                    long updateDate = Long.parseLong(
+                            data.fetch("_update_date", System.currentTimeMillis()) + "");
+
+                    PreparedStatement preparedStatement = connection
+                            .prepareStatement(
+                                    "INSERT INTO data(_id, data, tags, create_date, update_date) VALUES(?, ?, ?, ?, ?)");
+
+                    preparedStatement.setString(1, id);
+                    preparedStatement.setString(2, jsonData);
+                    preparedStatement.setString(3, tagString);
+                    preparedStatement.setLong(4, createDate);
+                    preparedStatement.setLong(5, updateDate);
+                    preparedStatement.execute();
+                    result.add(request.getPoly());
+                    preparedStatement.close();
+
+                    // tag index increment
+                    for (String tag : indexToPersist) {
+                        PreparedStatement tagIndexUpdate = connection.prepareStatement(
+                                "    INSERT OR IGNORE INTO tags_index(poly, tag, tag_count) VALUES (?, ?, 0);"
+                        );
+                        tagIndexUpdate.setString(1, name);
+                        tagIndexUpdate.setString(2, tag);
+                        tagIndexUpdate.execute();
+
+                        tagIndexUpdate = connection.prepareStatement(
+                                "UPDATE tags_index SET tag_count = tag_count + 1 WHERE poly = ? AND tag = ?;"
+                        );
+                        tagIndexUpdate.setString(1, name);
+                        tagIndexUpdate.setString(2, tag);
+                        tagIndexUpdate.execute();
+                        tagIndexUpdate.close();
+                    }
+                } catch (Exception throwables) {
+                    log.error("Failed to persist poly", throwables);
+                    throw new RuntimeException(throwables);
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+
+        if (!toUpdate.isEmpty()) {
+            update(poly, toUpdate);
+        }
+
+        return result;
     }
 
     @Override
