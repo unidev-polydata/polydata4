@@ -1,6 +1,7 @@
 package com.unidev.polydata4.sqlite;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.unidev.platform.Strings;
 import com.unidev.polydata4.api.AbstractPolydata;
 import com.unidev.polydata4.domain.BasicPoly;
 import com.unidev.polydata4.domain.BasicPolyList;
@@ -10,6 +11,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.flywaydb.core.Flyway;
 import org.sqlite.SQLiteDataSource;
 
@@ -123,18 +125,26 @@ public class PolydataSqlite extends AbstractPolydata {
         });
 
         try(Connection connection = fetchConnection(poly)) {
+            connection.setAutoCommit(false);
+            PreparedStatement preparedStatement = connection
+                    .prepareStatement(
+                            "INSERT INTO data(_id, data, polydata_index, create_date, update_date) VALUES(?, ?, ?, ?, ?)");
+
             for (InsertRequest request : toInsert) {
                 String id = request.getPoly()._id();
 
                 Set<String> indexToPersist = request.getIndexToPersist();
+                if (CollectionUtils.isEmpty(indexToPersist)) {
+                    indexToPersist = new HashSet<>();
+                }
                 String tagString = "";
 
                 for (String index : indexToPersist) {
                     tagString += "|" + index + "|";
                 }
+                BasicPoly data = request.getPoly();
 
                 try {
-                    BasicPoly data = request.getPoly();
                     String jsonData = objectMapper.writeValueAsString(data);
 
                     long createDate = Long.parseLong(
@@ -142,29 +152,34 @@ public class PolydataSqlite extends AbstractPolydata {
                     long updateDate = Long.parseLong(
                             data.fetch("_update_date", System.currentTimeMillis()) + "");
 
-                    PreparedStatement preparedStatement = connection
-                            .prepareStatement(
-                                    "INSERT INTO data(_id, data, tags, create_date, update_date) VALUES(?, ?, ?, ?, ?)");
 
                     preparedStatement.setString(1, id);
                     preparedStatement.setString(2, jsonData);
                     preparedStatement.setString(3, tagString);
                     preparedStatement.setLong(4, createDate);
                     preparedStatement.setLong(5, updateDate);
-                    preparedStatement.execute();
-                    result.add(request.getPoly());
-                    preparedStatement.close();
+                    preparedStatement.addBatch();
 
-                } catch (Exception t) {
-                    log.error("Failed to persist poly", throwables);
-                    throw new RuntimeException(throwables);
+                    result.add(request.getPoly());
+
+                } catch (Exception e) {
+                    log.error("Failed to persist poly {}", data._id(), e);
+                    throw new RuntimeException(e);
                 }
             }
+
+            preparedStatement.executeBatch();
+            connection.commit();
+            connection.setAutoCommit(true);
+            preparedStatement.close();
 
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
+        log.info("Added polys {} ", toInsert.size());
+
+        recalculateIndex(poly);
 
         if (!toUpdate.isEmpty()) {
             update(poly, toUpdate);
@@ -174,13 +189,13 @@ public class PolydataSqlite extends AbstractPolydata {
     }
 
     @Override
-    public BasicPolyList update(String poly, Collection<InsertRequest> insertRequests) {
+    public BasicPolyList update(String poly, Collection<InsertRequest> updateRequests) {
         BasicPolyList result = new BasicPolyList();
         try(Connection connection = fetchConnection(poly)) {
             connection.setAutoCommit(false);
             PreparedStatement preparedStatement = connection
-                    .prepareStatement("UPDATE data SET data=?, tags=?, update_date=? WHERE _id=?");
-            for (InsertRequest request : insertRequests) {
+                    .prepareStatement("UPDATE data SET data=?, polydata_index=?, update_date=? WHERE _id=?");
+            for (InsertRequest request : updateRequests) {
                 Set<String> indexToPersist = request.getIndexToPersist();
                 String tagString = "";
 
@@ -207,17 +222,47 @@ public class PolydataSqlite extends AbstractPolydata {
             throw new RuntimeException(e);
         }
 
+        recalculateIndex(poly);
+
+        log.info("Updated polys {} ", updateRequests.size());
         return result;
     }
 
     @Override
     public BasicPolyList read(String poly, Set<String> ids) {
-        return null;
+        BasicPolyList basicPolyList = new BasicPolyList();
+
+        try(Connection connection = fetchConnection(poly)) {
+            PreparedStatement preparedStatement = connection
+                    .prepareStatement("SELECT data FROM data WHERE _id IN (?) ; ");
+            preparedStatement.setString(1, "" + String.join(",", ids) + "");
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while(resultSet.next()) {
+                String rawData = resultSet.getString("data");
+                BasicPoly basicPoly = objectMapper.readValue(rawData, BasicPoly.class);
+                basicPolyList.add(basicPoly);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return basicPolyList;
     }
 
     @Override
     public BasicPolyList remove(String poly, Set<String> ids) {
-        return null;
+        BasicPolyList basicPolyList = read(poly, ids);
+        try(Connection connection = fetchConnection(poly)) {
+            PreparedStatement preparedStatement = connection
+                    .prepareStatement("DELETE FROM data WHERE _id IN (?) ; ");
+            preparedStatement.setString(1, "" + String.join(",", ids) + "");
+            long removedRows = preparedStatement.executeUpdate();
+            log.info("Removed {} rows", removedRows);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return basicPolyList;
     }
 
     @Override
@@ -252,6 +297,10 @@ public class PolydataSqlite extends AbstractPolydata {
 
     @Override
     public void close() throws IOException {
+
+    }
+
+    private void recalculateIndex(String poly) {
 
     }
 
