@@ -18,7 +18,7 @@ import java.util.Set;
 @NoArgsConstructor
 public class InsertRequest implements Serializable {
 
-    private BasicPoly poly;
+    private BasicPoly data;
     private Set<String> indexToPersist;
 
     // additional data to pass for indexing

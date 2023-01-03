@@ -132,7 +132,7 @@ public class PolydataRedis extends AbstractPolydata {
 
             Set<String> polyIds = new HashSet<>();
             for (InsertRequest insertRequest : insertRequests) {
-                BasicPoly data = insertRequest.getPoly();
+                BasicPoly data = insertRequest.getData();
                 polyIds.add(data._id());
 
                 Set<String> indexToPersist = insertRequest.getIndexToPersist();
@@ -147,14 +147,14 @@ public class PolydataRedis extends AbstractPolydata {
 
             for (InsertRequest insertRequest : insertRequests) {
 
-                BasicPoly polyToPersist = insertRequest.getPoly();
+                BasicPoly polyToPersist = insertRequest.getData();
                 writePoly(jedis, poly, polyToPersist);
                 Map<String, BasicPoly> indexData = insertRequest.getIndexData();
 
                 for (String indexName : insertRequest.getIndexToPersist()) {
                     // add poly it to list of polys
                     byte[] indexId = fetchId(poly, indexName);
-                    jedis.lpush(indexId, insertRequest.getPoly()._id().getBytes());
+                    jedis.lpush(indexId, insertRequest.getData()._id().getBytes());
 
                     BasicPoly tagIndex = index(poly).orElseGet(() -> BasicPoly.newPoly(TAG_INDEX_KEY));
 

@@ -95,7 +95,7 @@ public class PolydataMongodbTests {
     @Test
     void insert() {
         polydata.insert(polyId, Collections.singleton(InsertRequest.builder()
-                .poly(BasicPoly.newPoly("test").with("app", "123"))
+                .data(BasicPoly.newPoly("test").with("app", "123"))
                 .indexToPersist(Set.of("tag1", "date"))
                 .build()));
 
@@ -114,7 +114,7 @@ public class PolydataMongodbTests {
         for (int i = 0; i < 100; i++) {
             polydata.insert(polyId, Collections.singletonList(
                     InsertRequest.builder()
-                            .poly(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
+                            .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
                             .indexToPersist(Set.of("tag_x", "tag_" + i, "tag_a_" + (i % 2)))
                             .build())
             );
@@ -133,11 +133,11 @@ public class PolydataMongodbTests {
     void removal() {
         polydata.insert(polyId, Arrays.asList(
                         InsertRequest.builder()
-                                .poly(BasicPoly.newPoly("test").with("app", "123"))
+                                .data(BasicPoly.newPoly("test").with("app", "123"))
                                 .indexToPersist(Set.of("tag1", "date"))
                                 .build(),
                         InsertRequest.builder()
-                                .poly(BasicPoly.newPoly("test2").with("app", "567"))
+                                .data(BasicPoly.newPoly("test2").with("app", "567"))
                                 .indexToPersist(Set.of("tag2", "date"))
                                 .build()
                 )
@@ -158,7 +158,7 @@ public class PolydataMongodbTests {
         for (int i = 0; i < 100; i++) {
             polydata.insert(polyId, Collections.singletonList(
                     InsertRequest.builder()
-                            .poly(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
+                            .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
                             .indexToPersist(Set.of("tag_x", "tag_" + i))
                             .build())
             );
@@ -184,7 +184,7 @@ public class PolydataMongodbTests {
         for (int i = 0; i < 105; i++) {
             polydata.insert(polyId, Collections.singletonList(
                     InsertRequest.builder()
-                            .poly(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
+                            .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
                             .indexToPersist(Set.of("tag_x", "tag_" + i))
                             .build())
             );

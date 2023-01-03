@@ -1,26 +1,22 @@
 package com.unidev.polydata4.sqlite;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.unidev.platform.Strings;
 import com.unidev.polydata4.api.AbstractPolydata;
 import com.unidev.polydata4.domain.BasicPoly;
 import com.unidev.polydata4.domain.BasicPolyList;
 import com.unidev.polydata4.domain.InsertRequest;
 import com.unidev.polydata4.domain.PolyQuery;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.flywaydb.core.Flyway;
 import org.sqlite.SQLiteDataSource;
 
+import javax.sql.rowset.serial.SerialArray;
 import java.io.File;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -109,14 +105,14 @@ public class PolydataSqlite extends AbstractPolydata {
         BasicPolyList result = new BasicPolyList();
 
         Set<String> ids = new HashSet<>();
-        insertRequests.forEach(persistRequest -> ids.add(persistRequest.getPoly()._id()));
+        insertRequests.forEach(persistRequest -> ids.add(persistRequest.getData()._id()));
         BasicPolyList existingPolys = read(poly, ids);
 
         Collection<InsertRequest> toInsert = new HashSet<>();
         Collection<InsertRequest> toUpdate = new HashSet<>();
 
         insertRequests.forEach(persistRequest -> {
-            BasicPoly polyToPersist = persistRequest.getPoly();
+            BasicPoly polyToPersist = persistRequest.getData();
             if (existingPolys.hasPoly(polyToPersist._id())) {
                 toUpdate.add(persistRequest);
             } else {
@@ -124,14 +120,14 @@ public class PolydataSqlite extends AbstractPolydata {
             }
         });
 
-        try(Connection connection = fetchConnection(poly)) {
+        try (Connection connection = fetchConnection(poly)) {
             connection.setAutoCommit(false);
             PreparedStatement preparedStatement = connection
                     .prepareStatement(
                             "INSERT INTO data(_id, data, polydata_index, create_date, update_date) VALUES(?, ?, ?, ?, ?)");
 
             for (InsertRequest request : toInsert) {
-                String id = request.getPoly()._id();
+                String id = request.getData()._id();
 
                 Set<String> indexToPersist = request.getIndexToPersist();
                 if (CollectionUtils.isEmpty(indexToPersist)) {
@@ -142,7 +138,7 @@ public class PolydataSqlite extends AbstractPolydata {
                 for (String index : indexToPersist) {
                     tagString += "|" + index + "|";
                 }
-                BasicPoly data = request.getPoly();
+                BasicPoly data = request.getData();
 
                 try {
                     String jsonData = objectMapper.writeValueAsString(data);
@@ -160,7 +156,7 @@ public class PolydataSqlite extends AbstractPolydata {
                     preparedStatement.setLong(5, updateDate);
                     preparedStatement.addBatch();
 
-                    result.add(request.getPoly());
+                    result.add(request.getData());
 
                 } catch (Exception e) {
                     log.error("Failed to persist poly {}", data._id(), e);
@@ -191,7 +187,7 @@ public class PolydataSqlite extends AbstractPolydata {
     @Override
     public BasicPolyList update(String poly, Collection<InsertRequest> updateRequests) {
         BasicPolyList result = new BasicPolyList();
-        try(Connection connection = fetchConnection(poly)) {
+        try (Connection connection = fetchConnection(poly)) {
             connection.setAutoCommit(false);
             PreparedStatement preparedStatement = connection
                     .prepareStatement("UPDATE data SET data=?, polydata_index=?, update_date=? WHERE _id=?");
@@ -202,7 +198,7 @@ public class PolydataSqlite extends AbstractPolydata {
                 for (String index : indexToPersist) {
                     tagString += "|" + index + "|";
                 }
-                BasicPoly data = request.getPoly();
+                BasicPoly data = request.getData();
                 String id = data._id();
                 String jsonData = objectMapper.writeValueAsString(data);
                 preparedStatement.setString(1, jsonData);
@@ -231,14 +227,12 @@ public class PolydataSqlite extends AbstractPolydata {
     @Override
     public BasicPolyList read(String poly, Set<String> ids) {
         BasicPolyList basicPolyList = new BasicPolyList();
-
-        try(Connection connection = fetchConnection(poly)) {
+        try (Connection connection = fetchConnection(poly)) {
             PreparedStatement preparedStatement = connection
                     .prepareStatement("SELECT data FROM data WHERE _id IN (?) ; ");
-            preparedStatement.setString(1, "" + String.join(",", ids) + "");
-
+            preparedStatement.setString(1, "" +String.join(",", ids) + "");
             ResultSet resultSet = preparedStatement.executeQuery();
-            while(resultSet.next()) {
+            while (resultSet.next()) {
                 String rawData = resultSet.getString("data");
                 BasicPoly basicPoly = objectMapper.readValue(rawData, BasicPoly.class);
                 basicPolyList.add(basicPoly);
@@ -253,7 +247,7 @@ public class PolydataSqlite extends AbstractPolydata {
     @Override
     public BasicPolyList remove(String poly, Set<String> ids) {
         BasicPolyList basicPolyList = read(poly, ids);
-        try(Connection connection = fetchConnection(poly)) {
+        try (Connection connection = fetchConnection(poly)) {
             PreparedStatement preparedStatement = connection
                     .prepareStatement("DELETE FROM data WHERE _id IN (?) ; ");
             preparedStatement.setString(1, "" + String.join(",", ids) + "");
@@ -280,7 +274,7 @@ public class PolydataSqlite extends AbstractPolydata {
         BasicPolyList list = new BasicPolyList();
         File[] files = rootDir.listFiles();
         if (files != null) {
-            for(File file : files) {
+            for (File file : files) {
                 if (file.getName().endsWith(DB_FILE_EXTENSION)) {
                     String poly = file.getName().replace(DB_FILE_EXTENSION, "");
                     list.add(BasicPoly.newPoly(poly));
@@ -305,7 +299,7 @@ public class PolydataSqlite extends AbstractPolydata {
     }
 
     private void persistInternal(String poly, BasicPoly data) {
-        try(Connection connection = fetchConnection(poly)) {
+        try (Connection connection = fetchConnection(poly)) {
             PreparedStatement preparedStatement = connection
                     .prepareStatement("INSERT OR REPLACE INTO internal(_id, data, create_date, update_date) VALUES(?,?,?,?);");
             preparedStatement.setString(1, data._id());
@@ -319,7 +313,7 @@ public class PolydataSqlite extends AbstractPolydata {
     }
 
     private Optional<BasicPoly> readInternal(String poly, String id) {
-        try(Connection connection = fetchConnection(poly)) {
+        try (Connection connection = fetchConnection(poly)) {
             PreparedStatement preparedStatement = connection
                     .prepareStatement("SELECT data FROM internal WHERE _id=?");
             preparedStatement.setString(1, id);
@@ -343,7 +337,6 @@ public class PolydataSqlite extends AbstractPolydata {
             return sqLiteDataSource;
         });
     }
-
 
 
     private File getDbFile(String poly) {

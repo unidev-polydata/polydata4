@@ -8,6 +8,8 @@ import com.unidev.polydata4.domain.InsertRequest;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -49,13 +51,12 @@ public abstract class IntegrationTest {
         assertEquals(5, list.list().size());
     }
 
-
     @Test
     void operationsById() {
         String poly = createPoly();
         BasicPoly data = BasicPoly.newPoly("test-id");
         data.put("test-key", "test-value");
-        polydata.insert(poly, Set.of(InsertRequest.builder().poly(data).build()));
+        polydata.insert(poly, Set.of(InsertRequest.builder().data(data).build()));
         BasicPolyList list = polydata.read(poly, Set.of("test-id"));
         assertNotNull(list);
         assertEquals(1, list.list().size());
@@ -71,6 +72,27 @@ public abstract class IntegrationTest {
         assertEquals(0, list.list().size());
     }
 
+    @Test
+    void operationsByMultipleIds() {
+        String poly = createPoly();
+        Set<InsertRequest> items = new HashSet<>();
+        for(int i = 1;i<=100;i++) {
+            BasicPoly data = BasicPoly.newPoly("test-id-" + i);
+            data.put("item", "item " + i);
+            data.put("id", i);
+            data.put("date", new Date());
+            items.add(InsertRequest.builder().data(data).build());
+        }
+        polydata.insert(poly, items);
+
+        Set<String> queryIds = new HashSet<>();
+        for(int i = 1;i<=100;i++) {
+            queryIds.add("test-id-" + i);
+        }
+        BasicPolyList list = polydata.read(poly, queryIds);
+        assertNotNull(list);
+        assertEquals(100, list.list().size());
+    }
 
     @Test
     void query() {
@@ -79,7 +101,7 @@ public abstract class IntegrationTest {
         for (int i = 0; i < 100; i++) {
             polydata.insert(poly, Collections.singletonList(
                     InsertRequest.builder()
-                            .poly(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
+                            .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
                             .indexToPersist(Set.of("tag_x", "tag_" + i))
                             .build())
             );
@@ -105,7 +127,7 @@ public abstract class IntegrationTest {
         for (int i = 0; i < 105; i++) {
             polydata.insert(poly, Collections.singletonList(
                     InsertRequest.builder()
-                            .poly(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
+                            .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
                             .indexToPersist(Set.of("tag_x", "tag_" + i))
                             .build())
             );
