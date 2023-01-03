@@ -155,24 +155,7 @@ public class PolydataSqlite extends AbstractPolydata {
                     result.add(request.getPoly());
                     preparedStatement.close();
 
-                    // tag index increment
-                    for (String tag : indexToPersist) {
-                        PreparedStatement tagIndexUpdate = connection.prepareStatement(
-                                "    INSERT OR IGNORE INTO tags_index(poly, tag, tag_count) VALUES (?, ?, 0);"
-                        );
-                        tagIndexUpdate.setString(1, name);
-                        tagIndexUpdate.setString(2, tag);
-                        tagIndexUpdate.execute();
-
-                        tagIndexUpdate = connection.prepareStatement(
-                                "UPDATE tags_index SET tag_count = tag_count + 1 WHERE poly = ? AND tag = ?;"
-                        );
-                        tagIndexUpdate.setString(1, name);
-                        tagIndexUpdate.setString(2, tag);
-                        tagIndexUpdate.execute();
-                        tagIndexUpdate.close();
-                    }
-                } catch (Exception throwables) {
+                } catch (Exception t) {
                     log.error("Failed to persist poly", throwables);
                     throw new RuntimeException(throwables);
                 }
