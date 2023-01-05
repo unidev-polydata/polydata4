@@ -230,7 +230,7 @@ public class PolydataSqlite extends AbstractPolydata {
         try (Connection connection = fetchConnection(poly)) {
             PreparedStatement preparedStatement = connection
                     .prepareStatement("SELECT data FROM data WHERE _id IN (?) ; ");
-            preparedStatement.setString(1, "" +String.join(",", ids) + "");
+            preparedStatement.setString(1, "'" +String.join("','", ids) + "'");
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 String rawData = resultSet.getString("data");
