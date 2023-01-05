@@ -9,14 +9,15 @@ import com.unidev.polydata4.domain.PolyQuery;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.flywaydb.core.Flyway;
 import org.sqlite.SQLiteDataSource;
 
-import javax.sql.rowset.serial.SerialArray;
 import java.io.File;
 import java.io.IOException;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -228,9 +229,13 @@ public class PolydataSqlite extends AbstractPolydata {
     public BasicPolyList read(String poly, Set<String> ids) {
         BasicPolyList basicPolyList = new BasicPolyList();
         try (Connection connection = fetchConnection(poly)) {
+            String q = createQuestionMarks(ids);
             PreparedStatement preparedStatement = connection
-                    .prepareStatement("SELECT data FROM data WHERE _id IN (?) ; ");
-            preparedStatement.setString(1, "'" +String.join("','", ids) + "'");
+                    .prepareStatement("SELECT data FROM data WHERE _id IN ( " + q + ") ; ");
+            int i = 1;
+            for (String id : ids) {
+                preparedStatement.setString(i++, id);
+            }
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 String rawData = resultSet.getString("data");
@@ -248,9 +253,13 @@ public class PolydataSqlite extends AbstractPolydata {
     public BasicPolyList remove(String poly, Set<String> ids) {
         BasicPolyList basicPolyList = read(poly, ids);
         try (Connection connection = fetchConnection(poly)) {
+            String q = createQuestionMarks(ids);
             PreparedStatement preparedStatement = connection
-                    .prepareStatement("DELETE FROM data WHERE _id IN (?) ; ");
-            preparedStatement.setString(1, "" + String.join(",", ids) + "");
+                    .prepareStatement("DELETE FROM data WHERE _id IN (" + q + ") ; ");
+            int i = 1;
+            for (String id : ids) {
+                preparedStatement.setString(i++, id);
+            }
             long removedRows = preparedStatement.executeUpdate();
             log.info("Removed {} rows", removedRows);
         } catch (SQLException e) {
@@ -350,6 +359,15 @@ public class PolydataSqlite extends AbstractPolydata {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private String createQuestionMarks(Set<String> ids) {
+        String q = "";
+        for (int i = 0; i < ids.size(); i++) {
+            q += "?,";
+        }
+        q = q.substring(0, q.length() - 1);
+        return q;
     }
 
     static {
