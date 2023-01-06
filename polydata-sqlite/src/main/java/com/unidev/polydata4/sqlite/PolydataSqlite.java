@@ -2,13 +2,11 @@ package com.unidev.polydata4.sqlite;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.unidev.polydata4.api.AbstractPolydata;
-import com.unidev.polydata4.domain.BasicPoly;
-import com.unidev.polydata4.domain.BasicPolyList;
-import com.unidev.polydata4.domain.InsertRequest;
-import com.unidev.polydata4.domain.PolyQuery;
+import com.unidev.polydata4.domain.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.flywaydb.core.Flyway;
 import org.sqlite.SQLiteDataSource;
 
@@ -261,12 +259,70 @@ public class PolydataSqlite extends AbstractPolydata {
 
     @Override
     public BasicPolyList query(String poly, PolyQuery polyQuery) {
-        return null;
+        BasicPolyQuery query = (BasicPolyQuery) polyQuery;
+        Optional<BasicPoly> configPoly = config(poly);
+
+        if (configPoly.isEmpty()) {
+            throw new RuntimeException("Poly " + poly + " is not configured");
+        }
+
+        BasicPolyList list = new BasicPolyList();
+
+        String index = DATE_INDEX;
+        String tag = query.index();
+        if (!StringUtils.isBlank(tag)) {
+            index = tag;
+        }
+        BasicPoly config = configPoly.get();
+        final int page = query.page() < 0 ? 0 : query.page();
+        Integer defaultItemPerPage = config.fetch(ITEM_PER_PAGE, DEFAULT_ITEM_PER_PAGE);
+        Integer itemPerPage = query.getOptions().fetch(ITEM_PER_PAGE, defaultItemPerPage);
+        try (Connection connection = fetchConnection(poly)) {
+            PreparedStatement preparedStatement = null;
+            if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
+                preparedStatement = connection.prepareStatement("SELECT data FROM data WHERE polydata_index LIKE ? ORDER BY RANDOM() LIMIT " + itemPerPage + " ; ");
+            } else {
+                preparedStatement = connection.prepareStatement("SELECT data FROM data WHERE polydata_index LIKE ? ORDER BY update_date DESC LIMIT " + (page * itemPerPage) + "," + itemPerPage + " ; ");
+            }
+            preparedStatement.setString(1, "%|" + index + "|%" );
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                String rawData = resultSet.getString("data");
+                BasicPoly basicPoly = objectMapper.readValue(rawData, BasicPoly.class);
+                list.add(basicPoly);
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return list;
     }
 
     @Override
     public Long count(String poly, PolyQuery polyQuery) {
-        return null;
+        BasicPolyQuery query = (BasicPolyQuery) polyQuery;
+        Optional<BasicPoly> configPoly = config(poly);
+        if (configPoly.isEmpty()) {
+            throw new RuntimeException("Poly " + poly + " is not configured");
+        }
+        String index = DATE_INDEX;
+        String tag = query.index();
+        if (!StringUtils.isBlank(tag)) {
+            index = tag;
+        }
+        try (Connection connection = fetchConnection(poly)) {
+            PreparedStatement preparedStatement = null;
+                preparedStatement = connection.prepareStatement("SELECT count(data) FROM data WHERE polydata_index LIKE ? ; ");
+            preparedStatement.setString(1, "%|" + index + "|%" );
+            ResultSet resultSet = preparedStatement.executeQuery();
+            long count = 0;
+            if (resultSet.next()) {
+                count = resultSet.getLong(1);
+            }
+            return count;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
