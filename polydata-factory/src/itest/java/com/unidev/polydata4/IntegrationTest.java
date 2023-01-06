@@ -113,6 +113,42 @@ public abstract class IntegrationTest {
     }
 
     @Test
+    void updateIndexes() {
+        String poly = createPoly();
+        // insert test data
+        List<InsertRequest> list = new ArrayList<>();
+        for (int i = 1; i <= 100; i++) {
+            list.add(InsertRequest.builder()
+                    .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
+                    .indexToPersist(Set.of("id_" + (i % 2), "tag_" + i))
+                    .build());
+
+        }
+        polydata.insert(poly, list);
+
+        list.clear();
+        for (int i = 1; i <= 100; i++) {
+            list.add(InsertRequest.builder()
+                    .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
+                    .indexToPersist(Set.of("id_" + (i % 4), "tag_" + i))
+                    .build());
+
+        }
+        polydata.insert(poly, list);
+
+        BasicPoly index = polydata.index(poly).get();
+        assertNotNull(index);
+
+        assertEquals("25", index.fetch("id_0") + "");
+        assertEquals("25", index.fetch("id_1") + "");
+        assertEquals("25", index.fetch("id_2") + "");
+        assertEquals("25", index.fetch("id_3") + "");
+        for (int i = 1; i <= 100; i++) {
+            assertEquals("1", index.fetch("tag_" + i ) + "");
+        }
+    }
+
+    @Test
     void query() {
         String poly = createPoly();
 
