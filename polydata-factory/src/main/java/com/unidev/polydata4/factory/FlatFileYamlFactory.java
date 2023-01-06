@@ -23,7 +23,6 @@ public class FlatFileYamlFactory implements StorageFactory {
         }
         String root = config.fetch("root") + "";
         PolydataYaml polydataYaml = new PolydataYaml(new File(root));
-        StorageFactory.fetchCache(config.fetch("cache")).ifPresent(polydataYaml::setCache);
         return Optional.of(polydataYaml);
     }
 

@@ -24,7 +24,6 @@ public class MongodbFactory implements StorageFactory {
         String uri = config.fetch("uri") + "";
 
         PolydataMongodb polydataMongodb = new PolydataMongodb(uri);
-        StorageFactory.fetchCache(config.fetch("cache")).ifPresent(polydataMongodb::setCache);
         return Optional.of(polydataMongodb);
     }
 

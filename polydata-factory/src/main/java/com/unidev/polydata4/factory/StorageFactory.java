@@ -21,7 +21,7 @@ public interface StorageFactory {
     /**
      * Fetch cache provider from configuration
      */
-    static Optional<Cache<String, BasicPoly>> fetchCache(BasicPoly config) {
+    default Optional<Cache<String, BasicPoly>> fetchCache(BasicPoly config) {
         if (config == null) {
             return Optional.empty();
         }
