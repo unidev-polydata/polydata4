@@ -55,6 +55,12 @@ type: flat-file-yaml
 root: /data/polydata
 ```
 
+SQLite:
+```
+type: "sqlite"
+root: "/data/sqlite"
+```
+
 Cache integration:
 ```
 cache:
