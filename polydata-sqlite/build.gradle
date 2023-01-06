@@ -6,7 +6,7 @@ dependencies {
             "com.fasterxml.jackson.core:jackson-core:$jacksonVersion",
             "org.xerial:sqlite-jdbc:$sqliteJdbcVersion",
             "org.flywaydb:flyway-core:$flywayCoreVersion",
-            "org.apache.commons:commons-text:1.10.0"
+            "org.apache.commons:commons-text:$commonsTextVersion"
 
     )
 }
