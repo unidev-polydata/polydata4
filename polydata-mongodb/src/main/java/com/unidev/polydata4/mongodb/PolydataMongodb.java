@@ -33,7 +33,6 @@ public class PolydataMongodb extends AbstractPolydata {
     public static final String COUNT = "count";
     private static final String UPDATE_DATE = "_update_date";
 
-    private static final String INDEXED_TAGS = "_indexed_tags";
 
     @Getter
     @Setter
@@ -54,7 +53,7 @@ public class PolydataMongodb extends AbstractPolydata {
     }
 
     public void prepareStorage(String poly) {
-        collection(poly).createIndex(Indexes.ascending(INDEXED_TAGS));
+        collection(poly).createIndex(Indexes.ascending(INDEXES));
         indexCollection(poly).createIndex(Indexes.descending(COUNT));
     }
 
@@ -166,7 +165,7 @@ public class PolydataMongodb extends AbstractPolydata {
             polyDocument.put(_ID, id);
             polyDocument.put(CREATE_DATE, createDate);
             polyDocument.put(UPDATE_DATE, createDate);
-            polyDocument.put(INDEXED_TAGS, indexToPersist);
+            polyDocument.put(INDEXES, indexToPersist);
 
             Bson update = new Document("$set", polyDocument);
             Bson filter = Filters.eq(_ID, id);
@@ -298,7 +297,7 @@ public class PolydataMongodb extends AbstractPolydata {
         List<UpdateOneModel<Document>> tagsUpdate = new ArrayList<>();
 
         for (BasicPoly basicPoly : basicPolyList.list()) {
-            Collection<String> tags = basicPoly.fetch(INDEXED_TAGS);
+            Collection<String> tags = basicPoly.fetch(INDEXES);
 
             // decrement indexes...
             Map<String, Integer> tagsToDecrement = new HashMap<>();
@@ -357,7 +356,7 @@ public class PolydataMongodb extends AbstractPolydata {
 
         Integer defaultItemPerPage = config.fetch(ITEM_PER_PAGE, DEFAULT_ITEM_PER_PAGE);
         Integer itemPerPage = query.getOptions().fetch(ITEM_PER_PAGE, defaultItemPerPage);
-        Bson mongoQuery = Filters.in(INDEXED_TAGS, index);
+        Bson mongoQuery = Filters.in(INDEXES, index);
         MongoCollection<Document> collection = collection(poly);
         if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
             long count = collection(POLY).countDocuments(mongoQuery);
@@ -433,7 +432,7 @@ public class PolydataMongodb extends AbstractPolydata {
             return cachedResult;
         }
 
-        Bson mongoQuery = Filters.in(INDEXED_TAGS, index);
+        Bson mongoQuery = Filters.in(INDEXES, index);
         MongoCollection<Document> collection = collection(poly);
         Long count = collection.countDocuments(mongoQuery);
 

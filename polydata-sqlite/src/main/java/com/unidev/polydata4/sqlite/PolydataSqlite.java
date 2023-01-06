@@ -30,10 +30,11 @@ public class PolydataSqlite extends AbstractPolydata {
 
     private static final String DB_FILE_EXTENSION = ".db.sqlite";
 
+    private static final String INDEX_KEY = "index";
+
     private final File rootDir;
 
     private final ObjectMapper objectMapper;
-
 
     private final Map<String, SQLiteDataSource> connections = new ConcurrentHashMap<>();
 
@@ -93,12 +94,13 @@ public class PolydataSqlite extends AbstractPolydata {
 
     @Override
     public Optional<BasicPoly> index(String poly) {
-        return Optional.empty();
+        return readInternal(poly, INDEX_KEY);
     }
 
     @Override
     public Optional<BasicPoly> indexData(String poly, String indexId) {
-        return Optional.empty();
+        Optional<BasicPoly> index = index(poly);
+        return index.map(basicPoly -> basicPoly.fetch(indexId));
     }
 
     @Override
@@ -129,18 +131,10 @@ public class PolydataSqlite extends AbstractPolydata {
 
             for (InsertRequest request : toInsert) {
                 String id = request.getData()._id();
-
-                Set<String> indexToPersist = request.getIndexToPersist();
-                if (CollectionUtils.isEmpty(indexToPersist)) {
-                    indexToPersist = new HashSet<>();
-                }
-                String tagString = "";
-
-                for (String index : indexToPersist) {
-                    tagString += "|" + index + "|";
-                }
+                Set<String> tags = buildTagIndex(request);
+                String tagString = buildTagIndexString(tags);
                 BasicPoly data = request.getData();
-
+                data.put(INDEXES, tags);
                 try {
                     String jsonData = objectMapper.writeValueAsString(data);
 
@@ -193,13 +187,10 @@ public class PolydataSqlite extends AbstractPolydata {
             PreparedStatement preparedStatement = connection
                     .prepareStatement("UPDATE data SET data=?, polydata_index=?, update_date=? WHERE _id=?");
             for (InsertRequest request : updateRequests) {
-                Set<String> indexToPersist = request.getIndexToPersist();
-                String tagString = "";
-
-                for (String index : indexToPersist) {
-                    tagString += "|" + index + "|";
-                }
+                Set<String> tags = buildTagIndex(request);
+                String tagString = buildTagIndexString(tags);
                 BasicPoly data = request.getData();
+                data.put(INDEXES, tags);
                 String id = data._id();
                 String jsonData = objectMapper.writeValueAsString(data);
                 preparedStatement.setString(1, jsonData);
@@ -304,7 +295,25 @@ public class PolydataSqlite extends AbstractPolydata {
     }
 
     private void recalculateIndex(String poly) {
+        BasicPoly index = BasicPoly.newPoly(INDEX_KEY);
+        try (Connection connection = fetchConnection(poly)) {
+            PreparedStatement preparedStatement = connection
+                    .prepareStatement("SELECT polydata_index FROM data");
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                String indexString = resultSet.getString("polydata_index");
+                String[] split = indexString.split("\\|");
+                for (String s : split) {
+                    if (s != null && !s.isEmpty()) {
+                        index.put(s, index.fetch(s, 0L) + 1);
+                    }
+                }
 
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        persistInternal(poly, index);
     }
 
     private void persistInternal(String poly, BasicPoly data) {
@@ -368,6 +377,25 @@ public class PolydataSqlite extends AbstractPolydata {
         }
         q = q.substring(0, q.length() - 1);
         return q;
+    }
+
+    private String buildTagIndexString(Set<String> indexToPersist) {
+        String tagString = "";
+        for (String index : indexToPersist) {
+            tagString += "|" + index + "|";
+        }
+        return tagString;
+    }
+
+    private static Set<String> buildTagIndex(InsertRequest request) {
+        Set<String> indexToPersist = request.getIndexToPersist();
+        if (CollectionUtils.isEmpty(indexToPersist)) {
+            indexToPersist = new HashSet<>();
+        } else {
+            indexToPersist = new HashSet<>(indexToPersist);
+        }
+        indexToPersist.add(DATE_INDEX);
+        return indexToPersist;
     }
 
     static {

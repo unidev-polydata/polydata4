@@ -29,6 +29,9 @@ public interface Polydata extends Closeable {
 
     String DATE_INDEX = "_date";
 
+    String INDEXES = "_indexes";
+
+
     void prepareStorage();
 
     BasicPoly create(String poly);

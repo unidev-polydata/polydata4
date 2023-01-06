@@ -7,10 +7,7 @@ import com.unidev.polydata4.domain.BasicPolyQuery;
 import com.unidev.polydata4.domain.InsertRequest;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -92,6 +89,27 @@ public abstract class IntegrationTest {
         BasicPolyList list = polydata.read(poly, queryIds);
         assertNotNull(list);
         assertEquals(100, list.list().size());
+    }
+
+    @Test
+    void indexListing() {
+        String poly = createPoly();
+        List<InsertRequest> list = new ArrayList<>();
+        for (int i = 1; i <= 100; i++) {
+            list.add(InsertRequest.builder()
+                    .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
+                    .indexToPersist(Set.of("id_" + (i % 2), "tag_" + i))
+                    .build());
+
+        }
+        polydata.insert(poly, list);
+        BasicPoly index = polydata.index(poly).get();
+        assertNotNull(index);
+        assertEquals("50", index.fetch("id_0") + "");
+        assertEquals("50", index.fetch("id_1") + "");
+        for (int i = 1; i <= 100; i++) {
+            assertEquals("1", index.fetch("tag_" + i ) + "");
+        }
     }
 
     @Test
