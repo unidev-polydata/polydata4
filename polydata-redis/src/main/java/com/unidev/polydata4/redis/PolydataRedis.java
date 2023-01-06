@@ -159,12 +159,11 @@ public class PolydataRedis extends AbstractPolydata {
                     BasicPoly tagIndex = index(poly).orElseGet(() -> BasicPoly.newPoly(TAG_INDEX_KEY));
 
                     // update tags list
-                    Map data = new HashMap();
+                    BasicPoly data = new BasicPoly();
                     if (indexData != null) {
-                        data = indexData.getOrDefault(indexName, BasicPoly.newPoly(indexName)).data();
+                        data.data().putAll(indexData.getOrDefault(indexName, BasicPoly.newPoly(indexName)).data());
                     }
-
-                    data.put("_count", jedis.llen(indexId));
+                    data.put("count", jedis.llen(indexId));
                     tagIndex.put(indexName, data);
                     writePoly(jedis, poly, tagIndex);
                 }
