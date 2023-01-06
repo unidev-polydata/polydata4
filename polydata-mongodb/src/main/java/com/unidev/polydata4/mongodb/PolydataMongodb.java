@@ -30,7 +30,6 @@ public class PolydataMongodb extends AbstractPolydata {
     public static final String METADATA_COLLECTION = "_metadata";
     public static final String CREATE_DATE = "_create_date";
     public static final String INDEX_COLLECTION = "_indexes";
-    public static final String COUNT = "count";
     private static final String UPDATE_DATE = "_update_date";
 
 

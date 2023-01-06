@@ -105,10 +105,10 @@ public abstract class IntegrationTest {
         polydata.insert(poly, list);
         BasicPoly index = polydata.index(poly).get();
         assertNotNull(index);
-        assertEquals("50", index.fetch("id_0") + "");
-        assertEquals("50", index.fetch("id_1") + "");
+        assertEquals("50", index.fetch("id_0", BasicPoly.class).fetch("count") + "");
+        assertEquals("50", index.fetch("id_1", BasicPoly.class).fetch("count") + "");
         for (int i = 1; i <= 100; i++) {
-            assertEquals("1", index.fetch("tag_" + i ) + "");
+            assertEquals("1", index.fetch("tag_" + i, BasicPoly.class).fetch("count") + "");
         }
     }
 
@@ -139,12 +139,12 @@ public abstract class IntegrationTest {
         BasicPoly index = polydata.index(poly).get();
         assertNotNull(index);
 
-        assertEquals("25", index.fetch("id_0") + "");
-        assertEquals("25", index.fetch("id_1") + "");
-        assertEquals("25", index.fetch("id_2") + "");
-        assertEquals("25", index.fetch("id_3") + "");
+        assertEquals("25", index.fetch("id_0", BasicPoly.class).fetch("count") + "");
+        assertEquals("25", index.fetch("id_1", BasicPoly.class).fetch("count") + "");
+        assertEquals("25", index.fetch("id_2", BasicPoly.class).fetch("count") + "");
+        assertEquals("25", index.fetch("id_3", BasicPoly.class).fetch("count") + "");
         for (int i = 1; i <= 100; i++) {
-            assertEquals("1", index.fetch("tag_" + i ) + "");
+            assertEquals("1", index.fetch("tag_" + i, BasicPoly.class).fetch("count") + "");
         }
     }
 

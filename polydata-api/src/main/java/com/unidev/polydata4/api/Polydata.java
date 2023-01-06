@@ -31,6 +31,8 @@ public interface Polydata extends Closeable {
 
     String INDEXES = "_indexes";
 
+    String COUNT = "count";
+
 
     void prepareStorage();
 

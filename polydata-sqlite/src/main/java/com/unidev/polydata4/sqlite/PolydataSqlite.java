@@ -361,7 +361,10 @@ public class PolydataSqlite extends AbstractPolydata {
                 String[] split = indexString.split("\\|");
                 for (String s : split) {
                     if (s != null && !s.isEmpty()) {
-                        index.put(s, index.fetch(s, 0L) + 1);
+                        BasicPoly data = index.fetch(s, BasicPoly.newPoly(s));
+                        int count = data.fetch(COUNT, 0) + 1;
+                        data.put(COUNT, count);
+                        index.put(s,  data);
                     }
                 }
 
