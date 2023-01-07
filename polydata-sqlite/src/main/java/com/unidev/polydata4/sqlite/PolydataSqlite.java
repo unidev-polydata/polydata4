@@ -30,11 +30,28 @@ public class PolydataSqlite extends AbstractPolydata {
 
     private static final String INDEX_KEY = "index";
 
+    static {
+        try {
+            Class.forName("org.sqlite.JDBC");
+        } catch (ClassNotFoundException e) {
+            log.error("Failed to load SQLite driver", e);
+        }
+    }
+
     private final File rootDir;
-
     private final ObjectMapper objectMapper;
-
     private final Map<String, SQLiteDataSource> connections = new ConcurrentHashMap<>();
+
+    private static Set<String> buildTagIndex(InsertRequest request) {
+        Set<String> indexToPersist = request.getIndexToPersist();
+        if (CollectionUtils.isEmpty(indexToPersist)) {
+            indexToPersist = new HashSet<>();
+        } else {
+            indexToPersist = new HashSet<>(indexToPersist);
+        }
+        indexToPersist.add(DATE_INDEX);
+        return indexToPersist;
+    }
 
     @Override
     public void prepareStorage() {
@@ -284,7 +301,7 @@ public class PolydataSqlite extends AbstractPolydata {
             } else {
                 preparedStatement = connection.prepareStatement("SELECT data FROM data WHERE polydata_index LIKE ? ORDER BY update_date DESC LIMIT " + (page * itemPerPage) + "," + itemPerPage + " ; ");
             }
-            preparedStatement.setString(1, "%|" + index + "|%" );
+            preparedStatement.setString(1, "%|" + index + "|%");
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 String rawData = resultSet.getString("data");
@@ -312,8 +329,8 @@ public class PolydataSqlite extends AbstractPolydata {
         }
         try (Connection connection = fetchConnection(poly)) {
             PreparedStatement preparedStatement = null;
-                preparedStatement = connection.prepareStatement("SELECT count(data) FROM data WHERE polydata_index LIKE ? ; ");
-            preparedStatement.setString(1, "%|" + index + "|%" );
+            preparedStatement = connection.prepareStatement("SELECT count(data) FROM data WHERE polydata_index LIKE ? ; ");
+            preparedStatement.setString(1, "%|" + index + "|%");
             ResultSet resultSet = preparedStatement.executeQuery();
             long count = 0;
             if (resultSet.next()) {
@@ -364,7 +381,7 @@ public class PolydataSqlite extends AbstractPolydata {
                         BasicPoly data = index.fetch(s, BasicPoly.newPoly(s));
                         int count = data.fetch(COUNT, 0) + 1;
                         data.put(COUNT, count);
-                        index.put(s,  data);
+                        index.put(s, data);
                     }
                 }
 
@@ -415,7 +432,6 @@ public class PolydataSqlite extends AbstractPolydata {
         });
     }
 
-
     private File getDbFile(String poly) {
         File dbFile = new File(rootDir, poly + DB_FILE_EXTENSION);
         return dbFile;
@@ -444,24 +460,5 @@ public class PolydataSqlite extends AbstractPolydata {
             tagString += "|" + index + "|";
         }
         return tagString;
-    }
-
-    private static Set<String> buildTagIndex(InsertRequest request) {
-        Set<String> indexToPersist = request.getIndexToPersist();
-        if (CollectionUtils.isEmpty(indexToPersist)) {
-            indexToPersist = new HashSet<>();
-        } else {
-            indexToPersist = new HashSet<>(indexToPersist);
-        }
-        indexToPersist.add(DATE_INDEX);
-        return indexToPersist;
-    }
-
-    static {
-        try {
-            Class.forName("org.sqlite.JDBC");
-        } catch (ClassNotFoundException e) {
-            log.error("Failed to load SQLite driver", e);
-        }
     }
 }

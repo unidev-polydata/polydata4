@@ -18,6 +18,12 @@ import java.util.Optional;
  */
 public interface StorageFactory {
 
+    static Optional<MutableConfiguration<String, BasicPoly>> fetchJCacheConfig(BasicPoly config) {
+        MutableConfiguration<String, BasicPoly> jcacheConfig = new MutableConfiguration<>();
+        //TODO: add jcache configuration
+        return Optional.of(jcacheConfig);
+    }
+
     /**
      * Fetch cache provider from configuration
      */
@@ -65,12 +71,6 @@ public interface StorageFactory {
             return Optional.of(cache);
         }
         return Optional.empty();
-    }
-
-    static Optional<MutableConfiguration<String, BasicPoly>> fetchJCacheConfig(BasicPoly config) {
-        MutableConfiguration<String, BasicPoly> jcacheConfig = new MutableConfiguration<>();
-        //TODO: add jcache configuration
-        return Optional.of(jcacheConfig);
     }
 
     /**

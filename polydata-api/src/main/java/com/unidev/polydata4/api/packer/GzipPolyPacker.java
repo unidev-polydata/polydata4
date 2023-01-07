@@ -31,9 +31,7 @@ public class GzipPolyPacker implements PolyPacker {
             throw new RuntimeException(e);
         }
         return result;
-    }    @Getter
-    @Setter
-    private ObjectMapper objectMapper = objectMapper();
+    }
 
     public static byte[] gzipUncompress(byte[] compressedData) {
         byte[] result = new byte[]{};
@@ -50,7 +48,9 @@ public class GzipPolyPacker implements PolyPacker {
             e.printStackTrace();
         }
         return result;
-    }
+    }    @Getter
+    @Setter
+    private ObjectMapper objectMapper = objectMapper();
 
     public byte[] packPoly(BasicPoly poly) throws IOException {
         String value = objectMapper.writeValueAsString(poly);
@@ -69,6 +69,7 @@ public class GzipPolyPacker implements PolyPacker {
                         .build()
         );
     }
+
 
 
 

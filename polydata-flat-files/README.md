@@ -3,7 +3,8 @@
 Flat file storage for polydata. Useful to use polys stored as flat files.
 
 Supported formats:
-  * YAML
+
+* YAML
 
 ## Yaml example
 

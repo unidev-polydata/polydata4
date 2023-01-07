@@ -27,24 +27,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PolydataRedis extends AbstractPolydata {
 
-    @RequiredArgsConstructor
-    @Builder
-    public static class PolydataRedisConfig {
-        final String prefix;
-
-        final JedisPool pool;
-
-        final PolyPacker polyPacker;
-
-        final boolean hashIds;
-
-    }
-
     static final String POLY_LIST = "poly-list";
-
     static final String TAG_INDEX_KEY = "tag-index";
-
     private final PolydataRedisConfig polyConfig;
+    private final Randoms randoms = new Randoms();
 
     @Override
     public void prepareStorage() {
@@ -215,8 +201,6 @@ public class PolydataRedis extends AbstractPolydata {
         });
     }
 
-    private final Randoms randoms = new Randoms();
-
     @Override
     public BasicPolyList query(String poly, PolyQuery polyQuery) {
         return redis(jedis -> {
@@ -357,5 +341,18 @@ public class PolydataRedis extends AbstractPolydata {
             log.error("Failed to fetch poly", e);
             throw new RuntimeException(e);
         }
+    }
+
+    @RequiredArgsConstructor
+    @Builder
+    public static class PolydataRedisConfig {
+        final String prefix;
+
+        final JedisPool pool;
+
+        final PolyPacker polyPacker;
+
+        final boolean hashIds;
+
     }
 }

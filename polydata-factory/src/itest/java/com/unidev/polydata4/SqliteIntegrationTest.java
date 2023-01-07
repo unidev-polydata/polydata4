@@ -18,8 +18,7 @@ public class SqliteIntegrationTest extends IntegrationTest {
         root.mkdirs();
         BasicPoly config = BasicPoly.newPoly()
                 .with("type", "sqlite")
-                .with("root", root.getAbsolutePath())
-                ;
+                .with("root", root.getAbsolutePath());
         create(config);
     }
 

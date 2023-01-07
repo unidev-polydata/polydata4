@@ -73,7 +73,7 @@ public abstract class IntegrationTest {
     void operationsByMultipleIds() {
         String poly = createPoly();
         Set<InsertRequest> items = new HashSet<>();
-        for(int i = 1;i<=100;i++) {
+        for (int i = 1; i <= 100; i++) {
             BasicPoly data = BasicPoly.newPoly("test-id-" + i);
             data.put("item", "item " + i);
             data.put("id", i);
@@ -83,7 +83,7 @@ public abstract class IntegrationTest {
         polydata.insert(poly, items);
 
         Set<String> queryIds = new HashSet<>();
-        for(int i = 1;i<=100;i++) {
+        for (int i = 1; i <= 100; i++) {
             queryIds.add("test-id-" + i);
         }
         BasicPolyList list = polydata.read(poly, queryIds);

@@ -2,9 +2,7 @@ package com.unidev.polydata4;
 
 import com.unidev.polydata4.api.Polydata;
 import com.unidev.polydata4.domain.BasicPoly;
-import com.unidev.polydata4.domain.Poly;
 import com.unidev.polydata4.factory.*;
-import com.unidev.polydata4.mongodb.PolydataMongodb;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +60,7 @@ public class PolydataFactory {
         Optional<Polydata> polydata = storageFactory.create(config);
         // configure cache
         polydata.ifPresent(value -> {
-          storageFactory.fetchCache(config.fetch("cache")).ifPresent(value::setCache);
+            storageFactory.fetchCache(config.fetch("cache")).ifPresent(value::setCache);
         });
         polydata.ifPresent(Polydata::prepareStorage);
         return polydata;

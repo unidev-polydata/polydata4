@@ -21,13 +21,13 @@ public class NoOpPolyPacker implements PolyPacker {
     public byte[] packPoly(BasicPoly poly) throws IOException {
         String value = objectMapper.writeValueAsString(poly);
         return value.getBytes();
-    }    @Getter
-    @Setter
-    private ObjectMapper objectMapper = objectMapper();
+    }
 
     public BasicPoly unPackPoly(InputStream stream) throws IOException {
         return objectMapper.readValue(IOUtils.toByteArray(stream), BasicPoly.class);
-    }
+    }    @Getter
+    @Setter
+    private ObjectMapper objectMapper = objectMapper();
 
     protected ObjectMapper objectMapper() {
         return objectMapper = new ObjectMapper(
@@ -37,6 +37,7 @@ public class NoOpPolyPacker implements PolyPacker {
                         .build()
         );
     }
+
 
 
 

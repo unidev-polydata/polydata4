@@ -17,8 +17,7 @@ public class RedisIntegrationTest extends IntegrationTest {
     public void setup() {
         BasicPoly config = BasicPoly.newPoly()
                 .with("type", "redis")
-                .with("uri", "redis://" + redis.getHost() + ":" + redis.getMappedPort(6379))
-                ;
+                .with("uri", "redis://" + redis.getHost() + ":" + redis.getMappedPort(6379));
         create(config);
     }
 

@@ -22,8 +22,7 @@ public class MongodbIntegrationTest extends IntegrationTest {
     public void setup() {
         BasicPoly config = BasicPoly.newPoly()
                 .with("type", "mongodb")
-                .with("uri", "mongodb://localhost:" + mongodb.getMappedPort(27017) + "/polydata4")
-                ;
+                .with("uri", "mongodb://localhost:" + mongodb.getMappedPort(27017) + "/polydata4");
         create(config);
     }
 

@@ -43,6 +43,7 @@ Usage in Java code:
 ## Configuration examples
 
 Mongodb:
+
 ```
 type: mongodb
 uri: mongodb://localhost:27017
@@ -50,18 +51,21 @@ uri: mongodb://localhost:27017
 ```
 
 Flatfile Yaml:
+
 ```
 type: flat-file-yaml
 root: /data/polydata
 ```
 
 SQLite:
+
 ```
 type: "sqlite"
 root: "/data/sqlite"
 ```
 
 Cache integration:
+
 ```
 cache:
     data:

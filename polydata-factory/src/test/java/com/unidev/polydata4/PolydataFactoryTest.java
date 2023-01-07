@@ -47,6 +47,7 @@ public class PolydataFactoryTest {
         Optional<Polydata> polydata = polydataFactory.create(config);
         assertFalse(polydata.isPresent());
     }
+
     @Test
     void flatFileFactory() {
         BasicPoly config = new BasicPoly();
