@@ -3,6 +3,7 @@ package com.unidev.polydata4.mongodb;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.bulk.BulkWriteResult;
+import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -20,6 +21,7 @@ import org.bson.conversions.Bson;
 import javax.cache.Cache;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Storage of polydata records in mongodb.
@@ -140,10 +142,7 @@ public class PolydataMongodb extends AbstractPolydata {
             indexToPersist.add(DATE_INDEX);
             insertRequest.setIndexToPersist(indexToPersist);
         }
-        BasicPolyList existingPolys = read(poly, polyIds);
-
         // bulk insert
-
         MongoCollection<Document> polydataCollection = collection(poly);
 
         List<UpdateOneModel<Document>> requests = new ArrayList<>();
@@ -179,67 +178,7 @@ public class PolydataMongodb extends AbstractPolydata {
                     bulkWriteResult.getInsertedCount(), bulkWriteResult.getModifiedCount(),
                     bulkWriteResult.getMatchedCount());
         }
-
-        // syncronize indexes
-        // collect update requests
-        Map<String, Integer> tagsToIncrement = new HashMap<>();
-        Map<String, BasicPoly> tagsData = new HashMap<>();
-
-        for (InsertRequest insertRequest : insertRequests) {
-            BasicPoly data = insertRequest.getData();
-            Set<String> indexToPersist = insertRequest.getIndexToPersist();
-            if (CollectionUtils.isEmpty(indexToPersist)) {
-                continue;
-            }
-            if (existingPolys.hasPoly(data._id())) {
-                // skip increment of tags if poly already exists
-                continue;
-            }
-            Map<String, BasicPoly> indexData = insertRequest.getIndexData();
-            if (indexData == null) {
-                indexData = new HashMap<>();
-            }
-
-            for (String index : indexToPersist) {
-                int count = tagsToIncrement.getOrDefault(index, 0);
-                count++;
-                tagsToIncrement.put(index, count);
-                tagsData.put(index, indexData.get(index));
-            }
-
-        }
-
-        // bulk tag increment increment
-        List<UpdateOneModel<Document>> tagsUpdate = new ArrayList<>();
-        // bulk update
-        for (Map.Entry<String, Integer> tagToIncrement : tagsToIncrement.entrySet()) {
-            String index = tagToIncrement.getKey();
-            Document indexDocument = new Document();
-            indexDocument.put(_ID, index);
-            if (tagsData.containsKey(index)) {
-                tagsData.put("data", tagsData.get(index));
-            }
-
-            // persist index data
-            Bson indexUpdate = new Document("$set", indexDocument);
-            Bson indexFilter = Filters.eq(_ID, index);
-            tagsUpdate.add(new UpdateOneModel<>(indexFilter, indexUpdate, opt));
-
-            // index increment
-            Bson inc = new Document("$inc", new Document()
-                    .append(COUNT, tagToIncrement.getValue())
-            );
-            tagsUpdate.add(new UpdateOneModel<>(indexFilter, inc, opt));
-        }
-
-        if (!tagsUpdate.isEmpty()) {
-            BulkWriteResult bulkWriteResult = indexCollection(poly).bulkWrite(tagsUpdate);
-            log.debug(
-                    "Poly metadata update result getInsertedCount {} getModifiedCount {} getMatchedCount {}",
-                    bulkWriteResult.getInsertedCount(), bulkWriteResult.getModifiedCount(),
-                    bulkWriteResult.getMatchedCount());
-        }
-
+        recalculateIndex(poly);
         return basicPolyList;
     }
 
@@ -291,45 +230,9 @@ public class PolydataMongodb extends AbstractPolydata {
     public BasicPolyList remove(String poly, Set<String> ids) {
         //TODO: update cache
         BasicPolyList basicPolyList = read(poly, ids);
-
-        UpdateOptions opt = new UpdateOptions().upsert(true);
-        List<UpdateOneModel<Document>> tagsUpdate = new ArrayList<>();
-
-        for (BasicPoly basicPoly : basicPolyList.list()) {
-            Collection<String> tags = basicPoly.fetch(INDEXES);
-
-            // decrement indexes...
-            Map<String, Integer> tagsToDecrement = new HashMap<>();
-
-            for (String index : tags) {
-                int count = tagsToDecrement.getOrDefault(index, 0);
-                count++;
-                tagsToDecrement.put(index, count);
-            }
-
-            for (Map.Entry<String, Integer> tagEntry : tagsToDecrement.entrySet()) {
-                String indexId = tagEntry.getKey();
-
-                Bson indexFilter = Filters.eq(_ID, indexId);
-                Bson dec = new Document("$inc", new Document().append(COUNT, -1 * tagEntry.getValue()));
-                tagsUpdate.add(new UpdateOneModel<>(indexFilter, dec, opt));
-            }
-        }
-
-        if (!tagsUpdate.isEmpty()) {
-            // bulk decrement
-            BulkWriteResult bulkWriteResult = indexCollection(poly).bulkWrite(tagsUpdate);
-            log.debug("Tags decrement result getInsertedCount {} getModifiedCount {} getMatchedCount {}",
-                    bulkWriteResult.getInsertedCount(), bulkWriteResult.getModifiedCount(),
-                    bulkWriteResult.getMatchedCount());
-        }
-
-        // correct negative numbers
-        indexCollection(poly).updateMany(Filters.lt(COUNT, 0),
-                new Document("$set", new Document().append(COUNT, 0)));
-
         // delete by id
         collection(poly).deleteMany(Filters.in(_ID, ids));
+        recalculateIndex(poly);
         return basicPolyList;
     }
 
@@ -517,4 +420,33 @@ public class PolydataMongodb extends AbstractPolydata {
     private MongoCollection<Document> indexCollection(String poly) {
         return collection(INDEX_COLLECTION + "_" + poly);
     }
+
+    private void recalculateIndex(String poly) {
+        MongoCollection<Document> collection = collection(poly);
+        AggregateIterable<Document> documents = collection.aggregate(
+                Arrays.asList(
+                        Aggregates.project(Projections.fields(Projections.include(INDEXES))),
+                        Aggregates.unwind("$" + INDEXES),
+                        Aggregates.group("$" + INDEXES, Accumulators.sum("count", 1))
+                )
+        );
+
+
+        try (MongoCursor<Document> iterator = documents.iterator()) {
+            List<BasicPoly> indexes = new ArrayList<>();
+            while (iterator.hasNext()) {
+                Document next = iterator.next();
+                String index = next.getString(_ID);
+                Long count = Long.parseLong(next.get("count") + "");
+                BasicPoly indexData = BasicPoly.newPoly(index);
+                indexData.put("count", count);
+                indexData.put("index", index);
+                indexData.put("poly", poly);
+                indexes.add(indexData);
+            }
+            indexCollection(poly).drop();
+            indexCollection(poly).insertMany(indexes.stream().map(this::toDocument).collect(Collectors.toList()));
+        }
+    }
+
 }
