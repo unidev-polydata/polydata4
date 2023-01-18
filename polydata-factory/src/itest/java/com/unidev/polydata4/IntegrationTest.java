@@ -149,6 +149,35 @@ public abstract class IntegrationTest {
     }
 
     @Test
+    void updateIndexOnRemoval() {
+        String poly = createPoly();
+        // insert test data
+        List<InsertRequest> list = new ArrayList<>();
+        for (int i = 1; i <= 100; i++) {
+            list.add(InsertRequest.builder()
+                    .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
+                    .indexToPersist(Set.of("id_" + (i % 2), "tag_" + i))
+                    .build());
+
+        }
+        polydata.insert(poly, list);
+
+        // remove half of the data
+
+        Set<String> removeIds = new HashSet<>();
+        for (int i = 1; i <= 100; i++) {
+            if (i % 2 == 0) {
+                removeIds.add("test_" + i);
+            }
+        }
+        polydata.remove(poly, removeIds);
+        BasicPoly index = polydata.index(poly).get();
+        assertNotNull(index);
+        assertEquals("50", index.fetch("_date", BasicPoly.class).fetch("count") + "");
+        assertEquals("50", index.fetch("id_1", BasicPoly.class).fetch("count") + "");
+    }
+
+    @Test
     void query() {
         String poly = createPoly();
 

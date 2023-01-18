@@ -268,6 +268,7 @@ public class PolydataSqlite extends AbstractPolydata {
             }
             long removedRows = preparedStatement.executeUpdate();
             log.info("Removed {} rows", removedRows);
+            recalculateIndex(poly);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
