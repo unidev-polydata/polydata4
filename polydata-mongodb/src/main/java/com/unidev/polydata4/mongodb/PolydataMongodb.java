@@ -211,10 +211,12 @@ public class PolydataMongodb extends AbstractPolydata {
 
         final BasicPolyList dbPolys = new BasicPolyList();
         Bson query = Filters.in(_ID, ids);
-        collection(poly).find(query).iterator().forEachRemaining(document -> {
-            BasicPoly polyData = toPoly(document);
-            dbPolys.add(polyData);
-        });
+        try (MongoCursor<Document> cursor = collection(poly).find(query).iterator()) {
+            cursor.forEachRemaining(document -> {
+                BasicPoly polyData = toPoly(document);
+                dbPolys.add(polyData);
+            });
+        }
         if (cache.isPresent()) {
             Cache cacheInstance = cache.get();
             for (BasicPoly polyData : dbPolys.list()) {
@@ -444,8 +446,10 @@ public class PolydataMongodb extends AbstractPolydata {
                 indexData.put("poly", poly);
                 indexes.add(indexData);
             }
-            indexCollection(poly).drop();
-            indexCollection(poly).insertMany(indexes.stream().map(this::toDocument).collect(Collectors.toList()));
+            if (!indexes.isEmpty()) {
+                indexCollection(poly).drop();
+                indexCollection(poly).insertMany(indexes.stream().map(this::toDocument).collect(Collectors.toList()));
+            }
         }
     }
 
