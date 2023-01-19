@@ -37,7 +37,9 @@ public class BasicPoly implements Poly, Serializable {
     }
 
     public BasicPoly(BasicPoly copyPoly) {
-        super();
+        data = new ConcurrentHashMap<>();
+        metadata = new ConcurrentHashMap<>();
+
         if (copyPoly.data != null) {
             for (Map.Entry<String, Object> entry : copyPoly.data().entrySet()) {
                 if (entry.getValue() != null) {

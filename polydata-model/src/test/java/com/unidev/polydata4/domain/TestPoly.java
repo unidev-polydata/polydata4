@@ -39,4 +39,9 @@ public class TestPoly {
 
     }
 
+    @Test
+    void copyPoly() {
+        BasicPoly poly = new BasicPoly(BasicPoly.newPoly());
+    }
+
 }
