@@ -149,7 +149,7 @@ public class PolydataMongodbTests {
 
         polydata.remove(polyId, Set.of("test"));
         assertThat(polydata.read(polyId, Set.of("test")).hasPoly("test")).isFalse();
-        assertThat(polydata.index(polyId).get().fetch("tag1", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(0);
+        assertThat(polydata.index(polyId).get().containsKey("tag1")).isFalse();
         assertThat(polydata.index(polyId).get().fetch("date", BasicPoly.class).fetch("count", Integer.class)).isEqualTo(1);
     }
 
