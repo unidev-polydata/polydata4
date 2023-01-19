@@ -25,7 +25,7 @@ Dependencies:
     }
 
     dependencies {
-        implementation 'com.unidev.polydata4:polydata-factory:0.0.1'
+        implementation 'com.unidev.polydata4:polydata-factory:0.0.5'
     }
 ```
 
