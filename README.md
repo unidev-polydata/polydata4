@@ -51,9 +51,14 @@ uri: mongodb://localhost:27017
 ```
 
 Flatfile Yaml:
-
 ```
 type: flat-file-yaml
+root: /data/polydata
+```
+
+JSON:
+```
+type: flat-file-json
 root: /data/polydata
 ```
 

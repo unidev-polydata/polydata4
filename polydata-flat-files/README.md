@@ -5,10 +5,11 @@ Flat file storage for polydata. Useful to use polys stored as flat files.
 Supported formats:
 
 * YAML
+* JSON
 
 ## Yaml example
 
-Example definition of Yaml storage
+Example definition of Yaml storage:
 
 ```yaml
 # <polydata>/polydata.yaml
