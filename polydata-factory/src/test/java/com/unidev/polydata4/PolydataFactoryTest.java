@@ -2,6 +2,7 @@ package com.unidev.polydata4;
 
 import com.unidev.polydata4.api.Polydata;
 import com.unidev.polydata4.domain.BasicPoly;
+import com.unidev.polydata4.flatfiles.PolydataSingleJson;
 import com.unidev.polydata4.flatfiles.PolydataYaml;
 import org.junit.jupiter.api.Test;
 
@@ -57,6 +58,17 @@ public class PolydataFactoryTest {
         Optional<Polydata> polydata = polydataFactory.create(config);
         assertTrue(polydata.isPresent());
         assertTrue(polydata.get() instanceof PolydataYaml);
+    }
+
+    @Test
+    void flatFileSingleJson() {
+        BasicPoly config = new BasicPoly();
+        config.put("type", "flat-file-json");
+        config.put("root", "/tmp");
+
+        Optional<Polydata> polydata = polydataFactory.create(config);
+        assertTrue(polydata.isPresent());
+        assertTrue(polydata.get() instanceof PolydataSingleJson);
     }
 
 }

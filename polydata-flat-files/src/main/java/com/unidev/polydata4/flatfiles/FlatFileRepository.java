@@ -4,11 +4,10 @@ import com.unidev.polydata4.domain.BasicPoly;
 import com.unidev.polydata4.domain.BasicPolyList;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.unidev.polydata4.api.Polydata.INDEXES;
 
 @Data
 @ToString
@@ -89,11 +88,18 @@ public class FlatFileRepository {
     /**
      * Add poly to index
      */
-    public void add(BasicPoly basicPoly, List<String> indexes) {
+    public void add(BasicPoly basicPoly, Collection<String> indexes) {
+        basicPoly.put(INDEXES, indexes);
+        if (!basicPoly.containsKey(TIMESTAMP_KEY)) {
+            basicPoly.put(TIMESTAMP_KEY, System.nanoTime());
+        }
         polyById.put(basicPoly._id(), basicPoly);
         for (String index : indexes) {
             polyIndex.putIfAbsent(index, new ArrayList<>());
             List<String> list = polyIndex.get(index);
+            if (list.contains(basicPoly._id())) {
+                continue;
+            }
             list.add(basicPoly._id());
             list.sort((o1, o2) -> {
                 Number t1 = polyById.get(o1).fetch(TIMESTAMP_KEY, 0L);
@@ -101,6 +107,25 @@ public class FlatFileRepository {
                 return Long.compare(t2.longValue(), t1.longValue());
             });
         }
+    }
+
+    /**
+     * Remove poly from index
+     */
+    public void remove(String id) {
+        BasicPoly basicPoly = polyById.get(id);
+        if (basicPoly == null) {
+            return;
+        }
+        Collection<String> indexes = basicPoly.fetch(INDEXES);
+        for (String index : indexes) {
+            List<String> list = polyIndex.get(index);
+            if (list == null) {
+                continue;
+            }
+            list.remove(id);
+        }
+        polyById.remove(id);
     }
 
 }

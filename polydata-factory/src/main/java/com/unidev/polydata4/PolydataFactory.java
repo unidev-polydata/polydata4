@@ -37,6 +37,7 @@ public class PolydataFactory {
         // default storage factories
         addFactory(new MongodbFactory());
         addFactory(new FlatFileYamlFactory());
+        addFactory(new FlatFileJsonFactory());
         addFactory(new RedisFactory());
         addFactory(new SQLiteFactory());
     }

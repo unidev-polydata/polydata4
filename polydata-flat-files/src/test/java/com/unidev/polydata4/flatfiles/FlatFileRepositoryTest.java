@@ -3,7 +3,10 @@ package com.unidev.polydata4.flatfiles;
 import com.unidev.polydata4.domain.BasicPoly;
 import com.unidev.polydata4.domain.BasicPolyList;
 import org.junit.jupiter.api.Test;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
@@ -42,6 +45,32 @@ public class FlatFileRepositoryTest {
         assertTrue(list.hasPoly("test2"));
     }
 
+    @Test
+    void serializationTest() throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        FlatFileRepository repository = createRepository();
+
+        File file = File.createTempFile("test", ".json");
+        file.deleteOnExit();
+        objectMapper.writeValue(file, repository);
+
+        FlatFileRepository loadedRepository = objectMapper.readValue(file, FlatFileRepository.class);
+
+        loadedRepository.getPolyById().forEach((id, poly) -> {
+            assertTrue(repository.getPolyById().containsKey(id));
+            BasicPoly existingPoly = repository.getPolyById().get(id);
+            assertEquals(existingPoly.data(), poly.data());
+            assertEquals(existingPoly.metadata(), poly.metadata());
+        });
+
+        loadedRepository.getPolyIndex().forEach((index, list) -> {
+            List<String> existingList = repository.getPolyIndex().get(index);
+            assertEquals(existingList, list);
+        });
+
+    }
+
 
     private FlatFileRepository createRepository() {
         FlatFileRepository repository = new FlatFileRepository();
@@ -50,9 +79,6 @@ public class FlatFileRepositoryTest {
         return repository;
     }
 
-    public void fetchByIndex() {
-
-    }
 
 
 }

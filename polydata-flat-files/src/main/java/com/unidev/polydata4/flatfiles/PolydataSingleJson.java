@@ -1,7 +1,6 @@
 package com.unidev.polydata4.flatfiles;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.unidev.platform.Randoms;
 import com.unidev.polydata4.api.AbstractPolydata;
 import com.unidev.polydata4.domain.*;
@@ -10,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -18,21 +18,14 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Polydata storage backed by Yaml files
+ * Polydata storage in single JSON file
  */
 @RequiredArgsConstructor
 @Slf4j
-public class PolydataYaml extends AbstractPolydata {
+public class PolydataSingleJson extends AbstractPolydata {
 
-    public static final String DATE_INDEX = "_date";
-    public static final String DATA_DIR = "data";
-    public static final String POLY_FILE = "polydata.yaml";
-    public static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
-    private static final String[] POLY_EXTENSIONS = new String[]{"yaml", "yml"};
-
-    static {
-        FlatFileDeserializer.install(MAPPER);
-    }
+    public static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final String[] POLY_EXTENSIONS = new String[]{"poly.json"};
 
     @Getter
     private final File rootDir;
@@ -42,72 +35,38 @@ public class PolydataYaml extends AbstractPolydata {
     private final Map<String, FlatFileRepository> repositories = new ConcurrentHashMap<>();
     private final Randoms randoms = new Randoms();
 
-    /**
-     * Scan root directory for polys
-     */
     @Override
     public void prepareStorage() {
-
-        File[] files = rootDir.listFiles();
-        if (files == null) {
-            return;
-        }
-        for (File file : files) {
-            if (file.isDirectory()) {
-                loadPoly(file);
-            }
-        }
-    }
-
-    /**
-     * Load specific poly directory
-     *
-     * @param polyDir
-     */
-    public void loadPoly(File polyDir) {
-        log.info("Loading poly {}", polyDir.getName());
-        FlatFileRepository flatFileRepository = new FlatFileRepository();
-        flatFileRepository.setPoly(polyDir.getName());
-
-        // load poly file
-        File polyFile = new File(polyDir, POLY_FILE);
-        if (polyFile.exists()) {
+        FileUtils.listFiles(rootDir, POLY_EXTENSIONS, true).forEach(file -> {
+            log.info("Loading {}", file.getName());
             try {
-                FlatFile flatFile = MAPPER.readValue(polyFile, FlatFile.class);
-                flatFileRepository.setMetadata(BasicPoly.newPoly().withData(flatFile.metadata()));
-                flatFileRepository.setConfig(flatFile.toPoly());
+                FlatFileRepository repository = MAPPER.readValue(file, FlatFileRepository.class);
+                String key = FilenameUtils.getBaseName(file.getName());
+                repositories.put(key, repository);
             } catch (IOException e) {
-                log.error("Failed to load poly {}", polyDir.getName(), e);
+                throw new RuntimeException(e);
             }
-        }
+        });
 
-        // scan for YAMLs and load to poly
-        for (File file : FileUtils.listFiles(new File(polyDir, DATA_DIR), POLY_EXTENSIONS, true)) {
-            log.info("Loading file {}", file.getPath());
-            try {
-                FlatFile flatFile = MAPPER.readValue(file, FlatFile.class);
-                BasicPoly poly = flatFile.toPoly();
-                List<String> index = null;
-                if (flatFile.metadata() != null) {
-                    index = flatFile.metadata().getIndex();
-                }
-                if (index == null) {
-                    index = new ArrayList<>();
-                }
-                index.add(DATE_INDEX);
-                flatFileRepository.add(poly, index);
-            } catch (IOException e) {
-                log.error("Failed to load file {}", file.getName(), e);
-            }
-
-        }
-
-        repositories.put(polyDir.getName(), flatFileRepository);
     }
 
     @Override
     public BasicPoly create(String poly) {
-        throw new UnsupportedOperationException("Operation not supported");
+        Optional<BasicPoly> existingConfig = config(poly);
+        if (existingConfig.isPresent()) {
+            return existingConfig.get();
+        }
+
+        FlatFileRepository repository = new FlatFileRepository();
+        repositories.put(poly, repository);
+
+        BasicPoly config = new BasicPoly();
+        config._id(CONFIG_KEY);
+        config.put(ITEM_PER_PAGE, DEFAULT_ITEM_PER_PAGE);
+        config(poly, config);
+        metadata(poly, BasicPoly.newPoly(METADATA_KEY));
+
+        return config(poly).get();
     }
 
     @Override
@@ -125,8 +84,10 @@ public class PolydataYaml extends AbstractPolydata {
 
     @Override
     public void config(String poly, BasicPoly config) {
-        throw new UnsupportedOperationException("Operation not supported");
-
+        if (!exists(poly)) {
+            throw new RuntimeException("Poly " + poly + " does not exists");
+        }
+        repositories.get(poly).setConfig(config);
     }
 
     @Override
@@ -139,8 +100,10 @@ public class PolydataYaml extends AbstractPolydata {
 
     @Override
     public void metadata(String poly, BasicPoly metadata) {
-        throw new UnsupportedOperationException("Operation not supported");
-
+        if (!exists(poly)) {
+            throw new RuntimeException("Poly " + poly + " does not exists");
+        }
+        repositories.get(poly).setMetadata(metadata);
     }
 
     @Override
@@ -149,7 +112,7 @@ public class PolydataYaml extends AbstractPolydata {
             return Optional.empty();
         }
         BasicPoly index = new BasicPoly();
-        repositories.get(poly).getPolyIndex().forEach((key, value) -> index.put(key, BasicPoly.newPoly(key).with("_count", value.size())));
+        repositories.get(poly).getPolyIndex().forEach((key, value) -> index.put(key, BasicPoly.newPoly(key).with("count", value.size())));
         return Optional.of(index);
     }
 
@@ -163,25 +126,38 @@ public class PolydataYaml extends AbstractPolydata {
 
     @Override
     public BasicPolyList insert(String poly, Collection<InsertRequest> insertRequests) {
-        throw new UnsupportedOperationException("Operation not supported");
+        BasicPolyList list = new BasicPolyList();
+        FlatFileRepository repository = repositories.get(poly);
+        insertRequests.forEach(request -> {
+            BasicPoly data = request.getData();
+            String id = data._id();
+            repository.remove(id);
+            Set<String> tags = buildTagIndex(request);
+            repository.add(data, tags);
+            repository.fetchById(Set.of(id)).polyById(id).ifPresent(list::add);
+        });
+        return list;
     }
 
     @Override
     public BasicPolyList update(String poly, Collection<InsertRequest> insertRequests) {
-        throw new UnsupportedOperationException("Operation not supported");
+        return insert(poly, insertRequests);
     }
 
     @Override
     public BasicPolyList read(String poly, Set<String> ids) {
-        if (!exists(poly)) {
-            return new BasicPolyList();
-        }
-        return repositories.get(poly).fetchById(ids);
+        FlatFileRepository repository = repositories.get(poly);
+        return repository.fetchById(ids);
     }
 
     @Override
     public BasicPolyList remove(String poly, Set<String> ids) {
-        throw new UnsupportedOperationException("Operation not supported");
+        FlatFileRepository repository = repositories.get(poly);
+        BasicPolyList list = read(poly, ids);
+        ids.forEach(id -> {
+            repository.remove(id);
+        });
+        return list;
     }
 
     @Override
@@ -239,7 +215,7 @@ public class PolydataYaml extends AbstractPolydata {
     @Override
     public BasicPolyList list() {
         BasicPolyList list = new BasicPolyList();
-        repositories.keySet().forEach(poly -> list.add(BasicPoly.newPoly(poly)));
+        repositories.keySet().forEach(key -> list.add(BasicPoly.newPoly(key)));
         return list;
     }
 
@@ -250,6 +226,27 @@ public class PolydataYaml extends AbstractPolydata {
 
     @Override
     public void close() throws IOException {
+        repositories.entrySet().forEach(entry -> {
+            String key = entry.getKey();
+            FlatFileRepository repository = entry.getValue();
+            File file = new File(rootDir, key + ".poly.json");
+            try {
+                MAPPER.writeValue(file, repository);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
 
+    }
+
+    private static Set<String> buildTagIndex(InsertRequest request) {
+        Set<String> indexToPersist = request.getIndexToPersist();
+        if (CollectionUtils.isEmpty(indexToPersist)) {
+            indexToPersist = new HashSet<>();
+        } else {
+            indexToPersist = new HashSet<>(indexToPersist);
+        }
+        indexToPersist.add(DATE_INDEX);
+        return indexToPersist;
     }
 }
