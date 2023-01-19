@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TestPoly {
 
@@ -41,7 +42,9 @@ public class TestPoly {
 
     @Test
     void copyPoly() {
-        BasicPoly poly = new BasicPoly(BasicPoly.newPoly());
+        BasicPoly poly = new BasicPoly(BasicPoly.newPoly().with("key", "value"));
+        assertNotNull(poly);
+        assertEquals("value", poly.fetch("key"));
     }
 
 }
