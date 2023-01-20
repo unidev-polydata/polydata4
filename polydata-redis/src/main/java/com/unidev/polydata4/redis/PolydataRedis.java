@@ -224,10 +224,11 @@ public class PolydataRedis extends AbstractPolydata {
             Integer itemPerPage = query.getOptions().fetch(ITEM_PER_PAGE, defaultItemPerPage);
 
             long count = jedis.llen(fetchId(poly, index));
+            int randomCount = query.option(RANDOM_COUNT, itemPerPage);
 
             List<Integer> ids = new ArrayList<>();
             if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
-                for (int i = 0; i < itemPerPage; i++) {
+                for (int i = 0; i < randomCount; i++) {
                     ids.add(randoms.getRandom().nextInt((int) count));
                 }
             } else {

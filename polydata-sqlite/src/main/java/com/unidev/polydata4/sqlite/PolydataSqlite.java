@@ -298,7 +298,8 @@ public class PolydataSqlite extends AbstractPolydata {
         try (Connection connection = fetchConnection(poly)) {
             PreparedStatement preparedStatement = null;
             if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
-                preparedStatement = connection.prepareStatement("SELECT data FROM data WHERE polydata_index LIKE ? ORDER BY RANDOM() LIMIT " + itemPerPage + " ; ");
+                int randomCount = query.option(RANDOM_COUNT, itemPerPage);
+                preparedStatement = connection.prepareStatement("SELECT data FROM data WHERE polydata_index LIKE ? ORDER BY RANDOM() LIMIT " + randomCount + " ; ");
             } else {
                 preparedStatement = connection.prepareStatement("SELECT data FROM data WHERE polydata_index LIKE ? ORDER BY update_date DESC LIMIT " + (page * itemPerPage) + "," + itemPerPage + " ; ");
             }

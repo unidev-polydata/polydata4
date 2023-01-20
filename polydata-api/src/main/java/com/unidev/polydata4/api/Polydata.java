@@ -33,6 +33,8 @@ public interface Polydata extends Closeable {
 
     String COUNT = "count";
 
+    String RANDOM_COUNT = "random_count";
+
 
     void prepareStorage();
 

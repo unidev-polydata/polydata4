@@ -57,9 +57,14 @@ public class BasicPolyQuery implements PolyQuery, Serializable {
         return options.fetch(key);
     }
 
-    public <T> void option(String key, T value) {
+    public <T> T option(String key, T value) {
+        return options.fetch(key, value);
+    }
+
+    public <T> void withOption(String key, T value) {
         options.put(key, value);
     }
+
 
     public enum QueryFunction {PAGES, RANDOM}
 

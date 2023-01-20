@@ -205,7 +205,8 @@ public class PolydataYaml extends AbstractPolydata {
 
         if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
             List<String> indexes = repositories.get(poly).getPolyIndex().get(index);
-            List<String> randomIds = randoms.randomValues(indexes, itemPerPage);
+            int randomCount = query.option(RANDOM_COUNT, itemPerPage);
+            List<String> randomIds = randoms.randomValues(indexes, randomCount);
             return read(poly, new HashSet<>(randomIds));
         }
         final int page = query.page() < 0 ? 0 : query.page();
