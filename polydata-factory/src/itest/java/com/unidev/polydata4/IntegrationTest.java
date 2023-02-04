@@ -260,6 +260,25 @@ public abstract class IntegrationTest {
         assertEquals("test-value", metadata2.fetch("test-key"));
     }
 
+    @Test
+    void queryRandom() {
+        String poly = createPoly();
+        for (int i = 0; i < 105; i++) {
+            polydata.insert(poly, Collections.singletonList(
+                    InsertRequest.builder()
+                            .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
+                            .indexToPersist(Set.of("tag_x", "tag_" + i))
+                            .build())
+            );
+        }
+        BasicPolyQuery query = new BasicPolyQuery();
+        query.queryType(BasicPolyQuery.QueryFunction.RANDOM);
+        query.withOption("random_count", 25);
+
+        BasicPolyList list = polydata.query(poly, query);
+        assertThat(list.list().size()).isEqualTo(25);
+    }
+
     String createPoly() {
         String poly = "poly-" + System.currentTimeMillis();
         polydata.create(poly);

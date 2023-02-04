@@ -264,7 +264,7 @@ public class PolydataMongodb extends AbstractPolydata {
         MongoCollection<Document> collection = collection(poly);
         if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
             int randomCount = query.option(RANDOM_COUNT, itemPerPage);
-            long count = collection(POLY).countDocuments(mongoQuery);
+            long count = collection.countDocuments(mongoQuery);
             Random random = new Random();
             for (int i = 0; i < randomCount; i++) {
                 int skip = random.nextInt((int) count);
