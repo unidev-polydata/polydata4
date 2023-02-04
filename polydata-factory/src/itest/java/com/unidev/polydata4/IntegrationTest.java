@@ -273,10 +273,10 @@ public abstract class IntegrationTest {
         }
         BasicPolyQuery query = new BasicPolyQuery();
         query.queryType(BasicPolyQuery.QueryFunction.RANDOM);
-        query.withOption("random_count", 25);
+        query.withOption("random_count", 7);
 
         BasicPolyList list = polydata.query(poly, query);
-        assertThat(list.list().size()).isEqualTo(25);
+        assertThat(list.list().size()).isEqualTo(7);
     }
 
     String createPoly() {
