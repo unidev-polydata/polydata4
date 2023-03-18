@@ -75,7 +75,9 @@ Cache integration:
 cache:
     data:
         type: jcache
-        name: org.ehcache.jsr107.EhcacheCachingProvider
+        provider: org.ehcache.jsr107.EhcacheCachingProvider
+        implementationUri: "file://./ehcache.xml"
+        name: "polydata"
 ```
 
 ## License
