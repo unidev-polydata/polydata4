@@ -12,6 +12,7 @@ import javax.cache.spi.CachingProvider;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Interface for storage factories
@@ -49,9 +50,20 @@ public interface StorageFactory {
             if (StringUtils.isNotBlank(implementationUri)) {
                 try {
                     CacheManager cacheManager = provider.getCacheManager(new URI(implementationUri), null);
-                    Optional<MutableConfiguration<String, BasicPoly>> configuration = fetchJCacheConfig(config);
-                    if (configuration.isPresent()) {
-                        cache = cacheManager.createCache(cacheName, configuration.get());
+                    AtomicBoolean cacheExists = new AtomicBoolean(false);
+                    cacheManager.getCacheNames().iterator().forEachRemaining(name -> {
+                        if (name.equals(cacheName)) {
+                            cacheExists.set(true);
+                        }
+                    });
+
+                    if (!cacheExists.get()) {
+                        Optional<MutableConfiguration<String, BasicPoly>> configuration = fetchJCacheConfig(config);
+                        if (configuration.isPresent()) {
+                            cache = cacheManager.createCache(cacheName, configuration.get());
+                        } else {
+                            cache = cacheManager.getCache(cacheName);
+                        }
                     } else {
                         cache = cacheManager.getCache(cacheName);
                     }
