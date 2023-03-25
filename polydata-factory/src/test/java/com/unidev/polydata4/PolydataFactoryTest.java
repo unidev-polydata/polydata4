@@ -6,6 +6,7 @@ import com.unidev.polydata4.flatfiles.PolydataSingleJson;
 import com.unidev.polydata4.flatfiles.PolydataYaml;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -33,7 +34,8 @@ public class PolydataFactoryTest {
 
         config.put("cache", BasicPoly.newPoly()
                 .with("type", "jcache")
-                .with("name", "org.ehcache.jsr107.EhcacheCachingProvider")
+                .with("provider", "org.ehcache.jsr107.EhcacheCachingProvider")
+                .with("name", "polydata")
         );
 
         Optional<Polydata> polydata = polydataFactory.create(config);
@@ -62,9 +64,11 @@ public class PolydataFactoryTest {
 
     @Test
     void flatFileSingleJson() {
+        new File("/tmp/flat-file-json").mkdirs();
+
         BasicPoly config = new BasicPoly();
         config.put("type", "flat-file-json");
-        config.put("root", "/tmp");
+        config.put("root", "/tmp/flat-file-json");
 
         Optional<Polydata> polydata = polydataFactory.create(config);
         assertTrue(polydata.isPresent());

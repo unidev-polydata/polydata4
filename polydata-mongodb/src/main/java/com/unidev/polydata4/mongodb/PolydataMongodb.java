@@ -190,11 +190,11 @@ public class PolydataMongodb extends AbstractPolydata {
     @Override
     public BasicPolyList read(String poly, Set<String> ids) {
         Map<String, BasicPoly> cachedPolys = ifCache(cache -> {
-            List<String> cachedIds = new ArrayList<>();
+            Set<String> cachedIds = new HashSet<>();
             for (String id : ids) {
                 cachedIds.add(poly + "-read-" + id);
             }
-            return cache.getAll(ids);
+            return cache.getAll(cachedIds);
         });
 
         List<String> idsToQuery = new ArrayList<>(ids);
@@ -209,8 +209,12 @@ public class PolydataMongodb extends AbstractPolydata {
             }
         }
 
+        if (idsToQuery.isEmpty()) {
+            return list;
+        }
+
         final BasicPolyList dbPolys = new BasicPolyList();
-        Bson query = Filters.in(_ID, ids);
+        Bson query = Filters.in(_ID, idsToQuery);
         try (MongoCursor<Document> cursor = collection(poly).find(query).iterator()) {
             cursor.forEachRemaining(document -> {
                 BasicPoly polyData = toPoly(document);
@@ -219,9 +223,11 @@ public class PolydataMongodb extends AbstractPolydata {
         }
         if (cache.isPresent()) {
             Cache cacheInstance = cache.get();
-            for (BasicPoly polyData : dbPolys.list()) {
-                cacheInstance.put(poly + "-read-" + polyData._id(), polyData);
+            Map<String, BasicPoly> cacheMap = new HashMap<>();
+            for (BasicPoly data : dbPolys.list()) {
+                cacheMap.put(poly + "-read-" + data._id(), data);
             }
+            cacheInstance.putAll(cacheMap);
         }
         list.list().addAll(dbPolys.list());
 
@@ -230,12 +236,19 @@ public class PolydataMongodb extends AbstractPolydata {
 
     @Override
     public BasicPolyList remove(String poly, Set<String> ids) {
-        //TODO: update cache
-        BasicPolyList basicPolyList = read(poly, ids);
+        BasicPolyList list = read(poly, ids);
         // delete by id
         collection(poly).deleteMany(Filters.in(_ID, ids));
         recalculateIndex(poly);
-        return basicPolyList;
+        if (cache.isPresent()) {
+            Cache cacheInstance = cache.get();
+            Set<String> keysToRemove = new HashSet<>();
+            for (BasicPoly data : list.list()) {
+                keysToRemove.add(poly + "-read-" + data._id());
+            }
+            cacheInstance.removeAll(keysToRemove);
+        }
+        return list;
     }
 
     @Override

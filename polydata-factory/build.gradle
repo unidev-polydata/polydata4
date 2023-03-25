@@ -9,6 +9,10 @@ dependencies {
     testImplementation(
             "org.ehcache:ehcache:$testEhcacheVersion"
     )
+
+    testImplementation("com.unidev:unidev-template-freemarker:$unidevTemplatesVersion") {
+        exclude group: "ch.qos.logback", module: "logback-classic"
+    }
 }
 
 sourceSets {

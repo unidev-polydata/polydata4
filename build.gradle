@@ -54,6 +54,8 @@ subprojects {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    tasks.withType(Copy).all { duplicatesStrategy 'exclude' }
+
     test {
         useJUnitPlatform()
     }
