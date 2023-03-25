@@ -1,3 +1,4 @@
+<#setting number_format="computer">
 <!-- https://github.com/anthonydahanne/ehcache3-disk-persistence-demo/blob/master/src/main/resources/ehcache.xml -->
 <!-- https://www.ehcache.org/documentation/3.6/xml.html -->
 <config
@@ -9,7 +10,7 @@
 
     </service>
 
-    <persistence directory="/tmp"></persistence>
+    <persistence directory="/tmp/ehcache-${random}"></persistence>
 
     <cache alias="polydata" uses-template="heap-cache"/>
 

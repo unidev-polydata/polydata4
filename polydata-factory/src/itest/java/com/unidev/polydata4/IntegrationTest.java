@@ -1,10 +1,12 @@
 package com.unidev.polydata4;
 
+import com.unidev.platform.template.TemplateBuilder;
 import com.unidev.polydata4.api.Polydata;
 import com.unidev.polydata4.domain.BasicPoly;
 import com.unidev.polydata4.domain.BasicPolyList;
 import com.unidev.polydata4.domain.BasicPolyQuery;
 import com.unidev.polydata4.domain.InsertRequest;
+import freemarker.template.Template;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -285,5 +287,14 @@ public abstract class IntegrationTest {
         return poly;
     }
 
+    public static String renderTemplate(String content, Map<String, Object> variables) {
+        try {
+            Template template = TemplateBuilder.newTemplate(content).build().get();
+            String renderedFile = TemplateBuilder.evaluate(template, variables).get();
+            return renderedFile;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 }
