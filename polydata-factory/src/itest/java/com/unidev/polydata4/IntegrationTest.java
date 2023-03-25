@@ -57,6 +57,7 @@ public abstract class IntegrationTest {
         data.put("test-key", "test-value");
         polydata.insert(poly, Set.of(InsertRequest.builder().data(data).build()));
         BasicPolyList list = polydata.read(poly, Set.of("test-id"));
+        list = polydata.read(poly, Set.of("test-id"));
         assertNotNull(list);
         assertEquals(1, list.list().size());
         assertTrue(list.hasPoly("test-id"));
