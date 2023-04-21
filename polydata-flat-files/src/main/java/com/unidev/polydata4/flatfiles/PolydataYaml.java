@@ -18,7 +18,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Polydata storage backed by Yaml files
+ * Polydata storage backed by Yaml files. Read only storage.
  */
 @RequiredArgsConstructor
 @Slf4j
