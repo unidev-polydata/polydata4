@@ -113,6 +113,9 @@ public abstract class IntegrationTest {
         for (int i = 1; i <= 100; i++) {
             assertEquals("1", index.fetch("tag_" + i, BasicPoly.class).fetch("count") + "");
         }
+        // second cache read
+        BasicPoly index2 = polydata.index(poly).get();
+        assertNotNull(index2);
     }
 
     @Test

@@ -106,10 +106,7 @@ public class PolydataMongodb extends AbstractPolydata {
         if (!exists(poly)) {
             return Optional.empty();
         }
-        BasicPoly cachedResult = ifCache(cache -> {
-            String key = poly + "-index";
-            return cache.get(key);
-        });
+        BasicPoly cachedResult = ifCache(cache -> cache.get(poly + "-index"));
         if (cachedResult != null) {
             return Optional.of(cachedResult);
         }
