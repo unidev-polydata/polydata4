@@ -106,12 +106,20 @@ public class PolydataMongodb extends AbstractPolydata {
         if (!exists(poly)) {
             return Optional.empty();
         }
+        BasicPoly cachedResult = ifCache(cache -> {
+            String key = poly + "-index";
+            return cache.get(key);
+        });
+        if (cachedResult != null) {
+            return Optional.of(cachedResult);
+        }
         BasicPoly index = new BasicPoly();
         MongoCollection<Document> collection = indexCollection(poly);
         for (Document document : collection.find()) {
             BasicPoly value = toPoly(document);
             index.put(value._id(), value);
         }
+        putIfCache(poly + "-index", index);
         return Optional.of(index);
     }
 
