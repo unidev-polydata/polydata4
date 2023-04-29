@@ -115,12 +115,8 @@ public class PolydataRedis extends AbstractPolydata {
     public BasicPolyList insert(String poly, Collection<InsertRequest> insertRequests) {
         final BasicPolyList basicPolyList = new BasicPolyList();
         redis(jedis -> {
-
-            Set<String> polyIds = new HashSet<>();
+            // build index data
             for (InsertRequest insertRequest : insertRequests) {
-                BasicPoly data = insertRequest.getData();
-                polyIds.add(data._id());
-
                 Set<String> indexToPersist = insertRequest.getIndexToPersist();
                 if (CollectionUtils.isEmpty(indexToPersist)) {
                     indexToPersist = new HashSet<>();
@@ -129,34 +125,43 @@ public class PolydataRedis extends AbstractPolydata {
                 }
                 indexToPersist.add(DATE_INDEX);
                 insertRequest.setIndexToPersist(indexToPersist);
+                insertRequest.getData().put(INDEXES, indexToPersist);
             }
 
             for (InsertRequest insertRequest : insertRequests) {
-
                 BasicPoly polyToPersist = insertRequest.getData();
                 writePoly(jedis, poly, polyToPersist);
-                Map<String, BasicPoly> indexData = insertRequest.getIndexData();
-
+                removePolyFromIndex(jedis, poly, polyToPersist);
                 for (String indexName : insertRequest.getIndexToPersist()) {
                     // add poly it to list of polys
-                    byte[] indexId = fetchId(poly, indexName);
+                    byte[] indexId = fetchIndexId(poly, indexName);
                     jedis.lpush(indexId, insertRequest.getData()._id().getBytes());
-
-                    BasicPoly tagIndex = index(poly).orElseGet(() -> BasicPoly.newPoly(TAG_INDEX_KEY));
-
-                    // update tags list
-                    BasicPoly data = new BasicPoly();
-                    if (indexData != null) {
-                        data.data().putAll(indexData.getOrDefault(indexName, BasicPoly.newPoly(indexName)).data());
-                    }
-                    data.put("count", jedis.llen(indexId));
-                    tagIndex.put(indexName, data);
-                    writePoly(jedis, poly, tagIndex);
                 }
             }
+            rebuildIndex(jedis, poly);
         });
 
         return basicPolyList;
+    }
+
+    private void rebuildIndex(Jedis jedis, String poly) {
+        byte[] pattern = fetchIndexId(poly, "*");
+        Set<byte[]> keys = jedis.keys(pattern);
+        BasicPoly tagIndex = BasicPoly.newPoly(TAG_INDEX_KEY);
+        for (byte[] key : keys) {
+            String stringKey = StringUtils.replace(new String(key), new String(fetchIndexId(poly, "")), "");
+            long length = jedis.llen(key);
+            tagIndex.put(stringKey, BasicPoly.newPoly().with("count", length));
+        }
+        writePoly(jedis, poly, tagIndex);
+    }
+
+    private void removePolyFromIndex(Jedis jedis, String poly, BasicPoly p) {
+        byte[] pattern = fetchIndexId(poly, "*");
+        Set<byte[]> keys = jedis.keys(pattern);
+        for (byte[] index : keys) {
+            jedis.lrem(index, 0, p._id().getBytes());
+        }
     }
 
     @Override
@@ -190,6 +195,7 @@ public class PolydataRedis extends AbstractPolydata {
         return redis(jedis -> {
             byte[][] redisIds = ids.stream().map(id -> fetchId(poly, id)).toArray(byte[][]::new);
             BasicPolyList basicPolyList = read(poly, ids);
+            // remove ids
             for (byte[] id : redisIds) {
                 try {
                     jedis.del(id);
@@ -197,6 +203,15 @@ public class PolydataRedis extends AbstractPolydata {
                     log.error("Failed to delete poly", e);
                 }
             }
+            // remove poly from indexes
+            for(BasicPoly p: basicPolyList.list()) {
+                Collection<String> indexes = p.fetch(INDEXES);
+                for (String index : indexes) {
+                    byte[] indexId = fetchIndexId(poly, index);
+                    jedis.lrem(indexId, 0, p._id().getBytes());
+                }
+            }
+            rebuildIndex(jedis, poly);
             return basicPolyList;
         });
     }
@@ -223,11 +238,11 @@ public class PolydataRedis extends AbstractPolydata {
             Integer defaultItemPerPage = config.fetch(ITEM_PER_PAGE, DEFAULT_ITEM_PER_PAGE);
             Integer itemPerPage = query.getOptions().fetch(ITEM_PER_PAGE, defaultItemPerPage);
 
-            long count = jedis.llen(fetchId(poly, index));
-            int randomCount = query.option(RANDOM_COUNT, itemPerPage);
-
             List<Integer> ids = new ArrayList<>();
             if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
+                long count = jedis.llen(fetchIndexId(poly, index));
+                int randomCount = query.option(RANDOM_COUNT, itemPerPage);
+
                 for (int i = 0; i < randomCount; i++) {
                     ids.add(randoms.getRandom().nextInt((int) count));
                 }
@@ -239,7 +254,7 @@ public class PolydataRedis extends AbstractPolydata {
             }
 
             Set<String> indexIds = ids.stream()
-                    .map(id -> jedis.lindex(fetchId(poly, index), id))
+                    .map(id -> jedis.lindex(fetchIndexId(poly, index), id))
                     .filter(Objects::nonNull)
                     .map(id -> new String(id))
                     .collect(Collectors.toSet());
@@ -263,7 +278,7 @@ public class PolydataRedis extends AbstractPolydata {
             } else {
                 index = DATE_INDEX;
             }
-            byte[] indexId = fetchId(poly, index);
+            byte[] indexId = fetchIndexId(poly, index);
             return jedis.llen(indexId);
         });
     }
@@ -291,6 +306,14 @@ public class PolydataRedis extends AbstractPolydata {
 
     private byte[] fetchId(String poly, String id) {
         String value = polyConfig.prefix + poly + "-" + id;
+        if (!polyConfig.hashIds) {
+            return value.getBytes();
+        }
+        return DigestUtils.sha256Hex(value).toLowerCase().getBytes();
+    }
+
+    private byte[] fetchIndexId(String poly, String id) {
+        String value = polyConfig.prefix + poly + "-index-" + id;
         if (!polyConfig.hashIds) {
             return value.getBytes();
         }

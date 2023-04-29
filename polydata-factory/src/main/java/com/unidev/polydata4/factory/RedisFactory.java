@@ -33,6 +33,7 @@ public class RedisFactory implements StorageFactory {
         poolConfig.setTestOnBorrow(true);
         poolConfig.setTestOnReturn(true);
         poolConfig.setTestWhileIdle(true);
+        poolConfig.setTestOnCreate(true);
         poolConfig.setMinEvictableIdleTime(Duration.ofSeconds(config.fetch("min-evictable-idle", 60)));
         poolConfig.setTimeBetweenEvictionRuns(Duration.ofSeconds(config.fetch("time-between-eviction-runs", 30)));
         poolConfig.setNumTestsPerEvictionRun(config.fetch("num-tests-per-eviction", 10));
