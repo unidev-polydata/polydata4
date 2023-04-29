@@ -122,6 +122,9 @@ public class PolydataMongodb extends AbstractPolydata {
             // transform index to poly
             index = BasicPoly.newPoly(poly);
             for(String key : rawIndex.data().keySet()) {
+                if (StringUtils.equals(key, _ID)) {
+                    continue;
+                }
                 index.put(key, BasicPoly.newPoly(key).with("count", Long.parseLong(rawIndex.data().get(key) + "")));
             }
             putIfCache(poly + "-index", index);
