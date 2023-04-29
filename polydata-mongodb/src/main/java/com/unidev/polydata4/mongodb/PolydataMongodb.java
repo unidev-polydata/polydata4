@@ -55,7 +55,6 @@ public class PolydataMongodb extends AbstractPolydata {
 
     public void prepareStorage(String poly) {
         collection(poly).createIndex(Indexes.ascending(INDEXES));
-        indexCollection(poly).createIndex(Indexes.descending(COUNT));
     }
 
     @Override
@@ -110,14 +109,28 @@ public class PolydataMongodb extends AbstractPolydata {
         if (cachedResult != null) {
             return Optional.of(cachedResult);
         }
-        BasicPoly index = new BasicPoly();
-        MongoCollection<Document> collection = indexCollection(poly);
-        for (Document document : collection.find()) {
-            BasicPoly value = toPoly(document);
-            index.put(value._id(), value);
+        BasicPoly index = null;
+        BasicPoly rawIndex = null;
+        Bson query = Filters.eq(_ID, poly);
+        try (MongoCursor<Document> cursor = indexCollection(poly).find(query).iterator()) {
+            if (cursor.hasNext()) {
+                Document document = cursor.next();
+                rawIndex = toPoly(document);
+            }
         }
-        putIfCache(poly + "-index", index);
-        return Optional.of(index);
+        if (rawIndex != null) {
+            // transform index to poly
+            index = BasicPoly.newPoly(poly);
+            for(String key : rawIndex.data().keySet()) {
+                if (StringUtils.equals(key, _ID)) {
+                    continue;
+                }
+                index.put(key, BasicPoly.newPoly(key).with("count", Long.parseLong(rawIndex.data().get(key) + "")));
+            }
+            putIfCache(poly + "-index", index);
+        }
+
+        return Optional.ofNullable(index);
     }
 
     @Override
@@ -439,7 +452,7 @@ public class PolydataMongodb extends AbstractPolydata {
     }
 
     private MongoCollection<Document> indexCollection(String poly) {
-        return collection(INDEX_COLLECTION + "_" + poly);
+        return collection(INDEX_COLLECTION);
     }
 
     private void recalculateIndex(String poly) {
@@ -452,23 +465,23 @@ public class PolydataMongodb extends AbstractPolydata {
                 )
         );
 
-
         try (MongoCursor<Document> iterator = documents.iterator()) {
-            List<BasicPoly> indexes = new ArrayList<>();
+            BasicPoly indexes = BasicPoly.newPoly(poly);
+            UpdateOptions opt = new UpdateOptions().upsert(true);
             while (iterator.hasNext()) {
                 Document next = iterator.next();
                 String index = next.getString(_ID);
                 Long count = Long.parseLong(next.get("count") + "");
-                BasicPoly indexData = BasicPoly.newPoly(index);
-                indexData.put("count", count);
-                indexData.put("index", index);
-                indexData.put("poly", poly);
-                indexes.add(indexData);
+                indexes.put(index, count);
             }
-            if (!indexes.isEmpty()) {
-                indexCollection(poly).drop();
-                indexCollection(poly).insertMany(indexes.stream().map(this::toDocument).collect(Collectors.toList()));
-            }
+            Document indexDocument = toDocument(indexes);
+            Bson update = new Document("$set", indexDocument);
+            Bson filter = Filters.eq(_ID, poly);
+            BulkWriteResult bulkWriteResult = indexCollection(poly).bulkWrite(List.of(new UpdateOneModel<>(filter, update, opt)));
+
+            log.debug("Index write result getInsertedCount {} getModifiedCount {} getMatchedCount {}",
+                    bulkWriteResult.getInsertedCount(), bulkWriteResult.getModifiedCount(),
+                    bulkWriteResult.getMatchedCount());
         }
     }
 

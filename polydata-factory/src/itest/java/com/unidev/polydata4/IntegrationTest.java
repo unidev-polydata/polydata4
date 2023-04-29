@@ -269,7 +269,7 @@ public abstract class IntegrationTest {
     @Test
     void queryRandom() {
         String poly = createPoly();
-        for (int i = 0; i < 105; i++) {
+        for (int i = 0; i < 1000; i++) {
             polydata.insert(poly, Collections.singletonList(
                     InsertRequest.builder()
                             .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
