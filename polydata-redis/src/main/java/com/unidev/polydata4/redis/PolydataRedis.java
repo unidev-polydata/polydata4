@@ -204,7 +204,7 @@ public class PolydataRedis extends AbstractPolydata {
                 }
             }
             // remove poly from indexes
-            for(BasicPoly p: basicPolyList.list()) {
+            for (BasicPoly p : basicPolyList.list()) {
                 Collection<String> indexes = p.fetch(INDEXES);
                 for (String index : indexes) {
                     byte[] indexId = fetchIndexId(poly, index);

@@ -48,8 +48,7 @@ public class MongodbCacheIntegrationTest extends IntegrationTest {
                         .with("provider", "org.ehcache.jsr107.EhcacheCachingProvider")
                         .with("name", "polydata")
                         .with("implementationUri", "file://" + tempFile.getAbsolutePath())
-                )
-                ;
+                );
 
         create(config);
     }

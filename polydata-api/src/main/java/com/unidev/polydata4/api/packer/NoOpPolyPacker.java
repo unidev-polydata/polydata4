@@ -25,9 +25,7 @@ public class NoOpPolyPacker implements PolyPacker {
 
     public BasicPoly unPackPoly(InputStream stream) throws IOException {
         return objectMapper.readValue(IOUtils.toByteArray(stream), BasicPoly.class);
-    }    @Getter
-    @Setter
-    private ObjectMapper objectMapper = objectMapper();
+    }
 
     protected ObjectMapper objectMapper() {
         return objectMapper = new ObjectMapper(
@@ -38,7 +36,8 @@ public class NoOpPolyPacker implements PolyPacker {
         );
     }
 
-
-
+    @Getter
+    @Setter
+    private ObjectMapper objectMapper = objectMapper();
 
 }

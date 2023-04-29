@@ -21,7 +21,6 @@ import org.bson.conversions.Bson;
 import javax.cache.Cache;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Storage of polydata records in mongodb.
@@ -121,7 +120,7 @@ public class PolydataMongodb extends AbstractPolydata {
         if (rawIndex != null) {
             // transform index to poly
             index = BasicPoly.newPoly(poly);
-            for(String key : rawIndex.data().keySet()) {
+            for (String key : rawIndex.data().keySet()) {
                 if (StringUtils.equals(key, _ID)) {
                     continue;
                 }

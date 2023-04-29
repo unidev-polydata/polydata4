@@ -16,6 +16,13 @@ import java.util.List;
  */
 public class FlatFileDeserializer extends StdDeserializer<FlatFile> {
 
+    private final ObjectMapper objectMapper;
+
+    protected FlatFileDeserializer(Class<?> vc, ObjectMapper objectMapper) {
+        super(vc);
+        this.objectMapper = objectMapper;
+    }
+
     public static void install(ObjectMapper objectMapper) {
 
         SimpleModule flatFile =
@@ -23,13 +30,6 @@ public class FlatFileDeserializer extends StdDeserializer<FlatFile> {
         flatFile.addDeserializer(FlatFile.class, new FlatFileDeserializer(FlatFile.class, objectMapper));
         flatFile.addDeserializer(FlatFile.FileMetadata.class, new FlatFileDeserializer.FileMetadataDeserializer(FlatFile.FileMetadata.class, objectMapper));
         objectMapper.registerModule(flatFile);
-    }
-
-    private final ObjectMapper objectMapper;
-
-    protected FlatFileDeserializer(Class<?> vc, ObjectMapper objectMapper) {
-        super(vc);
-        this.objectMapper = objectMapper;
     }
 
     @Override
