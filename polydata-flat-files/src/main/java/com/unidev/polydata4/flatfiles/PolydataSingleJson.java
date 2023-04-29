@@ -35,6 +35,17 @@ public class PolydataSingleJson extends AbstractPolydata {
     private final Map<String, FlatFileRepository> repositories = new ConcurrentHashMap<>();
     private final Randoms randoms = new Randoms();
 
+    private static Set<String> buildTagIndex(InsertRequest request) {
+        Set<String> indexToPersist = request.getIndexToPersist();
+        if (CollectionUtils.isEmpty(indexToPersist)) {
+            indexToPersist = new HashSet<>();
+        } else {
+            indexToPersist = new HashSet<>(indexToPersist);
+        }
+        indexToPersist.add(DATE_INDEX);
+        return indexToPersist;
+    }
+
     @Override
     public void prepareStorage() {
         FileUtils.listFiles(rootDir, POLY_EXTENSIONS, true).forEach(file -> {
@@ -238,16 +249,5 @@ public class PolydataSingleJson extends AbstractPolydata {
             }
         });
 
-    }
-
-    private static Set<String> buildTagIndex(InsertRequest request) {
-        Set<String> indexToPersist = request.getIndexToPersist();
-        if (CollectionUtils.isEmpty(indexToPersist)) {
-            indexToPersist = new HashSet<>();
-        } else {
-            indexToPersist = new HashSet<>(indexToPersist);
-        }
-        indexToPersist.add(DATE_INDEX);
-        return indexToPersist;
     }
 }

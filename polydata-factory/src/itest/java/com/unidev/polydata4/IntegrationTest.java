@@ -23,6 +23,16 @@ public abstract class IntegrationTest {
 
     protected Polydata polydata;
 
+    public static String renderTemplate(String content, Map<String, Object> variables) {
+        try {
+            Template template = TemplateBuilder.newTemplate(content).build().get();
+            String renderedFile = TemplateBuilder.evaluate(template, variables).get();
+            return renderedFile;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     protected void create(BasicPoly config) {
         polydata = factory.create(config).get();
     }
@@ -289,16 +299,6 @@ public abstract class IntegrationTest {
         String poly = "poly-" + System.currentTimeMillis();
         polydata.create(poly);
         return poly;
-    }
-
-    public static String renderTemplate(String content, Map<String, Object> variables) {
-        try {
-            Template template = TemplateBuilder.newTemplate(content).build().get();
-            String renderedFile = TemplateBuilder.evaluate(template, variables).get();
-            return renderedFile;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
 }

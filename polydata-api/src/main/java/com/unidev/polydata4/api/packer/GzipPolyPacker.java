@@ -48,14 +48,16 @@ public class GzipPolyPacker implements PolyPacker {
             e.printStackTrace();
         }
         return result;
-    }    @Getter
-    @Setter
-    private ObjectMapper objectMapper = objectMapper();
+    }
 
     public byte[] packPoly(BasicPoly poly) throws IOException {
         String value = objectMapper.writeValueAsString(poly);
         return gzipCompress(value.getBytes());
     }
+
+    @Getter
+    @Setter
+    private ObjectMapper objectMapper = objectMapper();
 
     public BasicPoly unPackPoly(InputStream stream) throws IOException {
         return objectMapper.readValue(gzipUncompress(IOUtils.toByteArray(stream)), BasicPoly.class);
