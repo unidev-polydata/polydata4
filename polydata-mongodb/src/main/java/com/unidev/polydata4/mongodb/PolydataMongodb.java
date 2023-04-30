@@ -8,6 +8,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.*;
+import com.mongodb.client.result.UpdateResult;
 import com.unidev.polydata4.api.AbstractPolydata;
 import com.unidev.polydata4.domain.*;
 import lombok.Getter;
@@ -466,21 +467,15 @@ public class PolydataMongodb extends AbstractPolydata {
 
         try (MongoCursor<Document> iterator = documents.iterator()) {
             BasicPoly indexes = BasicPoly.newPoly(dataset);
-            UpdateOptions opt = new UpdateOptions().upsert(true);
             while (iterator.hasNext()) {
                 Document next = iterator.next();
                 String index = next.getString(_ID);
-                Long count = Long.parseLong(next.get("count") + "");
+                Long count = Long.parseLong(String.valueOf(next.get("count")));
                 indexes.put(index, count);
             }
             Document indexDocument = toDocument(indexes);
-            Bson update = new Document("$set", indexDocument);
             Bson filter = Filters.eq(_ID, dataset);
-            BulkWriteResult bulkWriteResult = indexCollection(dataset).bulkWrite(List.of(new UpdateOneModel<>(filter, update, opt)));
-
-            log.debug("Index write result getInsertedCount {} getModifiedCount {} getMatchedCount {}",
-                    bulkWriteResult.getInsertedCount(), bulkWriteResult.getModifiedCount(),
-                    bulkWriteResult.getMatchedCount());
+            indexCollection(dataset).replaceOne(filter, indexDocument, new ReplaceOptions().upsert(true));
         }
     }
 
