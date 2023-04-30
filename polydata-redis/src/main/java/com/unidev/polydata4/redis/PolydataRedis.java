@@ -38,73 +38,73 @@ public class PolydataRedis extends AbstractPolydata {
     }
 
     @Override
-    public BasicPoly create(String poly) {
-        if (exists(poly)) {
-            return config(poly).get();
+    public BasicPoly create(String dataset) {
+        if (exists(dataset)) {
+            return config(dataset).get();
         }
         BasicPoly config = new BasicPoly();
         config._id(CONFIG_KEY);
         config.put(ITEM_PER_PAGE, DEFAULT_ITEM_PER_PAGE);
-        config(poly, config);
-        metadata(poly, BasicPoly.newPoly(METADATA_KEY));
+        config(dataset, config);
+        metadata(dataset, BasicPoly.newPoly(METADATA_KEY));
         redis(jedis -> {
-            jedis.lpush(POLY_LIST, poly);
+            jedis.lpush(POLY_LIST, dataset);
         });
-        return config(poly).get();
+        return config(dataset).get();
     }
 
     @Override
-    public boolean exists(String poly) {
-        return list().hasPoly(poly);
+    public boolean exists(String dataset) {
+        return list().hasPoly(dataset);
     }
 
     @Override
-    public Optional<BasicPoly> config(String poly) {
-        if (!exists(poly)) {
+    public Optional<BasicPoly> config(String dataset) {
+        if (!exists(dataset)) {
             return Optional.empty();
         }
         return redis(jedis -> {
-            return readPoly(jedis, poly, CONFIG_KEY);
+            return readPoly(jedis, dataset, CONFIG_KEY);
         });
     }
 
     @Override
-    public void config(String poly, BasicPoly config) {
+    public void config(String dataset, BasicPoly config) {
         redis(jedis -> {
-            writePoly(jedis, poly, config);
+            writePoly(jedis, dataset, config);
         });
     }
 
     @Override
-    public Optional<BasicPoly> metadata(String poly) {
-        if (!exists(poly)) {
+    public Optional<BasicPoly> metadata(String dataset) {
+        if (!exists(dataset)) {
             return Optional.empty();
         }
         return redis(jedis -> {
-            return readPoly(jedis, poly, METADATA_KEY);
+            return readPoly(jedis, dataset, METADATA_KEY);
         });
     }
 
     @Override
-    public void metadata(String poly, BasicPoly metadata) {
+    public void metadata(String dataset, BasicPoly metadata) {
         redis(jedis -> {
-            writePoly(jedis, poly, metadata);
+            writePoly(jedis, dataset, metadata);
         });
     }
 
     @Override
-    public Optional<BasicPoly> index(String poly) {
-        if (!exists(poly)) {
+    public Optional<BasicPoly> index(String dataset) {
+        if (!exists(dataset)) {
             return Optional.empty();
         }
         return redis(jedis -> {
-            return readPoly(jedis, poly, TAG_INDEX_KEY);
+            return readPoly(jedis, dataset, TAG_INDEX_KEY);
         });
     }
 
     @Override
-    public Optional<BasicPoly> indexData(String poly, String indexId) {
-        Optional<BasicPoly> index = index(poly);
+    public Optional<BasicPoly> indexData(String dataset, String indexId) {
+        Optional<BasicPoly> index = index(dataset);
         if (index.isEmpty()) {
             return Optional.empty();
         }
@@ -112,7 +112,7 @@ public class PolydataRedis extends AbstractPolydata {
     }
 
     @Override
-    public BasicPolyList insert(String poly, Collection<InsertRequest> insertRequests) {
+    public BasicPolyList insert(String dataset, Collection<InsertRequest> insertRequests) {
         final BasicPolyList basicPolyList = new BasicPolyList();
         redis(jedis -> {
             // build index data
@@ -130,34 +130,34 @@ public class PolydataRedis extends AbstractPolydata {
 
             for (InsertRequest insertRequest : insertRequests) {
                 BasicPoly polyToPersist = insertRequest.getData();
-                writePoly(jedis, poly, polyToPersist);
-                removePolyFromIndex(jedis, poly, polyToPersist);
+                writePoly(jedis, dataset, polyToPersist);
+                removePolyFromIndex(jedis, dataset, polyToPersist);
                 for (String indexName : insertRequest.getIndexToPersist()) {
                     // add poly it to list of polys
-                    byte[] indexId = fetchIndexId(poly, indexName);
+                    byte[] indexId = fetchIndexId(dataset, indexName);
                     jedis.lpush(indexId, insertRequest.getData()._id().getBytes());
                 }
             }
-            rebuildIndex(jedis, poly);
+            rebuildIndex(jedis, dataset);
         });
 
         return basicPolyList;
     }
 
-    private void rebuildIndex(Jedis jedis, String poly) {
-        byte[] pattern = fetchIndexId(poly, "*");
+    private void rebuildIndex(Jedis jedis, String dataset) {
+        byte[] pattern = fetchIndexId(dataset, "*");
         Set<byte[]> keys = jedis.keys(pattern);
         BasicPoly tagIndex = BasicPoly.newPoly(TAG_INDEX_KEY);
         for (byte[] key : keys) {
-            String stringKey = StringUtils.replace(new String(key), new String(fetchIndexId(poly, "")), "");
+            String stringKey = StringUtils.replace(new String(key), new String(fetchIndexId(dataset, "")), "");
             long length = jedis.llen(key);
             tagIndex.put(stringKey, BasicPoly.newPoly().with("count", length));
         }
-        writePoly(jedis, poly, tagIndex);
+        writePoly(jedis, dataset, tagIndex);
     }
 
-    private void removePolyFromIndex(Jedis jedis, String poly, BasicPoly p) {
-        byte[] pattern = fetchIndexId(poly, "*");
+    private void removePolyFromIndex(Jedis jedis, String dataset, BasicPoly p) {
+        byte[] pattern = fetchIndexId(dataset, "*");
         Set<byte[]> keys = jedis.keys(pattern);
         for (byte[] index : keys) {
             jedis.lrem(index, 0, p._id().getBytes());
@@ -165,16 +165,16 @@ public class PolydataRedis extends AbstractPolydata {
     }
 
     @Override
-    public BasicPolyList update(String poly, Collection<InsertRequest> insertRequests) {
-        return insert(poly, insertRequests);
+    public BasicPolyList update(String dataset, Collection<InsertRequest> insertRequests) {
+        return insert(dataset, insertRequests);
     }
 
     @Override
-    public BasicPolyList read(String poly, Set<String> ids) {
+    public BasicPolyList read(String dataset, Set<String> ids) {
         return redis(jedis -> {
             BasicPolyList basicPolyList = new BasicPolyList();
             jedis.mget(
-                    ids.stream().map(id -> fetchId(poly, id)).toArray(byte[][]::new)
+                    ids.stream().map(id -> fetchId(dataset, id)).toArray(byte[][]::new)
             ).forEach(polyData -> {
                 if (polyData == null) {
                     return;
@@ -191,10 +191,10 @@ public class PolydataRedis extends AbstractPolydata {
     }
 
     @Override
-    public BasicPolyList remove(String poly, Set<String> ids) {
+    public BasicPolyList remove(String dataset, Set<String> ids) {
         return redis(jedis -> {
-            byte[][] redisIds = ids.stream().map(id -> fetchId(poly, id)).toArray(byte[][]::new);
-            BasicPolyList basicPolyList = read(poly, ids);
+            byte[][] redisIds = ids.stream().map(id -> fetchId(dataset, id)).toArray(byte[][]::new);
+            BasicPolyList basicPolyList = read(dataset, ids);
             // remove ids
             for (byte[] id : redisIds) {
                 try {
@@ -207,23 +207,23 @@ public class PolydataRedis extends AbstractPolydata {
             for (BasicPoly p : basicPolyList.list()) {
                 Collection<String> indexes = p.fetch(INDEXES);
                 for (String index : indexes) {
-                    byte[] indexId = fetchIndexId(poly, index);
+                    byte[] indexId = fetchIndexId(dataset, index);
                     jedis.lrem(indexId, 0, p._id().getBytes());
                 }
             }
-            rebuildIndex(jedis, poly);
+            rebuildIndex(jedis, dataset);
             return basicPolyList;
         });
     }
 
     @Override
-    public BasicPolyList query(String poly, PolyQuery polyQuery) {
+    public BasicPolyList query(String dataset, PolyQuery polyQuery) {
         return redis(jedis -> {
             BasicPolyQuery query = (BasicPolyQuery) polyQuery;
-            Optional<BasicPoly> configPoly = config(poly);
+            Optional<BasicPoly> configPoly = config(dataset);
 
             if (configPoly.isEmpty()) {
-                throw new RuntimeException("Poly " + poly + " is not configured");
+                throw new RuntimeException("Poly " + dataset + " is not configured");
             }
 
             String index;
@@ -240,7 +240,7 @@ public class PolydataRedis extends AbstractPolydata {
 
             List<Integer> ids = new ArrayList<>();
             if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
-                long count = jedis.llen(fetchIndexId(poly, index));
+                long count = jedis.llen(fetchIndexId(dataset, index));
                 int randomCount = query.option(RANDOM_COUNT, itemPerPage);
 
                 for (int i = 0; i < randomCount; i++) {
@@ -254,22 +254,22 @@ public class PolydataRedis extends AbstractPolydata {
             }
 
             Set<String> indexIds = ids.stream()
-                    .map(id -> jedis.lindex(fetchIndexId(poly, index), id))
+                    .map(id -> jedis.lindex(fetchIndexId(dataset, index), id))
                     .filter(Objects::nonNull)
                     .map(id -> new String(id))
                     .collect(Collectors.toSet());
 
-            return read(poly, indexIds);
+            return read(dataset, indexIds);
         });
     }
 
     @Override
-    public Long count(String poly, PolyQuery polyQuery) {
+    public Long count(String dataset, PolyQuery polyQuery) {
         return redis(jedis -> {
             BasicPolyQuery query = (BasicPolyQuery) polyQuery;
-            Optional<BasicPoly> configPoly = config(poly);
+            Optional<BasicPoly> configPoly = config(dataset);
             if (configPoly.isEmpty()) {
-                throw new RuntimeException("Poly " + poly + " is not configured");
+                throw new RuntimeException("Poly " + dataset + " is not configured");
             }
             String index;
             String queryIndex = query.index();
@@ -278,7 +278,7 @@ public class PolydataRedis extends AbstractPolydata {
             } else {
                 index = DATE_INDEX;
             }
-            byte[] indexId = fetchIndexId(poly, index);
+            byte[] indexId = fetchIndexId(dataset, index);
             return jedis.llen(indexId);
         });
     }
@@ -287,8 +287,8 @@ public class PolydataRedis extends AbstractPolydata {
     public BasicPolyList list() {
         return redis(jedis -> {
             BasicPolyList polyList = new BasicPolyList();
-            for (String poly : jedis.lrange(POLY_LIST, 0, -1)) {
-                polyList.add(BasicPoly.newPoly(poly));
+            for (String dataset : jedis.lrange(POLY_LIST, 0, -1)) {
+                polyList.add(BasicPoly.newPoly(dataset));
             }
             return polyList;
         });
@@ -304,16 +304,16 @@ public class PolydataRedis extends AbstractPolydata {
 
     }
 
-    private byte[] fetchId(String poly, String id) {
-        String value = polyConfig.prefix + poly + "-" + id;
+    private byte[] fetchId(String dataset, String id) {
+        String value = polyConfig.prefix + dataset + "-" + id;
         if (!polyConfig.hashIds) {
             return value.getBytes();
         }
         return DigestUtils.sha256Hex(value).toLowerCase().getBytes();
     }
 
-    private byte[] fetchIndexId(String poly, String id) {
-        String value = polyConfig.prefix + poly + "-index-" + id;
+    private byte[] fetchIndexId(String dataset, String id) {
+        String value = polyConfig.prefix + dataset + "-index-" + id;
         if (!polyConfig.hashIds) {
             return value.getBytes();
         }
@@ -341,10 +341,10 @@ public class PolydataRedis extends AbstractPolydata {
     /**
      * Write poly to redis.
      */
-    public void writePoly(Jedis jedis, String poly, BasicPoly data) {
+    public void writePoly(Jedis jedis, String dataset, BasicPoly data) {
         try {
             byte[] configBytes = polyConfig.polyPacker.packPoly(data);
-            jedis.set(fetchId(poly, data._id()), configBytes);
+            jedis.set(fetchId(dataset, data._id()), configBytes);
         } catch (Exception e) {
             log.error("Failed to persist config", e);
             throw new RuntimeException(e);
@@ -354,8 +354,8 @@ public class PolydataRedis extends AbstractPolydata {
     /**
      * Read raw poly from redis.
      */
-    public Optional<BasicPoly> readPoly(Jedis jedis, String poly, String id) {
-        byte[] value = jedis.get(fetchId(poly, id));
+    public Optional<BasicPoly> readPoly(Jedis jedis, String dataset, String id) {
+        byte[] value = jedis.get(fetchId(dataset, id));
         if (value == null || value.length == 0) {
             return Optional.empty();
         }

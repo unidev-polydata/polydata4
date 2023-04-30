@@ -38,47 +38,47 @@ public interface Polydata extends Closeable {
 
     void prepareStorage();
 
-    BasicPoly create(String poly);
+    BasicPoly create(String dataset);
 
     /**
      * Check if exists poly storage.
      *
-     * @param poly
+     * @param dataset
      * @return
      */
-    boolean exists(String poly);
+    boolean exists(String dataset);
 
-    Optional<BasicPoly> config(String poly);
+    Optional<BasicPoly> config(String dataset);
 
-    void config(String poly, BasicPoly config);
+    void config(String dataset, BasicPoly config);
 
-    Optional<BasicPoly> metadata(String poly);
+    Optional<BasicPoly> metadata(String dataset);
 
-    void metadata(String poly, BasicPoly metadata);
+    void metadata(String dataset, BasicPoly metadata);
 
     /**
      * Fetch tags from specific index.
      * Examples:
      * index("cats") = "{count: 10}"
      */
-    Optional<BasicPoly> index(String poly);
+    Optional<BasicPoly> index(String dataset);
 
     /**
      * Return index information
      **/
-    Optional<BasicPoly> indexData(String poly, String indexId);
+    Optional<BasicPoly> indexData(String dataset, String indexId);
 
-    BasicPolyList insert(String poly, Collection<InsertRequest> insertRequests);
+    BasicPolyList insert(String dataset, Collection<InsertRequest> insertRequests);
 
-    BasicPolyList update(String poly, Collection<InsertRequest> insertRequests);
+    BasicPolyList update(String dataset, Collection<InsertRequest> insertRequests);
 
-    BasicPolyList read(String poly, Set<String> ids);
+    BasicPolyList read(String dataset, Set<String> ids);
 
-    BasicPolyList remove(String poly, Set<String> ids);
+    BasicPolyList remove(String dataset, Set<String> ids);
 
-    BasicPolyList query(String poly, PolyQuery polyQuery);
+    BasicPolyList query(String dataset, PolyQuery polyQuery);
 
-    Long count(String poly, PolyQuery polyQuery);
+    Long count(String dataset, PolyQuery polyQuery);
 
     /**
      * List available polys
