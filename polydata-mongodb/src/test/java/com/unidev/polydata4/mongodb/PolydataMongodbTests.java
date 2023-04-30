@@ -107,10 +107,7 @@ public class PolydataMongodbTests {
 
     @Test
     void indexUpdate() {
-        BasicPoly index = polydata.index(polyId).get();
-        assertThat(index).isNotNull();
-        assertThat(index.data().isEmpty()).isTrue();
-
+        assertThat(polydata.index(polyId).isPresent()).isFalse();
         for (int i = 0; i < 100; i++) {
             polydata.insert(polyId, Collections.singletonList(
                     InsertRequest.builder()
@@ -120,7 +117,7 @@ public class PolydataMongodbTests {
             );
         }
 
-        index = polydata.index(polyId).get();
+        BasicPoly index = polydata.index(polyId).get();
         assertThat(index).isNotNull();
         assertThat(index.data().isEmpty()).isFalse();
 
