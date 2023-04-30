@@ -59,8 +59,8 @@ public class PolydataSqlite extends AbstractPolydata {
     }
 
     @Override
-    public BasicPoly create(String poly) {
-        SQLiteDataSource datasource = fetchDataSource(poly);
+    public BasicPoly create(String dataset) {
+        SQLiteDataSource datasource = fetchDataSource(dataset);
         try {
             Flyway flyway = Flyway.configure()
                     .dataSource(datasource.getUrl(), "", "")
@@ -75,56 +75,56 @@ public class PolydataSqlite extends AbstractPolydata {
         BasicPoly config = new BasicPoly();
         config._id(CONFIG_KEY);
         config.put(ITEM_PER_PAGE, DEFAULT_ITEM_PER_PAGE);
-        config(poly, config);
-        metadata(poly, BasicPoly.newPoly(METADATA_KEY));
+        config(dataset, config);
+        metadata(dataset, BasicPoly.newPoly(METADATA_KEY));
 
-        return config(poly).get();
+        return config(dataset).get();
 
     }
 
     @Override
-    public boolean exists(String poly) {
-        return getDbFile(poly).exists();
+    public boolean exists(String dataset) {
+        return getDbFile(dataset).exists();
     }
 
     @Override
-    public Optional<BasicPoly> config(String poly) {
-        return readInternal(poly, CONFIG_KEY);
+    public Optional<BasicPoly> config(String dataset) {
+        return readInternal(dataset, CONFIG_KEY);
     }
 
     @Override
-    public void config(String poly, BasicPoly config) {
-        persistInternal(poly, config);
+    public void config(String dataset, BasicPoly config) {
+        persistInternal(dataset, config);
     }
 
     @Override
-    public Optional<BasicPoly> metadata(String poly) {
-        return readInternal(poly, METADATA_KEY);
+    public Optional<BasicPoly> metadata(String dataset) {
+        return readInternal(dataset, METADATA_KEY);
     }
 
     @Override
-    public void metadata(String poly, BasicPoly metadata) {
-        persistInternal(poly, metadata);
+    public void metadata(String dataset, BasicPoly metadata) {
+        persistInternal(dataset, metadata);
     }
 
     @Override
-    public Optional<BasicPoly> index(String poly) {
-        return readInternal(poly, INDEX_KEY);
+    public Optional<BasicPoly> index(String dataset) {
+        return readInternal(dataset, INDEX_KEY);
     }
 
     @Override
-    public Optional<BasicPoly> indexData(String poly, String indexId) {
-        Optional<BasicPoly> index = index(poly);
+    public Optional<BasicPoly> indexData(String dataset, String indexId) {
+        Optional<BasicPoly> index = index(dataset);
         return index.map(basicPoly -> basicPoly.fetch(indexId));
     }
 
     @Override
-    public BasicPolyList insert(String poly, Collection<InsertRequest> insertRequests) {
+    public BasicPolyList insert(String dataset, Collection<InsertRequest> insertRequests) {
         BasicPolyList result = new BasicPolyList();
 
         Set<String> ids = new HashSet<>();
         insertRequests.forEach(persistRequest -> ids.add(persistRequest.getData()._id()));
-        BasicPolyList existingPolys = read(poly, ids);
+        BasicPolyList existingPolys = read(dataset, ids);
 
         Collection<InsertRequest> toInsert = new HashSet<>();
         Collection<InsertRequest> toUpdate = new HashSet<>();
@@ -138,7 +138,7 @@ public class PolydataSqlite extends AbstractPolydata {
             }
         });
 
-        try (Connection connection = fetchConnection(poly)) {
+        try (Connection connection = fetchConnection(dataset)) {
             connection.setAutoCommit(false);
             PreparedStatement preparedStatement = connection
                     .prepareStatement(
@@ -185,19 +185,19 @@ public class PolydataSqlite extends AbstractPolydata {
 
         log.info("Added polys {} ", toInsert.size());
 
-        recalculateIndex(poly);
+        recalculateIndex(dataset);
 
         if (!toUpdate.isEmpty()) {
-            update(poly, toUpdate);
+            update(dataset, toUpdate);
         }
 
         return result;
     }
 
     @Override
-    public BasicPolyList update(String poly, Collection<InsertRequest> updateRequests) {
+    public BasicPolyList update(String dataset, Collection<InsertRequest> updateRequests) {
         BasicPolyList result = new BasicPolyList();
-        try (Connection connection = fetchConnection(poly)) {
+        try (Connection connection = fetchConnection(dataset)) {
             connection.setAutoCommit(false);
             PreparedStatement preparedStatement = connection
                     .prepareStatement("UPDATE data SET data=?, polydata_index=?, update_date=? WHERE _id=?");
@@ -225,16 +225,16 @@ public class PolydataSqlite extends AbstractPolydata {
             throw new RuntimeException(e);
         }
 
-        recalculateIndex(poly);
+        recalculateIndex(dataset);
 
         log.info("Updated polys {} ", updateRequests.size());
         return result;
     }
 
     @Override
-    public BasicPolyList read(String poly, Set<String> ids) {
+    public BasicPolyList read(String dataset, Set<String> ids) {
         BasicPolyList basicPolyList = new BasicPolyList();
-        try (Connection connection = fetchConnection(poly)) {
+        try (Connection connection = fetchConnection(dataset)) {
             String q = createQuestionMarks(ids);
             PreparedStatement preparedStatement = connection
                     .prepareStatement("SELECT data FROM data WHERE _id IN ( " + q + ") ; ");
@@ -256,9 +256,9 @@ public class PolydataSqlite extends AbstractPolydata {
     }
 
     @Override
-    public BasicPolyList remove(String poly, Set<String> ids) {
-        BasicPolyList basicPolyList = read(poly, ids);
-        try (Connection connection = fetchConnection(poly)) {
+    public BasicPolyList remove(String dataset, Set<String> ids) {
+        BasicPolyList basicPolyList = read(dataset, ids);
+        try (Connection connection = fetchConnection(dataset)) {
             String q = createQuestionMarks(ids);
             PreparedStatement preparedStatement = connection
                     .prepareStatement("DELETE FROM data WHERE _id IN (" + q + ") ; ");
@@ -268,7 +268,7 @@ public class PolydataSqlite extends AbstractPolydata {
             }
             long removedRows = preparedStatement.executeUpdate();
             log.info("Removed {} rows", removedRows);
-            recalculateIndex(poly);
+            recalculateIndex(dataset);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -276,12 +276,12 @@ public class PolydataSqlite extends AbstractPolydata {
     }
 
     @Override
-    public BasicPolyList query(String poly, PolyQuery polyQuery) {
+    public BasicPolyList query(String dataset, PolyQuery polyQuery) {
         BasicPolyQuery query = (BasicPolyQuery) polyQuery;
-        Optional<BasicPoly> configPoly = config(poly);
+        Optional<BasicPoly> configPoly = config(dataset);
 
         if (configPoly.isEmpty()) {
-            throw new RuntimeException("Poly " + poly + " is not configured");
+            throw new RuntimeException("Poly " + dataset + " is not configured");
         }
 
         BasicPolyList list = new BasicPolyList();
@@ -295,7 +295,7 @@ public class PolydataSqlite extends AbstractPolydata {
         final int page = query.page() < 0 ? 0 : query.page();
         Integer defaultItemPerPage = config.fetch(ITEM_PER_PAGE, DEFAULT_ITEM_PER_PAGE);
         Integer itemPerPage = query.getOptions().fetch(ITEM_PER_PAGE, defaultItemPerPage);
-        try (Connection connection = fetchConnection(poly)) {
+        try (Connection connection = fetchConnection(dataset)) {
             PreparedStatement preparedStatement = null;
             if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
                 int randomCount = query.option(RANDOM_COUNT, itemPerPage);
@@ -318,18 +318,18 @@ public class PolydataSqlite extends AbstractPolydata {
     }
 
     @Override
-    public Long count(String poly, PolyQuery polyQuery) {
+    public Long count(String dataset, PolyQuery polyQuery) {
         BasicPolyQuery query = (BasicPolyQuery) polyQuery;
-        Optional<BasicPoly> configPoly = config(poly);
+        Optional<BasicPoly> configPoly = config(dataset);
         if (configPoly.isEmpty()) {
-            throw new RuntimeException("Poly " + poly + " is not configured");
+            throw new RuntimeException("Poly " + dataset + " is not configured");
         }
         String index = DATE_INDEX;
         String tag = query.index();
         if (!StringUtils.isBlank(tag)) {
             index = tag;
         }
-        try (Connection connection = fetchConnection(poly)) {
+        try (Connection connection = fetchConnection(dataset)) {
             PreparedStatement preparedStatement = null;
             preparedStatement = connection.prepareStatement("SELECT count(data) FROM data WHERE polydata_index LIKE ? ; ");
             preparedStatement.setString(1, "%|" + index + "|%");
@@ -351,8 +351,8 @@ public class PolydataSqlite extends AbstractPolydata {
         if (files != null) {
             for (File file : files) {
                 if (file.getName().endsWith(DB_FILE_EXTENSION)) {
-                    String poly = file.getName().replace(DB_FILE_EXTENSION, "");
-                    list.add(BasicPoly.newPoly(poly));
+                    String dataset = file.getName().replace(DB_FILE_EXTENSION, "");
+                    list.add(BasicPoly.newPoly(dataset));
                 }
             }
         }
@@ -369,9 +369,9 @@ public class PolydataSqlite extends AbstractPolydata {
 
     }
 
-    private void recalculateIndex(String poly) {
+    private void recalculateIndex(String dataset) {
         BasicPoly index = BasicPoly.newPoly(INDEX_KEY);
-        try (Connection connection = fetchConnection(poly)) {
+        try (Connection connection = fetchConnection(dataset)) {
             PreparedStatement preparedStatement = connection
                     .prepareStatement("SELECT polydata_index FROM data");
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -391,11 +391,11 @@ public class PolydataSqlite extends AbstractPolydata {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        persistInternal(poly, index);
+        persistInternal(dataset, index);
     }
 
-    private void persistInternal(String poly, BasicPoly data) {
-        try (Connection connection = fetchConnection(poly)) {
+    private void persistInternal(String dataset, BasicPoly data) {
+        try (Connection connection = fetchConnection(dataset)) {
             PreparedStatement preparedStatement = connection
                     .prepareStatement("INSERT OR REPLACE INTO internal(_id, data, create_date, update_date) VALUES(?,?,?,?);");
             preparedStatement.setString(1, data._id());
@@ -408,8 +408,8 @@ public class PolydataSqlite extends AbstractPolydata {
         }
     }
 
-    private Optional<BasicPoly> readInternal(String poly, String id) {
-        try (Connection connection = fetchConnection(poly)) {
+    private Optional<BasicPoly> readInternal(String dataset, String id) {
+        try (Connection connection = fetchConnection(dataset)) {
             PreparedStatement preparedStatement = connection
                     .prepareStatement("SELECT data FROM internal WHERE _id=?");
             preparedStatement.setString(1, id);
@@ -425,8 +425,8 @@ public class PolydataSqlite extends AbstractPolydata {
         return Optional.empty();
     }
 
-    private SQLiteDataSource fetchDataSource(String poly) {
-        return connections.computeIfAbsent(poly, k -> {
+    private SQLiteDataSource fetchDataSource(String dataset) {
+        return connections.computeIfAbsent(dataset, k -> {
             File dbFile = getDbFile(k);
             SQLiteDataSource sqLiteDataSource = new SQLiteDataSource();
             sqLiteDataSource.setUrl("jdbc:sqlite:" + dbFile.getAbsolutePath());
@@ -434,14 +434,14 @@ public class PolydataSqlite extends AbstractPolydata {
         });
     }
 
-    private File getDbFile(String poly) {
-        File dbFile = new File(rootDir, poly + DB_FILE_EXTENSION);
+    private File getDbFile(String dataset) {
+        File dbFile = new File(rootDir, dataset + DB_FILE_EXTENSION);
         return dbFile;
     }
 
-    private Connection fetchConnection(String poly) {
+    private Connection fetchConnection(String dataset) {
         try {
-            return fetchDataSource(poly).getConnection();
+            return fetchDataSource(dataset).getConnection();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

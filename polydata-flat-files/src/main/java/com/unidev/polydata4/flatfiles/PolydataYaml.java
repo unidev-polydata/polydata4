@@ -106,91 +106,91 @@ public class PolydataYaml extends AbstractPolydata {
     }
 
     @Override
-    public BasicPoly create(String poly) {
+    public BasicPoly create(String dataset) {
         throw new UnsupportedOperationException("Operation not supported");
     }
 
     @Override
-    public boolean exists(String poly) {
-        return repositories.containsKey(poly);
+    public boolean exists(String dataset) {
+        return repositories.containsKey(dataset);
     }
 
     @Override
-    public Optional<BasicPoly> config(String poly) {
-        if (!exists(poly)) {
+    public Optional<BasicPoly> config(String dataset) {
+        if (!exists(dataset)) {
             return Optional.empty();
         }
-        return Optional.ofNullable(repositories.get(poly).getConfig());
+        return Optional.ofNullable(repositories.get(dataset).getConfig());
     }
 
     @Override
-    public void config(String poly, BasicPoly config) {
+    public void config(String dataset, BasicPoly config) {
         throw new UnsupportedOperationException("Operation not supported");
 
     }
 
     @Override
-    public Optional<BasicPoly> metadata(String poly) {
-        if (!exists(poly)) {
+    public Optional<BasicPoly> metadata(String dataset) {
+        if (!exists(dataset)) {
             return Optional.empty();
         }
-        return Optional.ofNullable(repositories.get(poly).getMetadata());
+        return Optional.ofNullable(repositories.get(dataset).getMetadata());
     }
 
     @Override
-    public void metadata(String poly, BasicPoly metadata) {
+    public void metadata(String dataset, BasicPoly metadata) {
         throw new UnsupportedOperationException("Operation not supported");
 
     }
 
     @Override
-    public Optional<BasicPoly> index(String poly) {
-        if (!exists(poly)) {
+    public Optional<BasicPoly> index(String dataset) {
+        if (!exists(dataset)) {
             return Optional.empty();
         }
         BasicPoly index = new BasicPoly();
-        repositories.get(poly).getPolyIndex().forEach((key, value) -> index.put(key, BasicPoly.newPoly(key).with("_count", value.size())));
+        repositories.get(dataset).getPolyIndex().forEach((key, value) -> index.put(key, BasicPoly.newPoly(key).with("_count", value.size())));
         return Optional.of(index);
     }
 
     @Override
-    public Optional<BasicPoly> indexData(String poly, String indexId) {
-        if (!exists(poly)) {
+    public Optional<BasicPoly> indexData(String dataset, String indexId) {
+        if (!exists(dataset)) {
             return Optional.empty();
         }
-        return index(poly).map(p -> p.fetch(indexId));
+        return index(dataset).map(p -> p.fetch(indexId));
     }
 
     @Override
-    public BasicPolyList insert(String poly, Collection<InsertRequest> insertRequests) {
+    public BasicPolyList insert(String dataset, Collection<InsertRequest> insertRequests) {
         throw new UnsupportedOperationException("Operation not supported");
     }
 
     @Override
-    public BasicPolyList update(String poly, Collection<InsertRequest> insertRequests) {
+    public BasicPolyList update(String dataset, Collection<InsertRequest> insertRequests) {
         throw new UnsupportedOperationException("Operation not supported");
     }
 
     @Override
-    public BasicPolyList read(String poly, Set<String> ids) {
-        if (!exists(poly)) {
+    public BasicPolyList read(String dataset, Set<String> ids) {
+        if (!exists(dataset)) {
             return new BasicPolyList();
         }
-        return repositories.get(poly).fetchById(ids);
+        return repositories.get(dataset).fetchById(ids);
     }
 
     @Override
-    public BasicPolyList remove(String poly, Set<String> ids) {
+    public BasicPolyList remove(String dataset, Set<String> ids) {
         throw new UnsupportedOperationException("Operation not supported");
     }
 
     @Override
-    public BasicPolyList query(String poly, PolyQuery polyQuery) {
+    public BasicPolyList query(String dataset, PolyQuery polyQuery) {
         BasicPolyQuery query = (BasicPolyQuery) polyQuery;
-        Optional<BasicPoly> configPoly = config(poly);
+        Optional<BasicPoly> configPoly = config(dataset);
 
         if (configPoly.isEmpty()) {
-            throw new RuntimeException("Poly " + poly + " is not configured");
+            throw new RuntimeException("Poly " + dataset + " is not configured");
         }
 
         String index = DATE_INDEX;
@@ -204,10 +204,10 @@ public class PolydataYaml extends AbstractPolydata {
         Integer itemPerPage = query.getOptions().fetch(ITEM_PER_PAGE, defaultItemPerPage);
 
         if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
-            List<String> indexes = repositories.get(poly).getPolyIndex().get(index);
+            List<String> indexes = repositories.get(dataset).getPolyIndex().get(index);
             int randomCount = query.option(RANDOM_COUNT, itemPerPage);
             List<String> randomIds = randoms.randomValues(indexes, randomCount);
-            return read(poly, new HashSet<>(randomIds));
+            return read(dataset, new HashSet<>(randomIds));
         }
         final int page = query.page() < 0 ? 0 : query.page();
         List<Integer> ids = new ArrayList<>();
@@ -215,22 +215,22 @@ public class PolydataYaml extends AbstractPolydata {
             ids.add(i);
         }
 
-        return repositories.get(poly).fetchIndexById(index, ids);
+        return repositories.get(dataset).fetchIndexById(index, ids);
     }
 
     @Override
-    public Long count(String poly, PolyQuery polyQuery) {
+    public Long count(String dataset, PolyQuery polyQuery) {
         BasicPolyQuery query = (BasicPolyQuery) polyQuery;
-        Optional<BasicPoly> configPoly = config(poly);
+        Optional<BasicPoly> configPoly = config(dataset);
         if (configPoly.isEmpty()) {
-            throw new RuntimeException("Poly " + poly + " is not configured");
+            throw new RuntimeException("Poly " + dataset + " is not configured");
         }
         String index = DATE_INDEX;
         String queryIndex = query.index();
         if (!StringUtils.isBlank(queryIndex)) {
             index = queryIndex;
         }
-        List<String> ids = repositories.get(poly).getPolyIndex().get(index);
+        List<String> ids = repositories.get(dataset).getPolyIndex().get(index);
         if (CollectionUtils.isEmpty(ids)) {
             return 0L;
         }

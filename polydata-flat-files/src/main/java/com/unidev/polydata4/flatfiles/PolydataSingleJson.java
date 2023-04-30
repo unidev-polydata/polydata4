@@ -62,83 +62,83 @@ public class PolydataSingleJson extends AbstractPolydata {
     }
 
     @Override
-    public BasicPoly create(String poly) {
-        Optional<BasicPoly> existingConfig = config(poly);
+    public BasicPoly create(String dataset) {
+        Optional<BasicPoly> existingConfig = config(dataset);
         if (existingConfig.isPresent()) {
             return existingConfig.get();
         }
 
         FlatFileRepository repository = new FlatFileRepository();
-        repositories.put(poly, repository);
+        repositories.put(dataset, repository);
 
         BasicPoly config = new BasicPoly();
         config._id(CONFIG_KEY);
         config.put(ITEM_PER_PAGE, DEFAULT_ITEM_PER_PAGE);
-        config(poly, config);
-        metadata(poly, BasicPoly.newPoly(METADATA_KEY));
+        config(dataset, config);
+        metadata(dataset, BasicPoly.newPoly(METADATA_KEY));
 
-        return config(poly).get();
+        return config(dataset).get();
     }
 
     @Override
-    public boolean exists(String poly) {
-        return repositories.containsKey(poly);
+    public boolean exists(String dataset) {
+        return repositories.containsKey(dataset);
     }
 
     @Override
-    public Optional<BasicPoly> config(String poly) {
-        if (!exists(poly)) {
+    public Optional<BasicPoly> config(String dataset) {
+        if (!exists(dataset)) {
             return Optional.empty();
         }
-        return Optional.ofNullable(repositories.get(poly).getConfig());
+        return Optional.ofNullable(repositories.get(dataset).getConfig());
     }
 
     @Override
-    public void config(String poly, BasicPoly config) {
-        if (!exists(poly)) {
-            throw new RuntimeException("Poly " + poly + " does not exists");
+    public void config(String dataset, BasicPoly config) {
+        if (!exists(dataset)) {
+            throw new RuntimeException("Poly " + dataset + " does not exists");
         }
-        repositories.get(poly).setConfig(config);
+        repositories.get(dataset).setConfig(config);
     }
 
     @Override
-    public Optional<BasicPoly> metadata(String poly) {
-        if (!exists(poly)) {
+    public Optional<BasicPoly> metadata(String dataset) {
+        if (!exists(dataset)) {
             return Optional.empty();
         }
-        return Optional.ofNullable(repositories.get(poly).getMetadata());
+        return Optional.ofNullable(repositories.get(dataset).getMetadata());
     }
 
     @Override
-    public void metadata(String poly, BasicPoly metadata) {
-        if (!exists(poly)) {
-            throw new RuntimeException("Poly " + poly + " does not exists");
+    public void metadata(String dataset, BasicPoly metadata) {
+        if (!exists(dataset)) {
+            throw new RuntimeException("Poly " + dataset + " does not exists");
         }
-        repositories.get(poly).setMetadata(metadata);
+        repositories.get(dataset).setMetadata(metadata);
     }
 
     @Override
-    public Optional<BasicPoly> index(String poly) {
-        if (!exists(poly)) {
+    public Optional<BasicPoly> index(String dataset) {
+        if (!exists(dataset)) {
             return Optional.empty();
         }
         BasicPoly index = new BasicPoly();
-        repositories.get(poly).getPolyIndex().forEach((key, value) -> index.put(key, BasicPoly.newPoly(key).with("count", value.size())));
+        repositories.get(dataset).getPolyIndex().forEach((key, value) -> index.put(key, BasicPoly.newPoly(key).with("count", value.size())));
         return Optional.of(index);
     }
 
     @Override
-    public Optional<BasicPoly> indexData(String poly, String indexId) {
-        if (!exists(poly)) {
+    public Optional<BasicPoly> indexData(String dataset, String indexId) {
+        if (!exists(dataset)) {
             return Optional.empty();
         }
-        return index(poly).map(p -> p.fetch(indexId));
+        return index(dataset).map(p -> p.fetch(indexId));
     }
 
     @Override
-    public BasicPolyList insert(String poly, Collection<InsertRequest> insertRequests) {
+    public BasicPolyList insert(String dataset, Collection<InsertRequest> insertRequests) {
         BasicPolyList list = new BasicPolyList();
-        FlatFileRepository repository = repositories.get(poly);
+        FlatFileRepository repository = repositories.get(dataset);
         insertRequests.forEach(request -> {
             BasicPoly data = request.getData();
             String id = data._id();
@@ -151,20 +151,20 @@ public class PolydataSingleJson extends AbstractPolydata {
     }
 
     @Override
-    public BasicPolyList update(String poly, Collection<InsertRequest> insertRequests) {
-        return insert(poly, insertRequests);
+    public BasicPolyList update(String dataset, Collection<InsertRequest> insertRequests) {
+        return insert(dataset, insertRequests);
     }
 
     @Override
-    public BasicPolyList read(String poly, Set<String> ids) {
-        FlatFileRepository repository = repositories.get(poly);
+    public BasicPolyList read(String dataset, Set<String> ids) {
+        FlatFileRepository repository = repositories.get(dataset);
         return repository.fetchById(ids);
     }
 
     @Override
-    public BasicPolyList remove(String poly, Set<String> ids) {
-        FlatFileRepository repository = repositories.get(poly);
-        BasicPolyList list = read(poly, ids);
+    public BasicPolyList remove(String dataset, Set<String> ids) {
+        FlatFileRepository repository = repositories.get(dataset);
+        BasicPolyList list = read(dataset, ids);
         ids.forEach(id -> {
             repository.remove(id);
         });
@@ -172,12 +172,12 @@ public class PolydataSingleJson extends AbstractPolydata {
     }
 
     @Override
-    public BasicPolyList query(String poly, PolyQuery polyQuery) {
+    public BasicPolyList query(String dataset, PolyQuery polyQuery) {
         BasicPolyQuery query = (BasicPolyQuery) polyQuery;
-        Optional<BasicPoly> configPoly = config(poly);
+        Optional<BasicPoly> configPoly = config(dataset);
 
         if (configPoly.isEmpty()) {
-            throw new RuntimeException("Poly " + poly + " is not configured");
+            throw new RuntimeException("Poly " + dataset + " is not configured");
         }
 
         String index = DATE_INDEX;
@@ -191,10 +191,10 @@ public class PolydataSingleJson extends AbstractPolydata {
         Integer itemPerPage = query.getOptions().fetch(ITEM_PER_PAGE, defaultItemPerPage);
 
         if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
-            List<String> indexes = repositories.get(poly).getPolyIndex().get(index);
+            List<String> indexes = repositories.get(dataset).getPolyIndex().get(index);
             int randomCount = query.option(RANDOM_COUNT, itemPerPage);
             List<String> randomIds = randoms.randomValues(indexes, randomCount);
-            return read(poly, new HashSet<>(randomIds));
+            return read(dataset, new HashSet<>(randomIds));
         }
         final int page = query.page() < 0 ? 0 : query.page();
         List<Integer> ids = new ArrayList<>();
@@ -202,22 +202,22 @@ public class PolydataSingleJson extends AbstractPolydata {
             ids.add(i);
         }
 
-        return repositories.get(poly).fetchIndexById(index, ids);
+        return repositories.get(dataset).fetchIndexById(index, ids);
     }
 
     @Override
-    public Long count(String poly, PolyQuery polyQuery) {
+    public Long count(String dataset, PolyQuery polyQuery) {
         BasicPolyQuery query = (BasicPolyQuery) polyQuery;
-        Optional<BasicPoly> configPoly = config(poly);
+        Optional<BasicPoly> configPoly = config(dataset);
         if (configPoly.isEmpty()) {
-            throw new RuntimeException("Poly " + poly + " is not configured");
+            throw new RuntimeException("Poly " + dataset + " is not configured");
         }
         String index = DATE_INDEX;
         String queryIndex = query.index();
         if (!StringUtils.isBlank(queryIndex)) {
             index = queryIndex;
         }
-        List<String> ids = repositories.get(poly).getPolyIndex().get(index);
+        List<String> ids = repositories.get(dataset).getPolyIndex().get(index);
         if (CollectionUtils.isEmpty(ids)) {
             return 0L;
         }

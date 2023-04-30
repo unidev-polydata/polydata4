@@ -52,8 +52,8 @@ public class PolydataMongodb extends AbstractPolydata {
         this.mongoClient = new MongoClient(mongoClientURI);
     }
 
-    public void prepareStorage(String poly) {
-        collection(poly).createIndex(Indexes.ascending(INDEXES));
+    public void prepareStorage(String dataset) {
+        collection(dataset).createIndex(Indexes.ascending(INDEXES));
     }
 
     @Override
@@ -62,56 +62,56 @@ public class PolydataMongodb extends AbstractPolydata {
     }
 
     @Override
-    public BasicPoly create(String poly) {
-        if (exists(poly)) {
-            return config(poly).get();
+    public BasicPoly create(String dataset) {
+        if (exists(dataset)) {
+            return config(dataset).get();
         }
-        config(poly, BasicPoly.newPoly(poly));
-        metadata(poly, BasicPoly.newPoly(poly).with(CREATE_DATE, new Date()));
+        config(dataset, BasicPoly.newPoly(dataset));
+        metadata(dataset, BasicPoly.newPoly(dataset).with(CREATE_DATE, new Date()));
 
-        prepareStorage(poly);
+        prepareStorage(dataset);
 
-        return config(poly).get();
+        return config(dataset).get();
     }
 
     @Override
-    public boolean exists(String poly) {
-        return config(poly).isPresent();
+    public boolean exists(String dataset) {
+        return config(dataset).isPresent();
     }
 
     @Override
-    public Optional<BasicPoly> config(String poly) {
-        return fetchPolyFromCollection(poly, CONFIGURATION_COLLECTION);
+    public Optional<BasicPoly> config(String dataset) {
+        return fetchPolyFromCollection(dataset, CONFIGURATION_COLLECTION);
     }
 
     @Override
-    public void config(String poly, BasicPoly config) {
-        persistPolyToCollection(poly, CONFIGURATION_COLLECTION, config);
+    public void config(String dataset, BasicPoly config) {
+        persistPolyToCollection(dataset, CONFIGURATION_COLLECTION, config);
     }
 
     @Override
-    public Optional<BasicPoly> metadata(String poly) {
-        return fetchPolyFromCollection(poly, METADATA_COLLECTION);
+    public Optional<BasicPoly> metadata(String dataset) {
+        return fetchPolyFromCollection(dataset, METADATA_COLLECTION);
     }
 
     @Override
-    public void metadata(String poly, BasicPoly metadata) {
-        persistPolyToCollection(poly, METADATA_COLLECTION, metadata);
+    public void metadata(String dataset, BasicPoly metadata) {
+        persistPolyToCollection(dataset, METADATA_COLLECTION, metadata);
     }
 
     @Override
-    public Optional<BasicPoly> index(String poly) {
-        if (!exists(poly)) {
+    public Optional<BasicPoly> index(String dataset) {
+        if (!exists(dataset)) {
             return Optional.empty();
         }
-        BasicPoly cachedResult = ifCache(cache -> cache.get(poly + "-index"));
+        BasicPoly cachedResult = ifCache(cache -> cache.get(dataset + "-index"));
         if (cachedResult != null) {
             return Optional.of(cachedResult);
         }
         BasicPoly index = null;
         BasicPoly rawIndex = null;
-        Bson query = Filters.eq(_ID, poly);
-        try (MongoCursor<Document> cursor = indexCollection(poly).find(query).iterator()) {
+        Bson query = Filters.eq(_ID, dataset);
+        try (MongoCursor<Document> cursor = indexCollection(dataset).find(query).iterator()) {
             if (cursor.hasNext()) {
                 Document document = cursor.next();
                 rawIndex = toPoly(document);
@@ -119,22 +119,22 @@ public class PolydataMongodb extends AbstractPolydata {
         }
         if (rawIndex != null) {
             // transform index to poly
-            index = BasicPoly.newPoly(poly);
+            index = BasicPoly.newPoly(dataset);
             for (String key : rawIndex.data().keySet()) {
                 if (StringUtils.equals(key, _ID)) {
                     continue;
                 }
                 index.put(key, BasicPoly.newPoly(key).with("count", Long.parseLong(rawIndex.data().get(key) + "")));
             }
-            putIfCache(poly + "-index", index);
+            putIfCache(dataset + "-index", index);
         }
 
         return Optional.ofNullable(index);
     }
 
     @Override
-    public Optional<BasicPoly> indexData(String poly, String indexId) {
-        Optional<BasicPoly> index = index(poly);
+    public Optional<BasicPoly> indexData(String dataset, String indexId) {
+        Optional<BasicPoly> index = index(dataset);
         if (index.isEmpty()) {
             return Optional.empty();
         }
@@ -142,7 +142,7 @@ public class PolydataMongodb extends AbstractPolydata {
     }
 
     @Override
-    public BasicPolyList insert(String poly, Collection<InsertRequest> insertRequests) {
+    public BasicPolyList insert(String dataset, Collection<InsertRequest> insertRequests) {
         BasicPolyList basicPolyList = new BasicPolyList();
 
         Set<String> polyIds = new HashSet<>();
@@ -160,7 +160,7 @@ public class PolydataMongodb extends AbstractPolydata {
             insertRequest.setIndexToPersist(indexToPersist);
         }
         // bulk insert
-        MongoCollection<Document> polydataCollection = collection(poly);
+        MongoCollection<Document> polydataCollection = collection(dataset);
 
         List<UpdateOneModel<Document>> requests = new ArrayList<>();
         UpdateOptions opt = new UpdateOptions().upsert(true);
@@ -195,21 +195,21 @@ public class PolydataMongodb extends AbstractPolydata {
                     bulkWriteResult.getInsertedCount(), bulkWriteResult.getModifiedCount(),
                     bulkWriteResult.getMatchedCount());
         }
-        recalculateIndex(poly);
+        recalculateIndex(dataset);
         return basicPolyList;
     }
 
     @Override
-    public BasicPolyList update(String poly, Collection<InsertRequest> insertRequests) {
-        return insert(poly, insertRequests);
+    public BasicPolyList update(String dataset, Collection<InsertRequest> insertRequests) {
+        return insert(dataset, insertRequests);
     }
 
     @Override
-    public BasicPolyList read(String poly, Set<String> ids) {
+    public BasicPolyList read(String dataset, Set<String> ids) {
         Map<String, BasicPoly> cachedPolys = ifCache(cache -> {
             Set<String> cachedIds = new HashSet<>();
             for (String id : ids) {
-                cachedIds.add(poly + "-read-" + id);
+                cachedIds.add(dataset + "-read-" + id);
             }
             return cache.getAll(cachedIds);
         });
@@ -232,7 +232,7 @@ public class PolydataMongodb extends AbstractPolydata {
 
         final BasicPolyList dbPolys = new BasicPolyList();
         Bson query = Filters.in(_ID, idsToQuery);
-        try (MongoCursor<Document> cursor = collection(poly).find(query).iterator()) {
+        try (MongoCursor<Document> cursor = collection(dataset).find(query).iterator()) {
             cursor.forEachRemaining(document -> {
                 BasicPoly polyData = toPoly(document);
                 dbPolys.add(polyData);
@@ -242,7 +242,7 @@ public class PolydataMongodb extends AbstractPolydata {
             Cache cacheInstance = cache.get();
             Map<String, BasicPoly> cacheMap = new HashMap<>();
             for (BasicPoly data : dbPolys.list()) {
-                cacheMap.put(poly + "-read-" + data._id(), data);
+                cacheMap.put(dataset + "-read-" + data._id(), data);
             }
             cacheInstance.putAll(cacheMap);
         }
@@ -252,11 +252,11 @@ public class PolydataMongodb extends AbstractPolydata {
     }
 
     @Override
-    public BasicPolyList remove(String poly, Set<String> ids) {
-        BasicPolyList list = read(poly, ids);
+    public BasicPolyList remove(String dataset, Set<String> ids) {
+        BasicPolyList list = read(dataset, ids);
         // delete by id
-        collection(poly).deleteMany(Filters.in(_ID, ids));
-        recalculateIndex(poly);
+        collection(dataset).deleteMany(Filters.in(_ID, ids));
+        recalculateIndex(dataset);
         if (cache.isPresent()) {
             Cache cacheInstance = cache.get();
             Set<String> keysToRemove = new HashSet<>();
@@ -269,12 +269,12 @@ public class PolydataMongodb extends AbstractPolydata {
     }
 
     @Override
-    public BasicPolyList query(String poly, PolyQuery polyQuery) {
+    public BasicPolyList query(String dataset, PolyQuery polyQuery) {
         BasicPolyQuery query = (BasicPolyQuery) polyQuery;
-        Optional<BasicPoly> configPoly = config(poly);
+        Optional<BasicPoly> configPoly = config(dataset);
 
         if (configPoly.isEmpty()) {
-            throw new RuntimeException("Poly " + poly + " is not configured");
+            throw new RuntimeException("Poly " + dataset + " is not configured");
         }
 
         BasicPolyList list = new BasicPolyList();
@@ -291,7 +291,7 @@ public class PolydataMongodb extends AbstractPolydata {
         Integer defaultItemPerPage = config.fetch(ITEM_PER_PAGE, DEFAULT_ITEM_PER_PAGE);
         Integer itemPerPage = query.getOptions().fetch(ITEM_PER_PAGE, defaultItemPerPage);
         Bson mongoQuery = Filters.in(INDEXES, index);
-        MongoCollection<Document> collection = collection(poly);
+        MongoCollection<Document> collection = collection(dataset);
         if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
             int randomCount = query.option(RANDOM_COUNT, itemPerPage);
             long count = collection.countDocuments(mongoQuery);
@@ -309,7 +309,7 @@ public class PolydataMongodb extends AbstractPolydata {
             return list;
         }
         BasicPolyList cachedResult = ifCache(cache -> {
-            String key = poly + "-query-" + page + "-" + query.index() + "-" + query.queryType();
+            String key = dataset + "-query-" + page + "-" + query.index() + "-" + query.queryType();
             BasicPoly cachedQuery = cache.get(key);
             if (cachedQuery != null) {
                 return cachedQuery.fetch("list");
@@ -332,7 +332,7 @@ public class PolydataMongodb extends AbstractPolydata {
 
         if (cache.isPresent()) {
             Cache<String, BasicPoly> cachedInstance = cache.get();
-            String key = poly + "-query-" + query.page() + "-" + query.index() + "-" + query.queryType();
+            String key = dataset + "-query-" + query.page() + "-" + query.index() + "-" + query.queryType();
             BasicPoly cachedQuery = new BasicPoly();
             cachedQuery.put("list", list);
             cachedInstance.put(key, cachedQuery);
@@ -342,12 +342,12 @@ public class PolydataMongodb extends AbstractPolydata {
     }
 
     @Override
-    public Long count(String poly, PolyQuery polyQuery) {
+    public Long count(String dataset, PolyQuery polyQuery) {
         BasicPolyQuery query = (BasicPolyQuery) polyQuery;
-        Optional<BasicPoly> configPoly = config(poly);
+        Optional<BasicPoly> configPoly = config(dataset);
 
         if (configPoly.isEmpty()) {
-            throw new RuntimeException("Poly " + poly + " is not configured");
+            throw new RuntimeException("Poly " + dataset + " is not configured");
         }
         String index = DATE_INDEX;
         String tag = query.index();
@@ -356,7 +356,7 @@ public class PolydataMongodb extends AbstractPolydata {
         }
 
         Long cachedResult = ifCache(cache -> {
-            String key = poly + "-count-" + query.index() + "-" + query.queryType();
+            String key = dataset + "-count-" + query.index() + "-" + query.queryType();
             BasicPoly cachedQuery = cache.get(key);
             if (cachedQuery != null) {
                 return cachedQuery.fetch("count");
@@ -368,12 +368,12 @@ public class PolydataMongodb extends AbstractPolydata {
         }
 
         Bson mongoQuery = Filters.in(INDEXES, index);
-        MongoCollection<Document> collection = collection(poly);
+        MongoCollection<Document> collection = collection(dataset);
         Long count = collection.countDocuments(mongoQuery);
 
         if (cache.isPresent()) {
             Cache<String, BasicPoly> cachedInstance = cache.get();
-            String key = poly + "-count-" + query.index() + "-" + query.queryType();
+            String key = dataset + "-count-" + query.index() + "-" + query.queryType();
             BasicPoly cachedQuery = new BasicPoly();
             cachedQuery.put("count", count);
             cachedInstance.put(key, cachedQuery);
@@ -422,40 +422,40 @@ public class PolydataMongodb extends AbstractPolydata {
     /**
      * Fetch Poly document from mongo collection
      */
-    private Optional<BasicPoly> fetchPolyFromCollection(String poly, String collection) {
-        BasicPoly cachedPoly = ifCache(cache -> cache.get(collection + "-poly-from-collection-" + poly));
+    private Optional<BasicPoly> fetchPolyFromCollection(String dataset, String collection) {
+        BasicPoly cachedPoly = ifCache(cache -> cache.get(collection + "-poly-from-collection-" + dataset));
         if (cachedPoly != null) {
             return Optional.of(cachedPoly);
         }
         FindIterable<Document> configById = collection(collection)
-                .find(Filters.eq(poly));
+                .find(Filters.eq(dataset));
         try (MongoCursor<Document> iterator = configById.iterator()) {
             if (!iterator.hasNext()) {
                 return Optional.empty();
             }
             Document document = iterator.next();
             BasicPoly extractedPoly = toPoly(document);
-            putIfCache(collection + "-poly-from-collection-" + poly, extractedPoly);
+            putIfCache(collection + "-poly-from-collection-" + dataset, extractedPoly);
             return Optional.of(extractedPoly);
         }
     }
 
-    private void persistPolyToCollection(String poly, String collection, BasicPoly data) {
+    private void persistPolyToCollection(String dataset, String collection, BasicPoly data) {
         Document document = toDocument(data);
-        document.put(_ID, poly);
+        document.put(_ID, dataset);
         Bson update = new Document("$set", document);
-        Bson filter = Filters.eq(_ID, poly);
+        Bson filter = Filters.eq(_ID, dataset);
         UpdateOptions options = new UpdateOptions().upsert(true);
         collection(collection).updateOne(filter, update, options);
-        putIfCache(collection + "-poly-from-collection-" + poly, data);
+        putIfCache(collection + "-poly-from-collection-" + dataset, data);
     }
 
-    private MongoCollection<Document> indexCollection(String poly) {
+    private MongoCollection<Document> indexCollection(String dataset) {
         return collection(INDEX_COLLECTION);
     }
 
-    private void recalculateIndex(String poly) {
-        MongoCollection<Document> collection = collection(poly);
+    private void recalculateIndex(String dataset) {
+        MongoCollection<Document> collection = collection(dataset);
         AggregateIterable<Document> documents = collection.aggregate(
                 Arrays.asList(
                         Aggregates.project(Projections.fields(Projections.include(INDEXES))),
@@ -465,7 +465,7 @@ public class PolydataMongodb extends AbstractPolydata {
         );
 
         try (MongoCursor<Document> iterator = documents.iterator()) {
-            BasicPoly indexes = BasicPoly.newPoly(poly);
+            BasicPoly indexes = BasicPoly.newPoly(dataset);
             UpdateOptions opt = new UpdateOptions().upsert(true);
             while (iterator.hasNext()) {
                 Document next = iterator.next();
@@ -475,8 +475,8 @@ public class PolydataMongodb extends AbstractPolydata {
             }
             Document indexDocument = toDocument(indexes);
             Bson update = new Document("$set", indexDocument);
-            Bson filter = Filters.eq(_ID, poly);
-            BulkWriteResult bulkWriteResult = indexCollection(poly).bulkWrite(List.of(new UpdateOneModel<>(filter, update, opt)));
+            Bson filter = Filters.eq(_ID, dataset);
+            BulkWriteResult bulkWriteResult = indexCollection(dataset).bulkWrite(List.of(new UpdateOneModel<>(filter, update, opt)));
 
             log.debug("Index write result getInsertedCount {} getModifiedCount {} getMatchedCount {}",
                     bulkWriteResult.getInsertedCount(), bulkWriteResult.getModifiedCount(),
