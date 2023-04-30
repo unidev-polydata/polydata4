@@ -261,7 +261,7 @@ public class PolydataMongodb extends AbstractPolydata {
             Cache cacheInstance = cache.get();
             Set<String> keysToRemove = new HashSet<>();
             for (BasicPoly data : list.list()) {
-                keysToRemove.add(poly + "-read-" + data._id());
+                keysToRemove.add(dataset + "-read-" + data._id());
             }
             cacheInstance.removeAll(keysToRemove);
         }
