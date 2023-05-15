@@ -55,6 +55,8 @@ public class PolydataMongodb extends AbstractPolydata {
 
     public void prepareStorage(String dataset) {
         collection(dataset).createIndex(Indexes.ascending(INDEXES));
+        collection(dataset).createIndex(Indexes.ascending(CREATE_DATE));
+        collection(dataset).createIndex(Indexes.ascending(UPDATE_DATE));
     }
 
     @Override
@@ -463,7 +465,7 @@ public class PolydataMongodb extends AbstractPolydata {
                         Aggregates.unwind("$" + INDEXES),
                         Aggregates.group("$" + INDEXES, Accumulators.sum("count", 1))
                 )
-        );
+        ).allowDiskUse(true);
 
         try (MongoCursor<Document> iterator = documents.iterator()) {
             BasicPoly indexes = BasicPoly.newPoly(dataset);
