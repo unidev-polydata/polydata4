@@ -56,7 +56,8 @@ public class PolydataMongodb extends AbstractPolydata {
     public void prepareStorage(String dataset) {
         collection(dataset).createIndex(Indexes.ascending(INDEXES));
         collection(dataset).createIndex(Indexes.ascending(CREATE_DATE));
-        collection(dataset).createIndex(Indexes.ascending(UPDATE_DATE));
+        collection(dataset).createIndex(Indexes.descending(UPDATE_DATE));
+        collection(dataset).createIndex(Indexes.compoundIndex(Indexes.ascending(INDEXES), Indexes.descending(UPDATE_DATE)));
     }
 
     @Override
