@@ -42,7 +42,6 @@ public class PolydataSingleJson extends AbstractPolydata {
         } else {
             indexToPersist = new HashSet<>(indexToPersist);
         }
-        indexToPersist.add(DATE_INDEX);
         return indexToPersist;
     }
 

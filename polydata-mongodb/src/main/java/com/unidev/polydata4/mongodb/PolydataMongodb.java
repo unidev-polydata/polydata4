@@ -160,7 +160,6 @@ public class PolydataMongodb extends AbstractPolydata {
             } else {
                 indexToPersist = new HashSet<>(indexToPersist);
             }
-            indexToPersist.add(DATE_INDEX);
             insertRequest.setIndexToPersist(indexToPersist);
         }
         // bulk insert
