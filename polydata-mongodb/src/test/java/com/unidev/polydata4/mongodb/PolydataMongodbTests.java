@@ -112,7 +112,7 @@ public class PolydataMongodbTests {
             polydata.insert(polyId, Collections.singletonList(
                     InsertRequest.builder()
                             .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
-                            .indexToPersist(Set.of("tag_x", "tag_" + i, "tag_a_" + (i % 2)))
+                            .indexToPersist(Set.of("tag_x", "tag_" + i, "tag_a_" + (i % 2), "_date"))
                             .build())
             );
         }
@@ -156,7 +156,7 @@ public class PolydataMongodbTests {
             polydata.insert(polyId, Collections.singletonList(
                     InsertRequest.builder()
                             .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
-                            .indexToPersist(Set.of("tag_x", "tag_" + i))
+                            .indexToPersist(Set.of("tag_x", "tag_" + i, "_date"))
                             .build())
             );
         }
@@ -182,7 +182,7 @@ public class PolydataMongodbTests {
             polydata.insert(polyId, Collections.singletonList(
                     InsertRequest.builder()
                             .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
-                            .indexToPersist(Set.of("tag_x", "tag_" + i))
+                            .indexToPersist(Set.of("tag_x", "tag_" + i, "_date"))
                             .build())
             );
         }

@@ -29,7 +29,8 @@ public class PolydataYamlFileTest {
 
         List<String> indexes = flatFile.getMetadata().getIndex();
         assertNotNull(indexes);
-        assertEquals(3, indexes.size());
+        assertEquals(4, indexes.size());
+        assertTrue(indexes.contains("_date"));
         assertTrue(indexes.contains("tag1"));
         assertTrue(indexes.contains("tag2"));
         assertTrue(indexes.contains("tag3"));
@@ -49,7 +50,8 @@ public class PolydataYamlFileTest {
 
         List<String> indexes = (List<String>) metadata.get("_index");
         assertNotNull(indexes);
-        assertEquals(3, indexes.size());
+        assertEquals(4, indexes.size());
+        assertTrue(indexes.contains("_date"));
         assertTrue(indexes.contains("tag1"));
         assertTrue(indexes.contains("tag2"));
         assertTrue(indexes.contains("tag3"));

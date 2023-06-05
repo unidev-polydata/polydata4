@@ -111,7 +111,7 @@ public abstract class IntegrationTest {
         for (int i = 1; i <= 100; i++) {
             list.add(InsertRequest.builder()
                     .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
-                    .indexToPersist(Set.of("id_" + (i % 2), "tag_" + i))
+                    .indexToPersist(Set.of("id_" + (i % 2), "tag_" + i, "_date"))
                     .build());
 
         }
@@ -136,7 +136,7 @@ public abstract class IntegrationTest {
         for (int i = 1; i <= 100; i++) {
             list.add(InsertRequest.builder()
                     .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
-                    .indexToPersist(Set.of("id_" + (i % 2), "tag_" + i))
+                    .indexToPersist(Set.of("id_" + (i % 2), "tag_" + i, "_date"))
                     .build());
 
         }
@@ -146,7 +146,7 @@ public abstract class IntegrationTest {
         for (int i = 1; i <= 100; i++) {
             list.add(InsertRequest.builder()
                     .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
-                    .indexToPersist(Set.of("id_" + (i % 4), "tag_" + i))
+                    .indexToPersist(Set.of("id_" + (i % 4), "tag_" + i, "_date"))
                     .build());
 
         }
@@ -172,7 +172,7 @@ public abstract class IntegrationTest {
         for (int i = 1; i <= 100; i++) {
             list.add(InsertRequest.builder()
                     .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
-                    .indexToPersist(Set.of("id_" + (i % 2), "tag_" + i))
+                    .indexToPersist(Set.of("id_" + (i % 2), "tag_" + i, "_date"))
                     .build());
 
         }
@@ -201,7 +201,7 @@ public abstract class IntegrationTest {
             polydata.insert(poly, Collections.singletonList(
                     InsertRequest.builder()
                             .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
-                            .indexToPersist(Set.of("tag_x", "tag_" + i))
+                            .indexToPersist(Set.of("tag_x", "tag_" + i, "_date"))
                             .build())
             );
         }
@@ -227,7 +227,7 @@ public abstract class IntegrationTest {
             polydata.insert(poly, Collections.singletonList(
                     InsertRequest.builder()
                             .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
-                            .indexToPersist(Set.of("tag_x", "tag_" + i))
+                            .indexToPersist(Set.of("tag_x", "tag_" + i, "_date"))
                             .build())
             );
         }
@@ -283,7 +283,7 @@ public abstract class IntegrationTest {
             polydata.insert(poly, Collections.singletonList(
                     InsertRequest.builder()
                             .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
-                            .indexToPersist(Set.of("tag_x", "tag_" + i))
+                            .indexToPersist(Set.of("tag_x", "tag_" + i, "_date"))
                             .build())
             );
         }

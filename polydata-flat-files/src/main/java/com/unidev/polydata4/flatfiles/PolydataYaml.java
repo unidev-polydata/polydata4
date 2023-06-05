@@ -94,7 +94,6 @@ public class PolydataYaml extends AbstractPolydata {
                 if (index == null) {
                     index = new ArrayList<>();
                 }
-                index.add(DATE_INDEX);
                 flatFileRepository.add(poly, index);
             } catch (IOException e) {
                 log.error("Failed to load file {}", file.getName(), e);

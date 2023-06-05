@@ -123,7 +123,6 @@ public class PolydataRedis extends AbstractPolydata {
                 } else {
                     indexToPersist = new HashSet<>(indexToPersist);
                 }
-                indexToPersist.add(DATE_INDEX);
                 insertRequest.setIndexToPersist(indexToPersist);
                 insertRequest.getData().put(INDEXES, indexToPersist);
             }
