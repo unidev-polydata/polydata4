@@ -112,6 +112,13 @@ public class BasicPolyList implements PolyList<BasicPoly>, Serializable {
     }
 
     @Override
+    public <P extends Poly> PolyList<BasicPoly> add(PolyList<BasicPoly> list) {
+        this.list.addAll(list.getList());
+        return this;
+    }
+
+
+    @Override
     public PolyList<BasicPoly> delete(String polyId) {
         BasicPoly toDelete = null;
         for (BasicPoly poly : list) {
