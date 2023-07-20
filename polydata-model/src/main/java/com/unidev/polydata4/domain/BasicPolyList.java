@@ -112,7 +112,7 @@ public class BasicPolyList implements PolyList<BasicPoly>, Serializable {
     }
 
     @Override
-    public <P extends Poly> PolyList<BasicPoly> add(PolyList<BasicPoly> list) {
+    public <P extends Poly> PolyList<BasicPoly> addList(PolyList<BasicPoly> list) {
         this.list.addAll(list.getList());
         return this;
     }

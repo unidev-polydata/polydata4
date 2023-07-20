@@ -34,7 +34,7 @@ public interface PolyList<T extends Poly> extends Serializable {
 
     <P extends Poly> PolyList<T> add(P poly);
 
-    <P extends Poly> PolyList<T> add(PolyList<T> list);
+    <P extends Poly> PolyList<T> addList(PolyList<T> list);
 
     PolyList<T> delete(String polyId);
 
