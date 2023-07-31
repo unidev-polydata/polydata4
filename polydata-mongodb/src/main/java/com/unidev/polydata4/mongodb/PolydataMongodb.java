@@ -146,7 +146,7 @@ public class PolydataMongodb extends AbstractPolydata {
     }
 
     @Override
-    public BasicPolyList insert(String dataset, Collection<InsertRequest> insertRequests) {
+    public BasicPolyList insert(String dataset, InsertOptions insertOptions, Collection<InsertRequest> insertRequests) {
         BasicPolyList basicPolyList = new BasicPolyList();
 
         Set<String> polyIds = new HashSet<>();
@@ -198,8 +198,16 @@ public class PolydataMongodb extends AbstractPolydata {
                     bulkWriteResult.getInsertedCount(), bulkWriteResult.getModifiedCount(),
                     bulkWriteResult.getMatchedCount());
         }
-        recalculateIndex(dataset);
+
+        if (insertOptions.skipIndex()) {
+            recalculateIndex(dataset);
+        }
         return basicPolyList;
+    }
+
+    @Override
+    public BasicPolyList insert(String dataset, Collection<InsertRequest> insertRequests) {
+        return insert(dataset, InsertOptions.defaultInsertOptions(), insertRequests);
     }
 
     @Override

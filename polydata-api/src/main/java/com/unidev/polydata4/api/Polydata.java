@@ -1,9 +1,6 @@
 package com.unidev.polydata4.api;
 
-import com.unidev.polydata4.domain.BasicPoly;
-import com.unidev.polydata4.domain.BasicPolyList;
-import com.unidev.polydata4.domain.InsertRequest;
-import com.unidev.polydata4.domain.PolyQuery;
+import com.unidev.polydata4.domain.*;
 
 import javax.cache.Cache;
 import java.io.Closeable;
@@ -67,6 +64,8 @@ public interface Polydata extends Closeable {
      * Return index information
      **/
     Optional<BasicPoly> indexData(String dataset, String indexId);
+
+    BasicPolyList insert(String dataset, InsertOptions insertOptions, Collection<InsertRequest> insertRequests);
 
     BasicPolyList insert(String dataset, Collection<InsertRequest> insertRequests);
 
