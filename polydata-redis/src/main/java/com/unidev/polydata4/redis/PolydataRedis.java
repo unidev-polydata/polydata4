@@ -112,7 +112,7 @@ public class PolydataRedis extends AbstractPolydata {
     }
 
     @Override
-    public BasicPolyList insert(String dataset, Collection<InsertRequest> insertRequests) {
+    public BasicPolyList insert(String dataset, InsertOptions insertOptions, Collection<InsertRequest> insertRequests) {
         final BasicPolyList basicPolyList = new BasicPolyList();
         redis(jedis -> {
             // build index data
@@ -137,10 +137,17 @@ public class PolydataRedis extends AbstractPolydata {
                     jedis.lpush(indexId, insertRequest.getData()._id().getBytes());
                 }
             }
-            rebuildIndex(jedis, dataset);
+            if (insertOptions.skipIndex()) {
+                rebuildIndex(jedis, dataset);
+            }
         });
 
         return basicPolyList;
+    }
+
+    @Override
+    public BasicPolyList insert(String dataset, Collection<InsertRequest> insertRequests) {
+        return insert(dataset, InsertOptions.defaultInsertOptions(), insertRequests);
     }
 
     private void rebuildIndex(Jedis jedis, String dataset) {

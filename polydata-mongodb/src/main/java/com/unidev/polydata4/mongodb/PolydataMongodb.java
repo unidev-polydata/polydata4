@@ -200,8 +200,9 @@ public class PolydataMongodb extends AbstractPolydata {
         }
 
         if (insertOptions.skipIndex()) {
-            recalculateIndex(dataset);
+            return basicPolyList;
         }
+        recalculateIndex(dataset);
         return basicPolyList;
     }
 

@@ -135,18 +135,25 @@ public class PolydataSingleJson extends AbstractPolydata {
     }
 
     @Override
-    public BasicPolyList insert(String dataset, Collection<InsertRequest> insertRequests) {
+    public BasicPolyList insert(String dataset, InsertOptions insertOptions, Collection<InsertRequest> insertRequests) {
         BasicPolyList list = new BasicPolyList();
         FlatFileRepository repository = repositories.get(dataset);
         insertRequests.forEach(request -> {
             BasicPoly data = request.getData();
             String id = data._id();
             repository.remove(id);
-            Set<String> tags = buildTagIndex(request);
-            repository.add(data, tags);
             repository.fetchById(Set.of(id)).polyById(id).ifPresent(list::add);
+            if (!insertOptions.skipIndex()) {
+                Set<String> tags = buildTagIndex(request);
+                repository.add(data, tags);
+            }
         });
         return list;
+    }
+
+    @Override
+    public BasicPolyList insert(String dataset, Collection<InsertRequest> insertRequests) {
+        return insert(dataset, InsertOptions.defaultInsertOptions(), insertRequests);
     }
 
     @Override

@@ -161,6 +161,11 @@ public class PolydataYaml extends AbstractPolydata {
     }
 
     @Override
+    public BasicPolyList insert(String dataset, InsertOptions insertOptions, Collection<InsertRequest> insertRequests) {
+        throw new UnsupportedOperationException("Operation not supported");
+    }
+
+    @Override
     public BasicPolyList insert(String dataset, Collection<InsertRequest> insertRequests) {
         throw new UnsupportedOperationException("Operation not supported");
     }

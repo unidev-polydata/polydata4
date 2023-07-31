@@ -118,7 +118,7 @@ public class PolydataSqlite extends AbstractPolydata {
     }
 
     @Override
-    public BasicPolyList insert(String dataset, Collection<InsertRequest> insertRequests) {
+    public BasicPolyList insert(String dataset, InsertOptions insertOptions, Collection<InsertRequest> insertRequests) {
         BasicPolyList result = new BasicPolyList();
 
         Set<String> ids = new HashSet<>();
@@ -184,13 +184,22 @@ public class PolydataSqlite extends AbstractPolydata {
 
         log.info("Added polys {} ", toInsert.size());
 
-        recalculateIndex(dataset);
+        if (insertOptions.skipIndex()) {
+            return result;
+        }
 
+        recalculateIndex(dataset);
         if (!toUpdate.isEmpty()) {
             update(dataset, toUpdate);
         }
 
         return result;
+    }
+
+    @Override
+    public BasicPolyList insert(String dataset, Collection<InsertRequest> insertRequests) {
+        return insert(dataset, InsertOptions.defaultInsertOptions(), insertRequests);
+
     }
 
     @Override

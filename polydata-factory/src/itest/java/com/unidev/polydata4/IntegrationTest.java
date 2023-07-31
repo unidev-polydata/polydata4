@@ -2,10 +2,7 @@ package com.unidev.polydata4;
 
 import com.unidev.platform.template.TemplateBuilder;
 import com.unidev.polydata4.api.Polydata;
-import com.unidev.polydata4.domain.BasicPoly;
-import com.unidev.polydata4.domain.BasicPolyList;
-import com.unidev.polydata4.domain.BasicPolyQuery;
-import com.unidev.polydata4.domain.InsertRequest;
+import com.unidev.polydata4.domain.*;
 import freemarker.template.Template;
 import org.junit.jupiter.api.Test;
 
@@ -293,6 +290,26 @@ public abstract class IntegrationTest {
 
         BasicPolyList list = polydata.query(poly, query);
         assertThat(list.list().size()).isEqualTo(50);
+    }
+
+    @Test
+    void noIndexInsert() {
+        String poly = createPoly();
+        for (int i = 0; i < 1000; i++) {
+            polydata.insert(poly,
+                    InsertOptions.builder().skipIndex(true).build(),
+                    Collections.singletonList(
+                    InsertRequest.builder()
+                            .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
+                            .indexToPersist(Set.of("tag_x", "tag_" + i, "_date"))
+                            .build())
+            );
+        }
+        Optional<BasicPoly> index = polydata.index(poly);
+        if (index.isEmpty()) {
+            return;
+        }
+        assertFalse(index.get().containsKey("tag_x"));
     }
 
     String createPoly() {
