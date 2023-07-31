@@ -199,7 +199,6 @@ public class PolydataSqlite extends AbstractPolydata {
     @Override
     public BasicPolyList insert(String dataset, Collection<InsertRequest> insertRequests) {
         return insert(dataset, InsertOptions.defaultInsertOptions(), insertRequests);
-
     }
 
     @Override
