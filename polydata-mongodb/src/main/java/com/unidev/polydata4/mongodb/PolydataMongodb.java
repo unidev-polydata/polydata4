@@ -306,17 +306,15 @@ public class PolydataMongodb extends AbstractPolydata {
         MongoCollection<Document> collection = collection(dataset);
         if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
             int randomCount = query.option(RANDOM_COUNT, itemPerPage);
-            long count = collection.countDocuments(mongoQuery);
-            Random random = new Random();
-            for (int i = 0; i < randomCount; i++) {
-                int skip = random.nextInt((int) count);
-                try (MongoCursor<Document> iterator = collection.find(mongoQuery).skip(skip)
-                        .iterator()) {
-                    if (iterator.hasNext()) {
-                        Document next = iterator.next();
-                        list.add(toPoly(next));
-                    }
-                }
+            AggregateIterable<Document> documents = collection.aggregate(
+                    Arrays.asList(
+                            Aggregates.sample(randomCount)
+                    )
+            ).allowDiskUse(true);
+            try (MongoCursor<Document> iterator = documents.iterator()) {
+                iterator.forEachRemaining(document -> {
+                    list.add(toPoly(document));
+                });
             }
             return list;
         }
