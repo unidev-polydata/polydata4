@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
+import java.net.URI;
 import java.time.Duration;
 import java.util.Optional;
 
@@ -26,6 +27,7 @@ public class RedisFactory implements StorageFactory {
             return Optional.empty();
         }
         String uri = config.fetch("uri");
+        URI redisUri = URI.create(uri);
         final JedisPoolConfig poolConfig = new JedisPoolConfig();
         poolConfig.setMaxTotal(config.fetch("max-total", 100));
         poolConfig.setMaxIdle(config.fetch("max-idle", 10));
@@ -38,7 +40,7 @@ public class RedisFactory implements StorageFactory {
         poolConfig.setTimeBetweenEvictionRunsMillis(Duration.ofSeconds(config.fetch("time-between-eviction-runs", 30)).toMillis());
         poolConfig.setNumTestsPerEvictionRun(config.fetch("num-tests-per-eviction", 10));
 
-        JedisPool jedisPool = new JedisPool(poolConfig, uri);
+        JedisPool jedisPool = new JedisPool(poolConfig, redisUri.getHost(), redisUri.getPort());
 
         PolydataRedis polydataRedis = new PolydataRedis(
 
