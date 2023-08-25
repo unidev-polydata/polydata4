@@ -8,7 +8,6 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.*;
-import com.mongodb.client.result.UpdateResult;
 import com.unidev.polydata4.api.AbstractPolydata;
 import com.unidev.polydata4.domain.*;
 import lombok.Getter;
@@ -302,50 +301,59 @@ public class PolydataMongodb extends AbstractPolydata {
 
         Integer defaultItemPerPage = config.fetch(ITEM_PER_PAGE, DEFAULT_ITEM_PER_PAGE);
         Integer itemPerPage = query.getOptions().fetch(ITEM_PER_PAGE, defaultItemPerPage);
-        Bson mongoQuery = Filters.in(INDEXES, index);
         MongoCollection<Document> collection = collection(dataset);
         if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
             int randomCount = query.option(RANDOM_COUNT, itemPerPage);
-            AggregateIterable<Document> documents = collection.aggregate(
-                    Arrays.asList(
-                            Aggregates.sample(randomCount)
-                    )
-            ).allowDiskUse(true);
+            AggregateIterable<Document> documents = collection.aggregate(List.of(Aggregates.sample(randomCount))).allowDiskUse(true);
             try (MongoCursor<Document> iterator = documents.iterator()) {
-                iterator.forEachRemaining(document -> {
-                    list.add(toPoly(document));
-                });
+                iterator.forEachRemaining(document -> list.add(toPoly(document)));
             }
             return list;
         }
-        BasicPolyList cachedResult = ifCache(cache -> {
-            String key = dataset + "-query-" + page + "-" + query.index() + "-" + query.queryType();
-            BasicPoly cachedQuery = cache.get(key);
-            if (cachedQuery != null) {
-                return cachedQuery.fetch("list");
-            }
-            return null;
-        });
-
-        if (cachedResult != null) {
-            return cachedResult;
-        }
-
-        try (MongoCursor<Document> iterator = collection.find(mongoQuery).sort(
-                        Sorts.descending(UPDATE_DATE))
-                .skip(page * itemPerPage).limit(itemPerPage).cursor()) {
-            while (iterator.hasNext()) {
-                Document next = iterator.next();
-                list.add(toPoly(next));
+        if (query.queryType() == BasicPolyQuery.QueryFunction.SEARCH) {
+            String searchText = query.getOptions().fetch(SEARCH_TEXT);
+            Bson filter = Filters.text(searchText);
+            try (MongoCursor<Document> iterator = collection.find(filter).sort(
+                            Sorts.descending(UPDATE_DATE))
+                    .skip(page * itemPerPage).limit(itemPerPage).cursor()) {
+                while (iterator.hasNext()) {
+                    Document next = iterator.next();
+                    list.add(toPoly(next));
+                }
             }
         }
 
-        if (cache.isPresent()) {
-            Cache<String, BasicPoly> cachedInstance = cache.get();
-            String key = dataset + "-query-" + query.page() + "-" + query.index() + "-" + query.queryType();
-            BasicPoly cachedQuery = new BasicPoly();
-            cachedQuery.put("list", list);
-            cachedInstance.put(key, cachedQuery);
+        if (query.queryType() == BasicPolyQuery.QueryFunction.PAGES) {
+            Bson mongoQuery = Filters.in(INDEXES, index);
+            BasicPolyList cachedResult = ifCache(cache -> {
+                String key = dataset + "-query-" + page + "-" + query.index() + "-" + query.queryType();
+                BasicPoly cachedQuery = cache.get(key);
+                if (cachedQuery != null) {
+                    return cachedQuery.fetch("list");
+                }
+                return null;
+            });
+
+            if (cachedResult != null) {
+                return cachedResult;
+            }
+
+            try (MongoCursor<Document> iterator = collection.find(mongoQuery).sort(
+                            Sorts.descending(UPDATE_DATE))
+                    .skip(page * itemPerPage).limit(itemPerPage).cursor()) {
+                while (iterator.hasNext()) {
+                    Document next = iterator.next();
+                    list.add(toPoly(next));
+                }
+            }
+
+            if (cache.isPresent()) {
+                Cache<String, BasicPoly> cachedInstance = cache.get();
+                String key = dataset + "-query-" + query.page() + "-" + query.index() + "-" + query.queryType();
+                BasicPoly cachedQuery = new BasicPoly();
+                cachedQuery.put("list", list);
+                cachedInstance.put(key, cachedQuery);
+            }
         }
 
         return list;
