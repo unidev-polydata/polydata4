@@ -11,6 +11,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.Collections;
 import java.util.Set;
 
+import static com.unidev.polydata4.api.Polydata.CUSTOM_QUERY;
 import static com.unidev.polydata4.api.Polydata.SEARCH_TEXT;
 import static com.unidev.polydata4.domain.BasicPolyQuery.QUERY_FUNCTION;
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,6 +29,57 @@ public class MongodbIntegrationTest extends IntegrationTest {
                 .with("type", "mongodb")
                 .with("uri", "mongodb://localhost:" + mongodb.getMappedPort(27017) + "/polydata4");
         create(config);
+    }
+
+    @Test
+    void mongoDbCustomQuery() {
+        String poly = createPoly();
+        for (int i = 0; i < 1000; i++) {
+            polydata.insert(poly,
+                    InsertOptions.builder().build(),
+                    Collections.singletonList(
+                            InsertRequest.builder()
+                                    .data(BasicPoly.newPoly("test_" + i).with("app", "app_" + i).with("field", i))
+                                    .indexToPersist(Set.of("tag_x", "tag_" + i, "_date"))
+                                    .build())
+            );
+        }
+
+        PolydataMongodb polydataMongodb = (PolydataMongodb) polydata;
+        polydataMongodb.createTextIndex(poly, "_id", "_indexes", "app");
+        BasicPolyList list = polydata.query(poly,
+                BasicPolyQuery
+                        .builder()
+                        .options(
+                                BasicPoly.newPoly()
+                                        .with(QUERY_FUNCTION, BasicPolyQuery.QueryFunction.CUSTOM.name())
+                                        .with(CUSTOM_QUERY, """                       
+                        {
+                           app: { $regex: /app_.*/ }
+                        }"""
+                        )).build());
+        assertEquals(10, list.list().size());
+        for (int i = 999; i > 989; i--) {
+            assertTrue(list.hasPoly("test_" + i), "Missing poly " + i);
+        }
+
+        list = polydata.query(poly,
+                BasicPolyQuery
+                        .builder()
+                        .options(
+                                BasicPoly.newPoly()
+                                        .with(QUERY_FUNCTION, BasicPolyQuery.QueryFunction.CUSTOM.name())
+                                        .with(CUSTOM_QUERY, """                       
+                        {
+                          $and: [
+                            { app: "app_10" },
+                            { field: { $eq: 10 } }
+                          ]
+                        }"""
+                                        )).build());
+        assertEquals(1, list.list().size());
+        assertTrue(list.hasPoly("test_10"));
+
     }
 
     @Test
@@ -67,20 +119,6 @@ public class MongodbIntegrationTest extends IntegrationTest {
                                 BasicPoly.newPoly()
                                         .with(QUERY_FUNCTION, BasicPolyQuery.QueryFunction.SEARCH.name())
                                         .with(SEARCH_TEXT, "tag_x")
-
-                        ).build());
-        assertEquals(10, list.list().size());
-        for (int i = 999; i > 989; i--) {
-            assertTrue(list.hasPoly("test_" + i), "Missing poly " + i);
-        }
-
-        list = polydata.query(poly,
-                BasicPolyQuery
-                        .builder()
-                        .options(
-                                BasicPoly.newPoly()
-                                        .with(QUERY_FUNCTION, BasicPolyQuery.QueryFunction.SEARCH.name())
-                                        .with(SEARCH_TEXT, "/^tag_x$/i")
 
                         ).build());
         assertEquals(10, list.list().size());
