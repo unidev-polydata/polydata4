@@ -59,6 +59,19 @@ public class PolydataMongodb extends AbstractPolydata {
         collection(dataset).createIndex(Indexes.compoundIndex(Indexes.ascending(INDEXES), Indexes.descending(UPDATE_DATE)));
     }
 
+    public void createTextIndex(String dataset, String... fields) {
+        if (fields.length == 0) {
+            return;
+        }
+        Document index = new Document();
+        for (String field : fields) {
+            index.put(field, "text");
+        }
+        IndexOptions options = new IndexOptions();
+        options.background(true);
+        collection(dataset).createIndex(index, options);
+    }
+
     @Override
     public void prepareStorage() {
 
@@ -312,7 +325,8 @@ public class PolydataMongodb extends AbstractPolydata {
         }
         if (query.queryType() == BasicPolyQuery.QueryFunction.SEARCH) {
             String searchText = query.getOptions().fetch(SEARCH_TEXT);
-            Bson filter = Filters.text(searchText);
+            TextSearchOptions options = new TextSearchOptions().caseSensitive(true);
+            Bson filter = Filters.text(searchText, options);
             try (MongoCursor<Document> iterator = collection.find(filter).sort(
                             Sorts.descending(UPDATE_DATE))
                     .skip(page * itemPerPage).limit(itemPerPage).cursor()) {
