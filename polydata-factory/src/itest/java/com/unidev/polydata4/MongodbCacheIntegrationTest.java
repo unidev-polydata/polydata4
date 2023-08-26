@@ -24,11 +24,6 @@ public class MongodbCacheIntegrationTest extends IntegrationTest {
     private final GenericContainer mongodb = new GenericContainer("mongo:6.0.2-focal")
             .withExposedPorts(27017);
 
-    @Container
-    private final GenericContainer redis = new GenericContainer("redis:7.0.5")
-            .withExposedPorts(6379);
-
-
     @BeforeEach
     public void setup() throws IOException {
 
