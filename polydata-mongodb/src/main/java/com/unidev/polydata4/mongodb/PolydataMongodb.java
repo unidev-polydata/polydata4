@@ -59,6 +59,16 @@ public class PolydataMongodb extends AbstractPolydata {
         collection(dataset).createIndex(Indexes.compoundIndex(Indexes.ascending(INDEXES), Indexes.descending(UPDATE_DATE)));
     }
 
+    /**
+     * Create custom index on collection.
+     */
+    public void createIndex(String dataset, Document index) {
+        collection(dataset).createIndex(index);
+    }
+
+    /**
+     * Create text index.
+     */
     public void createTextIndex(String dataset, String... fields) {
         if (fields.length == 0) {
             return;
@@ -315,6 +325,7 @@ public class PolydataMongodb extends AbstractPolydata {
         Integer defaultItemPerPage = config.fetch(ITEM_PER_PAGE, DEFAULT_ITEM_PER_PAGE);
         Integer itemPerPage = query.getOptions().fetch(ITEM_PER_PAGE, defaultItemPerPage);
         MongoCollection<Document> collection = collection(dataset);
+
         if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
             int randomCount = query.option(RANDOM_COUNT, itemPerPage);
             AggregateIterable<Document> documents = collection.aggregate(List.of(Aggregates.sample(randomCount))).allowDiskUse(true);
@@ -367,6 +378,19 @@ public class PolydataMongodb extends AbstractPolydata {
                 BasicPoly cachedQuery = new BasicPoly();
                 cachedQuery.put("list", list);
                 cachedInstance.put(key, cachedQuery);
+            }
+        }
+
+        if (query.queryType() == BasicPolyQuery.QueryFunction.CUSTOM) {
+            String customQuery = query.getOptions().fetch(CUSTOM_QUERY);
+            Document filter = Document.parse(customQuery);
+            try (MongoCursor<Document> iterator = collection.find(filter).sort(
+                            Sorts.descending(UPDATE_DATE))
+                    .skip(page * itemPerPage).limit(itemPerPage).cursor()) {
+                while (iterator.hasNext()) {
+                    Document next = iterator.next();
+                    list.add(toPoly(next));
+                }
             }
         }
 

@@ -65,7 +65,7 @@ public class BasicPolyQuery implements PolyQuery, Serializable {
         options.put(key, value);
     }
 
-    public enum QueryFunction {PAGES, RANDOM, SEARCH}
+    public enum QueryFunction {PAGES, RANDOM, SEARCH, CUSTOM}
 
 
 }

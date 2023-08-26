@@ -34,6 +34,8 @@ public interface Polydata extends Closeable {
 
     String SEARCH_TEXT = "search_text";
 
+    String CUSTOM_QUERY = "custom_query";
+
     void prepareStorage();
 
     BasicPoly create(String dataset);
