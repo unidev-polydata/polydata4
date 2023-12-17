@@ -108,7 +108,27 @@ public class PolydataSqlite extends AbstractPolydata {
 
     @Override
     public Optional<BasicPoly> index(String dataset) {
-        return readInternal(dataset, INDEX_KEY);
+        Optional<BasicPoly> index = readInternal(dataset, INDEX_KEY);
+        if (index.isEmpty()) {
+            return index;
+        }
+        BasicPoly internalIndex = index.get();
+        BasicPoly result = new BasicPoly();
+
+        Map<String, Object> data = internalIndex.data();
+        for (Map.Entry<String, Object> entry : data.entrySet()) {
+            if (!(entry.getValue() instanceof Map)) {
+                continue;
+            }
+            Map<String, Object> value = (Map<String, Object>) entry.getValue();
+            if (value.containsKey("data")) {
+                value = (Map<String, Object>) value.get("data");
+            }
+            BasicPoly poly = new BasicPoly();
+            poly.data().putAll(value);
+            result.put(entry.getKey(), poly);
+        }
+        return Optional.of(result);
     }
 
     @Override
