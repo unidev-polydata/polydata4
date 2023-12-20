@@ -77,6 +77,11 @@ public abstract class IntegrationTest {
         list = polydata.read(poly, Set.of("test-id"));
         assertNotNull(list);
         assertEquals(0, list.list().size());
+
+
+        list = polydata.read(poly, Set.of());
+        assertNotNull(list);
+        assertEquals(0, list.list().size());
     }
 
     @Test
