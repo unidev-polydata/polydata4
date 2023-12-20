@@ -157,7 +157,8 @@ public class PolydataSqlite extends AbstractPolydata {
             }
         });
 
-        try (Connection connection = fetchConnection(dataset)) {
+        Connection connection = fetchConnection(dataset);
+        try {
             connection.setAutoCommit(false);
             PreparedStatement preparedStatement = connection
                     .prepareStatement(
@@ -224,7 +225,8 @@ public class PolydataSqlite extends AbstractPolydata {
     @Override
     public BasicPolyList update(String dataset, Collection<InsertRequest> updateRequests) {
         BasicPolyList result = new BasicPolyList();
-        try (Connection connection = fetchConnection(dataset)) {
+        Connection connection = fetchConnection(dataset);
+        try {
             connection.setAutoCommit(false);
             PreparedStatement preparedStatement = connection
                     .prepareStatement("UPDATE data SET data=?, polydata_index=?, update_date=? WHERE _id=?");
@@ -264,7 +266,8 @@ public class PolydataSqlite extends AbstractPolydata {
         if (ids.isEmpty()) {
             return basicPolyList;
         }
-        try (Connection connection = fetchConnection(dataset)) {
+        Connection connection = fetchConnection(dataset);
+        try {
             String q = createQuestionMarks(ids);
             PreparedStatement preparedStatement = connection
                     .prepareStatement("SELECT data FROM data WHERE _id IN ( " + q + ") ; ");
@@ -288,7 +291,8 @@ public class PolydataSqlite extends AbstractPolydata {
     @Override
     public BasicPolyList remove(String dataset, Set<String> ids) {
         BasicPolyList basicPolyList = read(dataset, ids);
-        try (Connection connection = fetchConnection(dataset)) {
+        Connection connection = fetchConnection(dataset);
+        try {
             String q = createQuestionMarks(ids);
             PreparedStatement preparedStatement = connection
                     .prepareStatement("DELETE FROM data WHERE _id IN (" + q + ") ; ");
@@ -325,7 +329,8 @@ public class PolydataSqlite extends AbstractPolydata {
         final int page = query.page() < 0 ? 0 : query.page();
         Integer defaultItemPerPage = config.fetch(ITEM_PER_PAGE, DEFAULT_ITEM_PER_PAGE);
         Integer itemPerPage = query.getOptions().fetch(ITEM_PER_PAGE, defaultItemPerPage);
-        try (Connection connection = fetchConnection(dataset)) {
+        Connection connection = fetchConnection(dataset);
+        try {
             PreparedStatement preparedStatement = null;
             if (query.queryType() == BasicPolyQuery.QueryFunction.RANDOM) {
                 int randomCount = query.option(RANDOM_COUNT, itemPerPage);
@@ -359,7 +364,8 @@ public class PolydataSqlite extends AbstractPolydata {
         if (!StringUtils.isBlank(tag)) {
             index = tag;
         }
-        try (Connection connection = fetchConnection(dataset)) {
+        Connection connection = fetchConnection(dataset);
+        try {
             PreparedStatement preparedStatement = null;
             preparedStatement = connection.prepareStatement("SELECT count(data) FROM data WHERE polydata_index LIKE ? ; ");
             preparedStatement.setString(1, "%|" + index + "|%");
@@ -396,12 +402,19 @@ public class PolydataSqlite extends AbstractPolydata {
 
     @Override
     public void close() throws IOException {
-
+        connectionMap.values().forEach(connection -> {
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private void recalculateIndex(String dataset) {
         BasicPoly index = BasicPoly.newPoly(INDEX_KEY);
-        try (Connection connection = fetchConnection(dataset)) {
+        Connection connection = fetchConnection(dataset);
+        try {
             PreparedStatement preparedStatement = connection
                     .prepareStatement("SELECT polydata_index FROM data");
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -425,7 +438,8 @@ public class PolydataSqlite extends AbstractPolydata {
     }
 
     private void persistInternal(String dataset, BasicPoly data) {
-        try (Connection connection = fetchConnection(dataset)) {
+        Connection connection = fetchConnection(dataset);
+        try {
             PreparedStatement preparedStatement = connection
                     .prepareStatement("INSERT OR REPLACE INTO internal(_id, data, create_date, update_date) VALUES(?,?,?,?);");
             preparedStatement.setString(1, data._id());
@@ -439,7 +453,8 @@ public class PolydataSqlite extends AbstractPolydata {
     }
 
     private Optional<BasicPoly> readInternal(String dataset, String id) {
-        try (Connection connection = fetchConnection(dataset)) {
+        Connection connection = fetchConnection(dataset);
+        try {
             PreparedStatement preparedStatement = connection
                     .prepareStatement("SELECT data FROM internal WHERE _id=?");
             preparedStatement.setString(1, id);
@@ -449,7 +464,7 @@ public class PolydataSqlite extends AbstractPolydata {
                 String rawData = resultSet.getString("data");
                 return Optional.ofNullable(objectMapper.readValue(rawData, BasicPoly.class));
             }
-        } catch (Exception e) {
+        }catch (Exception e) {
             e.printStackTrace();
         }
         return Optional.empty();
@@ -469,12 +484,16 @@ public class PolydataSqlite extends AbstractPolydata {
         return dbFile;
     }
 
+    private final Map<String, Connection> connectionMap = new ConcurrentHashMap<>();
+
     private Connection fetchConnection(String dataset) {
-        try {
-            return fetchDataSource(dataset).getConnection();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        return connectionMap.computeIfAbsent(dataset, k -> {
+            try {
+                return fetchDataSource(dataset).getConnection();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     private String createQuestionMarks(Set<String> ids) {
