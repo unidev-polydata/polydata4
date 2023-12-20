@@ -261,6 +261,9 @@ public class PolydataSqlite extends AbstractPolydata {
     @Override
     public BasicPolyList read(String dataset, Set<String> ids) {
         BasicPolyList basicPolyList = new BasicPolyList();
+        if (ids.isEmpty()) {
+            return basicPolyList;
+        }
         try (Connection connection = fetchConnection(dataset)) {
             String q = createQuestionMarks(ids);
             PreparedStatement preparedStatement = connection
