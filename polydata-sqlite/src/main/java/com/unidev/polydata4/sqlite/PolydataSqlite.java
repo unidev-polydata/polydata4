@@ -165,7 +165,7 @@ public class PolydataSqlite extends AbstractPolydata {
             connection.setAutoCommit(false);
             PreparedStatement preparedStatement = connection
                     .prepareStatement(
-                            "INSERT INTO data(_id_n, _id, data, polydata_index, create_date, update_date) VALUES(?, ?, ?, ?, ?, ?)");
+                            "INSERT INTO data(_id_n, _id, data, polydata_index, create_date, update_date) VALUES(?, ?, ?, ?, ?, ?) ON CONFLICT (_id_n) DO NOTHING;");
 
             for (InsertRequest request : toInsert) {
                 String id = request.getData()._id();
