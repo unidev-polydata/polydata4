@@ -172,7 +172,7 @@ public class PolydataSqlite extends AbstractPolydata {
                 long id_n = genHash(id);
 
                 if (genHashIds.contains(id_n)) {
-                    log.warn("Duplicate id {} for poly {}", id, request.getData());
+                    log.warn("Duplicate id {} => {} for poly {}", id, id_n, request.getData());
                     continue;
                 }
                 genHashIds.add(id_n);
