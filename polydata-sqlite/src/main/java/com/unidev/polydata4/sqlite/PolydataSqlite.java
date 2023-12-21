@@ -158,6 +158,8 @@ public class PolydataSqlite extends AbstractPolydata {
             }
         });
 
+        Set<Long> genHashIds = new HashSet<>();
+
         Connection connection = fetchConnection(dataset);
         try {
             connection.setAutoCommit(false);
@@ -168,6 +170,13 @@ public class PolydataSqlite extends AbstractPolydata {
             for (InsertRequest request : toInsert) {
                 String id = request.getData()._id();
                 long id_n = genHash(id);
+
+                if (genHashIds.contains(id_n)) {
+                    log.warn("Duplicate id {} for poly {}", id, request.getData());
+                    continue;
+                }
+                genHashIds.add(id_n);
+
                 Set<String> tags = buildTagIndex(request);
                 String tagString = buildTagIndexString(tags);
                 BasicPoly data = request.getData();
