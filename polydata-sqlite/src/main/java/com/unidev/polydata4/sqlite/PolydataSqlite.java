@@ -500,7 +500,7 @@ public class PolydataSqlite extends AbstractPolydata {
     private final Map<String, Connection> connectionMap = new ConcurrentHashMap<>();
 
     private Connection fetchConnection(String dataset) {
-        return connectionMap.computeIfAbsent(Thread.currentThread().getName() + "-" + dataset, k -> {
+        return connectionMap.computeIfAbsent(dataset, k -> {
             try {
                 return fetchDataSource(dataset).getConnection();
             } catch (SQLException e) {
