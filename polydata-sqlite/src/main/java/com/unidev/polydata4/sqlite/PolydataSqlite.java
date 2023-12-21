@@ -162,10 +162,11 @@ public class PolydataSqlite extends AbstractPolydata {
             connection.setAutoCommit(false);
             PreparedStatement preparedStatement = connection
                     .prepareStatement(
-                            "INSERT INTO data(_id, data, polydata_index, create_date, update_date) VALUES(?, ?, ?, ?, ?)");
+                            "INSERT INTO data(_id_n, _id, data, polydata_index, create_date, update_date) VALUES(?, ?, ?, ?, ?, ?)");
 
             for (InsertRequest request : toInsert) {
                 String id = request.getData()._id();
+                int id_n = id.hashCode();
                 Set<String> tags = buildTagIndex(request);
                 String tagString = buildTagIndexString(tags);
                 BasicPoly data = request.getData();
@@ -179,11 +180,11 @@ public class PolydataSqlite extends AbstractPolydata {
                             data.fetch("_update_date", System.currentTimeMillis()) + "");
 
 
-                    preparedStatement.setString(1, id);
-                    preparedStatement.setString(2, jsonData);
-                    preparedStatement.setString(3, tagString);
-                    preparedStatement.setLong(4, createDate);
-                    preparedStatement.setLong(5, updateDate);
+                    preparedStatement.setLong(1, id_n);
+                    preparedStatement.setString(3, jsonData);
+                    preparedStatement.setString(4, tagString);
+                    preparedStatement.setLong(5, createDate);
+                    preparedStatement.setLong(6, updateDate);
                     preparedStatement.addBatch();
 
                     result.add(request.getData());
@@ -229,18 +230,19 @@ public class PolydataSqlite extends AbstractPolydata {
         try {
             connection.setAutoCommit(false);
             PreparedStatement preparedStatement = connection
-                    .prepareStatement("UPDATE data SET data=?, polydata_index=?, update_date=? WHERE _id=?");
+                    .prepareStatement("UPDATE data SET data=?, polydata_index=?, update_date=? WHERE _id_n=?");
             for (InsertRequest request : updateRequests) {
                 Set<String> tags = buildTagIndex(request);
                 String tagString = buildTagIndexString(tags);
                 BasicPoly data = request.getData();
                 data.put(INDEXES, tags);
                 String id = data._id();
+                int id_n = id.hashCode();
                 String jsonData = objectMapper.writeValueAsString(data);
                 preparedStatement.setString(1, jsonData);
                 preparedStatement.setString(2, tagString);
                 preparedStatement.setLong(3, System.currentTimeMillis());
-                preparedStatement.setString(4, id);
+                preparedStatement.setLong(4, id_n);
                 preparedStatement.addBatch();
 
                 result.add(data);
@@ -270,10 +272,10 @@ public class PolydataSqlite extends AbstractPolydata {
         try {
             String q = createQuestionMarks(ids);
             PreparedStatement preparedStatement = connection
-                    .prepareStatement("SELECT data FROM data WHERE _id IN ( " + q + ") ; ");
+                    .prepareStatement("SELECT data FROM data WHERE _id_n IN ( " + q + ") ; ");
             int i = 1;
             for (String id : ids) {
-                preparedStatement.setString(i++, id);
+                preparedStatement.setLong(i++, id.hashCode());
             }
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -295,10 +297,10 @@ public class PolydataSqlite extends AbstractPolydata {
         try {
             String q = createQuestionMarks(ids);
             PreparedStatement preparedStatement = connection
-                    .prepareStatement("DELETE FROM data WHERE _id IN (" + q + ") ; ");
+                    .prepareStatement("DELETE FROM data WHERE _id_n IN (" + q + ") ; ");
             int i = 1;
             for (String id : ids) {
-                preparedStatement.setString(i++, id);
+                preparedStatement.setLong(i++, id.hashCode());
             }
             long removedRows = preparedStatement.executeUpdate();
             log.info("Removed {} rows", removedRows);
