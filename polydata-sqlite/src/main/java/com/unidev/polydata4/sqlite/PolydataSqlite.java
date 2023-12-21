@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.flywaydb.core.Flyway;
 import org.sqlite.SQLiteDataSource;
 
@@ -166,7 +167,7 @@ public class PolydataSqlite extends AbstractPolydata {
 
             for (InsertRequest request : toInsert) {
                 String id = request.getData()._id();
-                int id_n = id.hashCode();
+                long id_n = genHash(id);
                 Set<String> tags = buildTagIndex(request);
                 String tagString = buildTagIndexString(tags);
                 BasicPoly data = request.getData();
@@ -237,7 +238,7 @@ public class PolydataSqlite extends AbstractPolydata {
                 BasicPoly data = request.getData();
                 data.put(INDEXES, tags);
                 String id = data._id();
-                int id_n = id.hashCode();
+                long id_n = genHash(id);
                 String jsonData = objectMapper.writeValueAsString(data);
                 preparedStatement.setString(1, jsonData);
                 preparedStatement.setString(2, tagString);
@@ -275,7 +276,7 @@ public class PolydataSqlite extends AbstractPolydata {
                     .prepareStatement("SELECT data FROM data WHERE _id_n IN ( " + q + ") ; ");
             int i = 1;
             for (String id : ids) {
-                preparedStatement.setLong(i++, id.hashCode());
+                preparedStatement.setLong(i++, genHash(id));
             }
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -300,7 +301,7 @@ public class PolydataSqlite extends AbstractPolydata {
                     .prepareStatement("DELETE FROM data WHERE _id_n IN (" + q + ") ; ");
             int i = 1;
             for (String id : ids) {
-                preparedStatement.setLong(i++, id.hashCode());
+                preparedStatement.setLong(i++, genHash(id));
             }
             long removedRows = preparedStatement.executeUpdate();
             log.info("Removed {} rows", removedRows);
@@ -514,4 +515,11 @@ public class PolydataSqlite extends AbstractPolydata {
         }
         return tagString;
     }
+
+    long genHash(String value) {
+        return new HashCodeBuilder(17, 37)
+                .append(value)
+                .toHashCode() & 0xffffffffL;
+    }
+
 }
