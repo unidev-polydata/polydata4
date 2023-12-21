@@ -7,6 +7,8 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 public class PolydataSqliteTest {
 
     @TempDir
@@ -24,6 +26,13 @@ public class PolydataSqliteTest {
     @Test
     void polyCreation() {
         polydata.create("test");
+    }
+
+    @Test
+    void genHash() {
+        long v1 = polydata.genHash("123");
+        long v2 = polydata.genHash("123");
+        assertEquals(v1, v2);
     }
 
 }
