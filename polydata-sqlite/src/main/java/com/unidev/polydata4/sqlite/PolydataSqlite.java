@@ -182,6 +182,7 @@ public class PolydataSqlite extends AbstractPolydata {
 
 
                     preparedStatement.setLong(1, id_n);
+                    preparedStatement.setString(2, id);
                     preparedStatement.setString(3, jsonData);
                     preparedStatement.setString(4, tagString);
                     preparedStatement.setLong(5, createDate);
