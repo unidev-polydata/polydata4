@@ -11,6 +11,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.flywaydb.core.Flyway;
 import org.sqlite.SQLiteDataSource;
 
+import javax.cache.Cache;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
@@ -279,24 +280,50 @@ public class PolydataSqlite extends AbstractPolydata {
         if (ids.isEmpty()) {
             return basicPolyList;
         }
+        List<String> idsToQuery = new ArrayList<>(ids);
+
+        Map<String, BasicPoly> cachedPolys = ifCache(cache -> {
+            Set<String> cachedIds = new HashSet<>();
+            for (String id : ids) {
+                cachedIds.add(dataset + "-read-" + genHash(id));
+            }
+            return cache.getAll(cachedIds);
+        });
+        if (cachedPolys != null) {
+            for (BasicPoly item : cachedPolys.values()) {
+                basicPolyList.add(item);
+                idsToQuery.remove(item._id());
+            }
+        }
+        final BasicPolyList dbPolys = new BasicPolyList();
+
         Connection connection = fetchConnection(dataset);
         try {
             String q = createQuestionMarks(ids);
             PreparedStatement preparedStatement = connection
                     .prepareStatement("SELECT data FROM data WHERE _id_n IN ( " + q + ") ; ");
             int i = 1;
-            for (String id : ids) {
+            for (String id : idsToQuery) {
                 preparedStatement.setLong(i++, genHash(id));
             }
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 String rawData = resultSet.getString("data");
                 BasicPoly basicPoly = objectMapper.readValue(rawData, BasicPoly.class);
-                basicPolyList.add(basicPoly);
+                dbPolys.add(basicPoly);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        if (cache.isPresent()) {
+            Cache cacheInstance = cache.get();
+            Map<String, BasicPoly> cacheMap = new HashMap<>();
+            for (BasicPoly data : dbPolys.list()) {
+                cacheMap.put(dataset + "-read-" + genHash(data._id()), data);
+            }
+            cacheInstance.putAll(cacheMap);
+        }
+        basicPolyList.list().addAll(dbPolys.list());
 
         return basicPolyList;
     }
