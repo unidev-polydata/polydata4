@@ -42,7 +42,9 @@ public class PolydataSqlite extends AbstractPolydata {
 
     private final File rootDir;
     private final ObjectMapper objectMapper;
-    private final Map<String, SQLiteDataSource> connections = new ConcurrentHashMap<>();
+    private final Map<String, SQLiteDataSource> datasourcesMap = new ConcurrentHashMap<>();
+
+    private final Map<String, Connection> connectionMap = new ConcurrentHashMap<>();
 
     private static Set<String> buildTagIndex(InsertRequest request) {
         Set<String> indexToPersist = request.getIndexToPersist();
@@ -437,7 +439,11 @@ public class PolydataSqlite extends AbstractPolydata {
 
     @Override
     public void open() {
-
+        BasicPolyList list = list();
+        list.list().forEach(poly -> {
+            String name = poly._id();
+            fetchConnection(name);
+        });
     }
 
     @Override
@@ -511,7 +517,7 @@ public class PolydataSqlite extends AbstractPolydata {
     }
 
     private SQLiteDataSource fetchDataSource(String dataset) {
-        return connections.computeIfAbsent(dataset, k -> {
+        return datasourcesMap.computeIfAbsent(dataset, k -> {
             File dbFile = getDbFile(k);
             SQLiteDataSource sqLiteDataSource = new SQLiteDataSource();
             sqLiteDataSource.setUrl("jdbc:sqlite:" + dbFile.getAbsolutePath());
@@ -523,8 +529,6 @@ public class PolydataSqlite extends AbstractPolydata {
         File dbFile = new File(rootDir, dataset + DB_FILE_EXTENSION);
         return dbFile;
     }
-
-    private final Map<String, Connection> connectionMap = new ConcurrentHashMap<>();
 
     private Connection fetchConnection(String dataset) {
         return connectionMap.computeIfAbsent(dataset, k -> {
