@@ -225,7 +225,7 @@ public class BasicPoly implements Poly, Serializable {
     }
 
     public String _id() {
-        return String.valueOf(fetch(ID_KEY));
+        return fetch(ID_KEY) + "";
     }
 
     public BasicPoly _id(String id) {
