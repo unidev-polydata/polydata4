@@ -1,0 +1,7 @@
+{
+  "_id": "5",
+  "_index": ["_date"],
+  "data": "5",
+  "_internal1": "internal_field_1",
+  "__auto_remove_field": "123"
+}
