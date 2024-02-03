@@ -3,9 +3,8 @@
 Flat file storage for polydata. Useful to use polys stored as flat files.
 
 Supported formats:
-
-* YAML
-* JSON
+* YAML(flat-file-yaml) - scan of yaml files in a directory and build polydata storage
+* JSON(flat-file-json) - single json files
 
 ## Yaml example
 
