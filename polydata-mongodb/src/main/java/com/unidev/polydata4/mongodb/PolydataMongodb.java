@@ -171,10 +171,8 @@ public class PolydataMongodb extends AbstractPolydata {
     public BasicPolyList insert(String dataset, InsertOptions insertOptions, Collection<InsertRequest> insertRequests) {
         BasicPolyList basicPolyList = new BasicPolyList();
 
-        Set<String> polyIds = new HashSet<>();
         for (InsertRequest insertRequest : insertRequests) {
             BasicPoly data = insertRequest.getData();
-            polyIds.add(data._id());
 
             Set<String> indexToPersist = insertRequest.getIndexToPersist();
             if (CollectionUtils.isEmpty(indexToPersist)) {
@@ -457,7 +455,12 @@ public class PolydataMongodb extends AbstractPolydata {
         mongoClient.close();
     }
 
-    private MongoCollection<Document> collection(String collection) {
+    /**
+     * Fetch collection for dataset.
+     * @param collection
+     * @return
+     */
+    public MongoCollection<Document> collection(String collection) {
         return mongoClient.getDatabase(Objects.requireNonNull(mongoClientURI.getDatabase())).getCollection(collection);
     }
 
@@ -506,11 +509,17 @@ public class PolydataMongodb extends AbstractPolydata {
         putIfCache(collection + "-poly-from-collection-" + dataset, data);
     }
 
-    private MongoCollection<Document> indexCollection(String dataset) {
+    /**
+     * Fetch dataset collection.
+     */
+    public MongoCollection<Document> indexCollection(String dataset) {
         return collection(INDEX_COLLECTION);
     }
 
-    private void recalculateIndex(String dataset) {
+    /**
+     * Recalculate index for dataset
+     */
+    public void recalculateIndex(String dataset) {
         MongoCollection<Document> collection = collection(dataset);
         AggregateIterable<Document> documents = collection.aggregate(
                 Arrays.asList(
