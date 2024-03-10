@@ -220,7 +220,7 @@ public class PolydataSqlite extends AbstractPolydata {
 
         log.info("Added polys {} ", toInsert.size());
 
-        if (insertOptions.skipIndex()) {
+        if (insertOptions.isSkipIndex()) {
             return result;
         }
 

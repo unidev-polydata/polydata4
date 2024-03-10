@@ -137,7 +137,7 @@ public class PolydataRedis extends AbstractPolydata {
                     jedis.lpush(indexId, insertRequest.getData()._id().getBytes());
                 }
             }
-            if (insertOptions.skipIndex()) {
+            if (insertOptions.isSkipIndex()) {
                 rebuildIndex(jedis, dataset);
             }
         });
