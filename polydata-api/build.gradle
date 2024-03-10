@@ -1,6 +1,9 @@
 dependencies {
     api project(":polydata-model")
-
-    api "javax.cache:cache-api:${javaxCacheApiVersion}"
-
+    api(
+            "javax.cache:cache-api:${javaxCacheApiVersion}",
+            "com.unidev.platform:unidev-common:$unidevPlatformVersion",
+            "com.unidev.platform:unidev-logger:$unidevPlatformVersion",
+            "com.unidev.platform:unidev-exception:$unidevPlatformVersion"
+    )
 }
