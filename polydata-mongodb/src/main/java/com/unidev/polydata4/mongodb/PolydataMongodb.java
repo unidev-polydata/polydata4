@@ -219,7 +219,7 @@ public class PolydataMongodb extends AbstractPolydata {
                     bulkWriteResult.getMatchedCount());
         }
 
-        if (insertOptions.skipIndex()) {
+        if (insertOptions.isSkipIndex()) {
             return basicPolyList;
         }
         recalculateIndex(dataset);

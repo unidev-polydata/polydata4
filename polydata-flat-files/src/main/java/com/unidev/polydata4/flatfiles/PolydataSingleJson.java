@@ -143,7 +143,7 @@ public class PolydataSingleJson extends AbstractPolydata {
             String id = data._id();
             repository.remove(id);
             repository.fetchById(Set.of(id)).polyById(id).ifPresent(list::add);
-            if (!insertOptions.skipIndex()) {
+            if (!insertOptions.isSkipIndex()) {
                 Set<String> tags = buildTagIndex(request);
                 repository.add(data, tags);
             }
