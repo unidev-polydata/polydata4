@@ -2,8 +2,6 @@ package com.unidev.polydata4.domain;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.unidev.platform.common.DataTransform;
-import com.unidev.platform.common.exception.UnidevRuntimeException;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -280,7 +278,7 @@ public class BasicPoly implements Poly, Serializable {
             try {
                 return (P) objectMapper.readValue(objectMapper.writeValueAsString(item), BasicPolyList.class);
             } catch (JsonProcessingException e) {
-                throw new UnidevRuntimeException(e);
+                throw new RuntimeException(e);
             }
         }
         return (P) item;
@@ -311,7 +309,7 @@ public class BasicPoly implements Poly, Serializable {
             try {
                 return (P) objectMapper.readValue(objectMapper.writeValueAsString(item), BasicPolyMap.class);
             } catch (JsonProcessingException e) {
-                throw new UnidevRuntimeException(e);
+                throw new RuntimeException(e);
             }
         }
         return (P) item;

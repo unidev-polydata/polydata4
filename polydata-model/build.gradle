@@ -6,12 +6,6 @@ java {
 }
 
 dependencies {
-
-    api(
-            "com.unidev.platform:unidev-common:$unidevPlatformVersion",
-            "com.unidev.platform:unidev-logger:$unidevPlatformVersion",
-            "com.unidev.platform:unidev-exception:$unidevPlatformVersion"
-    )
     implementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 
 }
