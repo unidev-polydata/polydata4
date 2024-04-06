@@ -24,11 +24,6 @@ public class BasicPoly implements Poly, Serializable {
     @Setter
     protected Map<String, Object> metadata;
 
-    public BasicPoly(Map<String, Object> data) {
-        this.data = data;
-        this.metadata = new ConcurrentHashMap<>();
-    }
-
     public BasicPoly(Map<String, Object> data, Map<String, Object> metadata) {
         this.data = data;
         this.metadata = metadata;
