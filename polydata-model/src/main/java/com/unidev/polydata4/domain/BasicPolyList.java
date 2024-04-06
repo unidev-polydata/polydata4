@@ -26,17 +26,21 @@ public class BasicPolyList implements PolyList<BasicPoly>, Serializable {
     @Setter
     protected Map<String, Object> metadata;
 
-    public BasicPolyList(Map<String, Object> metadata, List<BasicPoly> list) {
+    public BasicPolyList(List<BasicPoly> list) {
+        this(list, new ConcurrentHashMap<>());
+    }
+
+    public BasicPolyList(List<BasicPoly> list, Map<String, Object> metadata) {
         this.list = list;
         this.metadata = metadata;
     }
 
     public BasicPolyList() {
-        this(new ConcurrentHashMap<>(), new CopyOnWriteArrayList<>());
+        this(new CopyOnWriteArrayList<>(), new ConcurrentHashMap<>());
     }
 
     public BasicPolyList(Collection<BasicPoly> source) {
-        this(new ConcurrentHashMap<>(), new CopyOnWriteArrayList<>(source));
+        this(new CopyOnWriteArrayList<>(source), new ConcurrentHashMap<>());
     }
 
     public static BasicPolyList newList() {
