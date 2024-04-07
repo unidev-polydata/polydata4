@@ -510,7 +510,7 @@ public class PolydataSqlite extends AbstractPolydata {
                 String rawData = resultSet.getString("data");
                 return Optional.ofNullable(objectMapper.readValue(rawData, BasicPoly.class));
             }
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return Optional.empty();

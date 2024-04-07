@@ -334,7 +334,7 @@ public class PolydataMongodb extends AbstractPolydata {
         }
         if (query.queryType() == BasicPolyQuery.QueryFunction.SEARCH) {
             String searchText = query.getOptions().fetch(SEARCH_TEXT);
-            TextSearchOptions options = new TextSearchOptions().caseSensitive(true);
+            TextSearchOptions options = new TextSearchOptions().caseSensitive(false).diacriticSensitive(false);
             Bson filter = Filters.text(searchText, options);
             try (MongoCursor<Document> iterator = collection.find(filter).sort(
                             Sorts.descending(UPDATE_DATE))
@@ -457,6 +457,7 @@ public class PolydataMongodb extends AbstractPolydata {
 
     /**
      * Fetch collection for dataset.
+     *
      * @param collection
      * @return
      */

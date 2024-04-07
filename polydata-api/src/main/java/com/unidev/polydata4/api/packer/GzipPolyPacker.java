@@ -73,6 +73,4 @@ public class GzipPolyPacker implements PolyPacker {
     }
 
 
-
-
 }
