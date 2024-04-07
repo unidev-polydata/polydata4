@@ -54,10 +54,10 @@ public class MongodbIntegrationTest extends IntegrationTest {
                                 BasicPoly.newPoly()
                                         .with(QUERY_FUNCTION, BasicPolyQuery.QueryFunction.CUSTOM.name())
                                         .with(CUSTOM_QUERY, """                       
-                        {
-                           app: { $regex: /app_.*/ }
-                        }"""
-                        )).build());
+                                                {
+                                                   app: { $regex: /app_.*/ }
+                                                }"""
+                                        )).build());
         assertEquals(10, list.list().size());
         for (int i = 999; i > 989; i--) {
             assertTrue(list.hasPoly("test_" + i), "Missing poly " + i);
@@ -70,12 +70,12 @@ public class MongodbIntegrationTest extends IntegrationTest {
                                 BasicPoly.newPoly()
                                         .with(QUERY_FUNCTION, BasicPolyQuery.QueryFunction.CUSTOM.name())
                                         .with(CUSTOM_QUERY, """                       
-                        {
-                          $and: [
-                            { app: "app_10" },
-                            { field: { $eq: 10 } }
-                          ]
-                        }"""
+                                                {
+                                                  $and: [
+                                                    { app: "app_10" },
+                                                    { field: { $eq: 10 } }
+                                                  ]
+                                                }"""
                                         )).build());
         assertEquals(1, list.list().size());
         assertTrue(list.hasPoly("test_10"));

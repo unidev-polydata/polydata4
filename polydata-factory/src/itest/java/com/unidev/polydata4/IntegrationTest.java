@@ -304,10 +304,10 @@ public abstract class IntegrationTest {
             polydata.insert(poly,
                     InsertOptions.builder().skipIndex(true).build(),
                     Collections.singletonList(
-                    InsertRequest.builder()
-                            .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
-                            .indexToPersist(Set.of("tag_x", "tag_" + i, "_date"))
-                            .build())
+                            InsertRequest.builder()
+                                    .data(BasicPoly.newPoly("test_" + i).with("app", i + "").with("field", i))
+                                    .indexToPersist(Set.of("tag_x", "tag_" + i, "_date"))
+                                    .build())
             );
         }
         Optional<BasicPoly> index = polydata.index(poly);
