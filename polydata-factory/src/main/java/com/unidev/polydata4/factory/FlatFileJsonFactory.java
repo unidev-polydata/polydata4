@@ -9,7 +9,7 @@ import java.io.File;
 import java.util.Optional;
 
 @Slf4j
-public class FlatFileJsonFactory implements StorageFactory {
+public class FlatFileJsonFactory extends StorageFactory {
     @Override
     public String type() {
         return "flat-file-json";

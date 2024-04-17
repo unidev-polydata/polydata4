@@ -10,7 +10,7 @@ import java.io.File;
 import java.util.Optional;
 
 @Slf4j
-public class SQLiteFactory implements StorageFactory {
+public class SQLiteFactory extends StorageFactory {
     @Override
     public String type() {
         return "sqlite";

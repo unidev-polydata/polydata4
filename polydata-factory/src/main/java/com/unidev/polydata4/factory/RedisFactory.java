@@ -13,7 +13,7 @@ import java.time.Duration;
 import java.util.Optional;
 
 @Slf4j
-public class RedisFactory implements StorageFactory {
+public class RedisFactory extends StorageFactory {
 
     @Override
     public String type() {
