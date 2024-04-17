@@ -9,7 +9,7 @@ import java.io.File;
 import java.util.Optional;
 
 @Slf4j
-public class FlatFileYamlFactory implements StorageFactory {
+public class FlatFileYamlFactory extends StorageFactory {
     @Override
     public String type() {
         return "flat-file-yaml";

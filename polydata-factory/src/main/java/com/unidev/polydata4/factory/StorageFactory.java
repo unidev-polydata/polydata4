@@ -2,6 +2,7 @@ package com.unidev.polydata4.factory;
 
 import com.unidev.polydata4.api.Polydata;
 import com.unidev.polydata4.domain.BasicPoly;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.cache.Cache;
@@ -17,7 +18,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Interface for storage factories
  */
-public interface StorageFactory {
+@Slf4j
+public abstract class StorageFactory {
 
     static Optional<MutableConfiguration<String, BasicPoly>> fetchJCacheConfig(BasicPoly config) {
         MutableConfiguration<String, BasicPoly> jcacheConfig = new MutableConfiguration<>();
@@ -28,12 +30,12 @@ public interface StorageFactory {
     /**
      * Fetch cache provider from configuration
      */
-    default Optional<Cache<String, BasicPoly>> fetchCache(BasicPoly config) {
+    public Optional<Cache<String, BasicPoly>> fetchCache(BasicPoly config) {
         if (config == null) {
             return Optional.empty();
         }
         String cacheType = config.fetch("type", "");
-
+        log.info("Fetching cache for type {}", cacheType);
         if (cacheType.equals("jcache")) {
             String cacheProvider = config.fetch("provider", "");
             String cacheName = config.fetch("name", "");
@@ -88,12 +90,12 @@ public interface StorageFactory {
     /**
      * Return supported storage type.
      */
-    String type();
+    public abstract String type();
 
     /**
      * Create polydata from configuration.
      */
-    Optional<Polydata> create(BasicPoly config);
+    public abstract Optional<Polydata> create(BasicPoly config);
 
 
 }
