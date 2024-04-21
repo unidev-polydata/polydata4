@@ -12,6 +12,8 @@ import javax.cache.configuration.MutableConfiguration;
 import javax.cache.spi.CachingProvider;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -27,6 +29,7 @@ public abstract class StorageFactory {
         return Optional.of(jcacheConfig);
     }
 
+    protected Map<String, CachingProvider> cachingProviders = new HashMap<>();
     /**
      * Fetch cache provider from configuration
      */
@@ -45,7 +48,18 @@ public abstract class StorageFactory {
             if (StringUtils.isBlank(cacheProvider)) {
                 provider = Caching.getCachingProvider();
             } else {
-                provider = Caching.getCachingProvider(cacheProvider);
+                provider = cachingProviders.computeIfAbsent(cacheProvider, key -> {
+                    try {
+                        return Caching.getCachingProvider(cacheProvider);
+                    } catch (Exception e) {
+                        log.error("Failed to get caching provider {}", cacheProvider, e);
+                        return null;
+                    }
+                });
+                if (provider == null) {
+                    log.error("Failed to get caching provider {}", cacheProvider);
+                    return Optional.empty();
+                }
             }
 
             Cache<String, BasicPoly> cache = null;
