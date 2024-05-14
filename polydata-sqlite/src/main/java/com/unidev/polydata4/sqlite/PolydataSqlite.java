@@ -504,6 +504,13 @@ public class PolydataSqlite extends AbstractPolydata {
     }
 
     private Optional<BasicPoly> readInternal(String dataset, String id) {
+        // cache if present
+        Optional<BasicPoly> cachedPoly = ifCache(cache -> {
+            return Optional.ofNullable(cache.get(dataset + "-readInternal-" + genHash(id)));
+        });
+        if (cachedPoly.isPresent()) {
+            return cachedPoly;
+        }
         Connection connection = fetchConnection(dataset);
         try {
             PreparedStatement preparedStatement = connection
@@ -513,7 +520,10 @@ public class PolydataSqlite extends AbstractPolydata {
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 String rawData = resultSet.getString("data");
-                return Optional.ofNullable(objectMapper.readValue(rawData, BasicPoly.class));
+                BasicPoly basicPoly = objectMapper.readValue(rawData, BasicPoly.class);
+                // cache
+                cache.ifPresent(entries -> entries.put(dataset + "-readInternal-" + genHash(id), basicPoly));
+                return Optional.ofNullable(basicPoly);
             }
         } catch (Exception e) {
             e.printStackTrace();
