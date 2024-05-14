@@ -297,6 +297,11 @@ public class PolydataSqlite extends AbstractPolydata {
                 idsToQuery.remove(item._id());
             }
         }
+
+        if (idsToQuery.isEmpty()) {
+            return basicPolyList;
+        }
+
         final BasicPolyList dbPolys = new BasicPolyList();
 
         Connection connection = fetchConnection(dataset);
