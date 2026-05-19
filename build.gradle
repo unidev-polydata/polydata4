@@ -1,6 +1,6 @@
 plugins {
-    id 'io.franzbecker.gradle-lombok' version '1.8'
-    id "com.palantir.git-version" version "0.12.3"
+    id 'io.freefair.lombok' version '8.14' apply false
+    id 'com.palantir.git-version' version '3.3.0'
 }
 
 println 'Building version: ' + gitVersion()
@@ -14,32 +14,26 @@ subprojects {
     apply plugin: 'idea'
     apply plugin: 'maven-publish'
     apply plugin: 'java-library'
+    apply plugin: 'io.freefair.lombok'
 
     repositories {
         google()
         mavenCentral()
         maven {
-            url "https://mvn.universal-development.com/public"
+            url = "https://mvn.universal-development.com/public"
         }
     }
 
-
     dependencies {
-
-        compileOnly "org.projectlombok:lombok:${lombokVersion}"
-        annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
-
-        testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
-        testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
-
-        testImplementation "org.mockito:mockito-all:${mokitoVersion}"
-        testImplementation "org.hamcrest:hamcrest-all:${hamcrestVersion}"
+        testImplementation "org.mockito:mockito-core:${mokitoVersion}"
+        testImplementation "org.hamcrest:hamcrest:${hamcrestVersion}"
         testImplementation "org.assertj:assertj-core:${assertjCoreVersion}"
 
         testImplementation "org.testcontainers:testcontainers:${testcontainersVersion}"
         testImplementation "org.testcontainers:junit-jupiter:${testcontainersVersion}"
 
         testImplementation "org.junit.jupiter:junit-jupiter:${junitJupiterVersion}"
+        testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     }
 
     idea {
@@ -48,21 +42,26 @@ subprojects {
         }
     }
 
-    // if is model project, apply jdk 1.8
+    // polydata-model stays on Java 8 to remain consumable by Java 8 downstream
+    // projects. All other modules move to Java 25.
     if (project.name == 'polydata-model') {
-        tasks.withType(JavaCompile) {
+        java {
             sourceCompatibility = JavaVersion.VERSION_1_8
             targetCompatibility = JavaVersion.VERSION_1_8
         }
     } else {
-        tasks.withType(JavaCompile) {
-            sourceCompatibility = JavaVersion.VERSION_17
-            targetCompatibility = JavaVersion.VERSION_17
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(25)
+            }
         }
     }
 
+    lombok {
+        version = lombokVersion
+    }
 
-    tasks.withType(Copy).all { duplicatesStrategy 'exclude' }
+    tasks.withType(Copy).configureEach { duplicatesStrategy = 'exclude' }
 
     // docker-java defaults to API v1.32 which Docker 25+ rejects.
     // Apply to every Test task (test, itest, ...) so Testcontainers can connect.
@@ -81,4 +80,3 @@ subprojects {
         }
     }
 }
-

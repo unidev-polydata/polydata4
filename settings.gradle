@@ -1,3 +1,8 @@
+plugins {
+    // Auto-provisions JDK toolchains (e.g. Java 25) from foojay's discovery API.
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
 rootProject.name = 'polydata4'
 
 include(

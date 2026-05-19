@@ -1,10 +1,11 @@
 package com.unidev.polydata4.mongodb;
 
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
+import com.mongodb.ConnectionString;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.*;
@@ -40,7 +41,7 @@ public class PolydataMongodb extends AbstractPolydata {
 
     @Getter
     @Setter
-    private MongoClientURI mongoClientURI;
+    private ConnectionString connectionString;
 
     @Getter
     @Setter
@@ -48,8 +49,8 @@ public class PolydataMongodb extends AbstractPolydata {
 
     public PolydataMongodb(String mongoUri) {
         this.mongoUri = mongoUri;
-        this.mongoClientURI = new MongoClientURI(this.mongoUri);
-        this.mongoClient = new MongoClient(mongoClientURI);
+        this.connectionString = new ConnectionString(this.mongoUri);
+        this.mongoClient = MongoClients.create(this.connectionString);
     }
 
     public void prepareStorage(String dataset) {
@@ -462,7 +463,7 @@ public class PolydataMongodb extends AbstractPolydata {
      * @return
      */
     public MongoCollection<Document> collection(String collection) {
-        return mongoClient.getDatabase(Objects.requireNonNull(mongoClientURI.getDatabase())).getCollection(collection);
+        return mongoClient.getDatabase(Objects.requireNonNull(connectionString.getDatabase())).getCollection(collection);
     }
 
     private BasicPoly toPoly(Document document) {
