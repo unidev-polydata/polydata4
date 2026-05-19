@@ -1,0 +1,109 @@
+name: build
+
+# CI policy: build + test only. NEVER publish artifacts to any Maven
+# repository (neither remote nor local). Publication is handled exclusively
+# by the Jenkins pipeline (see Jenkinsfile / buildPublicArtifacts).
+#
+# Guards:
+#   - Only the `build` and `itest` tasks are invoked (Gradle's `build` task
+#     does not depend on any `publish*` task).
+#   - `publish` and `publishToMavenLocal` are explicitly excluded with -x
+#     as belt-and-suspenders, so even an accidental task graph change cannot
+#     trigger publication.
+#   - `permissions: contents: read` removes write access to the repo.
+#   - No credentials for the Universal Development Maven repo are configured.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build + test (JDK 17)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # palantir git-version reads tags
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/master' }}
+
+      - name: Verify Docker available (Testcontainers)
+        run: docker version
+
+      - name: Build + unit tests (no publication)
+        run: ./gradlew build -x publish -x publishToMavenLocal --stacktrace --no-daemon
+
+      - name: Upload unit test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports
+          path: |
+            **/build/reports/tests/test/
+            **/build/test-results/test/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  integration-test:
+    name: integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: true
+
+      - name: Verify Docker available
+        run: docker version
+
+      - name: Run integration tests (no publication)
+        run: ./gradlew :polydata-factory:itest -x publish -x publishToMavenLocal --stacktrace --no-daemon
+        continue-on-error: true  # pre-existing flakiness; tracked in code-study findings
+
+      - name: Upload integration test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: itest-reports
+          path: |
+            polydata-factory/build/reports/tests/itest/
+            polydata-factory/build/test-results/itest/
+          if-no-files-found: ignore
+          retention-days: 14

@@ -18,7 +18,6 @@ subprojects {
     repositories {
         google()
         mavenCentral()
-        jcenter()
         maven {
             url "https://mvn.universal-development.com/public"
         }
@@ -65,8 +64,13 @@ subprojects {
 
     tasks.withType(Copy).all { duplicatesStrategy 'exclude' }
 
-    test {
+    // docker-java defaults to API v1.32 which Docker 25+ rejects.
+    // Apply to every Test task (test, itest, ...) so Testcontainers can connect.
+    tasks.withType(Test).configureEach {
         useJUnitPlatform()
+        def dockerApi = System.getenv().getOrDefault('DOCKER_API_VERSION', '1.44')
+        systemProperty 'api.version', dockerApi
+        environment 'DOCKER_API_VERSION', dockerApi
     }
 
     publishing {

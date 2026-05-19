@@ -504,12 +504,9 @@ public class PolydataSqlite extends AbstractPolydata {
     }
 
     private Optional<BasicPoly> readInternal(String dataset, String id) {
-        // cache if present
-        Optional<BasicPoly> cachedPoly = ifCache(cache -> {
-            return Optional.ofNullable(cache.get(dataset + "-readInternal-" + genHash(id)));
-        });
-        if (cachedPoly.isPresent()) {
-            return cachedPoly;
+        BasicPoly cachedPoly = ifCache(cache -> cache.get(dataset + "-readInternal-" + genHash(id)));
+        if (cachedPoly != null) {
+            return Optional.of(cachedPoly);
         }
         Connection connection = fetchConnection(dataset);
         try {
